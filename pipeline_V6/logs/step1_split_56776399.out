@@ -1,0 +1,66 @@
+🚀 === ÉTAPE 1: FRACTIONNEMENT PAR NAVIRE ===
+Job ID: 56776399
+Node: bc12213
+Début: Thu 26 Jun 2025 10:09:27 AM EDT
+✅ Lancement script de fractionnement...
+📋 Configuration: ~/scratch/output_V6/core_window.yaml
+📁 Input: ~/scratch/AIS_data/benjamin2.csv
+
+🚀  STEP-1  |  FRACTIONNEMENT AIS PAR NAVIRE  |  début : 2025-06-26 10:09:29 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+⚠️ QS non disponible, fallback vers RDS
+📁  INPUT  :  ~/scratch/AIS_data/benjamin2.csv 
+📁  OUTPUT :  ~/scratch/ais_split_56776399 
+📋  CONFIG :  ~/scratch/output_V6/core_window.yaml 
+
+🔍  Lecture configuration step 0...
+📅  Fenêtre temporelle : 2015 - 2024 
+🚢  Navires sélectionnés : 11 
+   • Charles Darwin, Congo River, Cristobal Colon, Fairway, Goryo 6 Ho, Ham 318, Inai Kenanga, Leiv Eiriksson, Queen Of The Netherlands, Vasco Da Gama, Vox Maxima 
+
+🔍  CSV détectés : 1 
+   • benjamin2.csv 
+
+✅  Lecture terminée : 10 432 017 lignes  |  17.6 s
+🔍  Application des filtres step 0...
+📊  Filtrage : 10 432 017 → 8 803 955 lignes (84.4% conservées)
+⚠️  Navires manquants dans la fenêtre : Ham 318 
+✅  Filtrage terminé
+
+🚢  Navires détectés : 10 
+
+  |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%
+
+✅  Intégrité OK :  8803955  lignes vérifiées.
+
+📊  RÉCAP ---------------------------------------------------------
+                      Navire n_observations
+                      <char>          <int>
+ 1:           Charles Darwin        1372116
+ 2:           Leiv Eiriksson        1197293
+ 3:                  Fairway        1038765
+ 4: Queen Of The Netherlands        1028255
+ 5:               Goryo 6 Ho         942182
+ 6:          Cristobal Colon         838311
+ 7:              Congo River         832988
+ 8:             Inai Kenanga         803229
+ 9:               Vox Maxima         573815
+10:            Vasco Da Gama         177001
+                                                              file_path
+                                                                 <char>
+ 1:           ~/scratch/ais_split_56776399/navire_01_Charles_Darwin.rds
+ 2:           ~/scratch/ais_split_56776399/navire_02_Leiv_Eiriksson.rds
+ 3:                  ~/scratch/ais_split_56776399/navire_03_Fairway.rds
+ 4: ~/scratch/ais_split_56776399/navire_04_Queen_Of_The_Netherlands.rds
+ 5:               ~/scratch/ais_split_56776399/navire_05_Goryo_6_Ho.rds
+ 6:          ~/scratch/ais_split_56776399/navire_06_Cristobal_Colon.rds
+ 7:              ~/scratch/ais_split_56776399/navire_07_Congo_River.rds
+ 8:             ~/scratch/ais_split_56776399/navire_08_Inai_Kenanga.rds
+ 9:               ~/scratch/ais_split_56776399/navire_09_Vox_Maxima.rds
+10:            ~/scratch/ais_split_56776399/navire_10_Vasco_Da_Gama.rds
+
+💾  10 fichiers .rds (54.1 MB cumulés) écrits dans : ~/scratch/ais_split_56776399
+
+🏁  STEP-1 terminé avec succès : 2025-06-26 10:13:01 
+❌ Étape 1 échouée (code 1): Thu Jun 26 10:13:01 EDT 2025

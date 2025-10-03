@@ -1,0 +1,116 @@
+#!/bin/bash
+#SBATCH --job-name=step6_calculate_cri
+#SBATCH --output=step6_calculate_cri_%j.out
+#SBATCH --error=step6_calculate_cri_%j.err
+#SBATCH --time=8:00:00
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=4
+#SBATCH --account=def-wailung
+
+# ────────────────────────────────────────────────────────────────────────────────
+# STEP-6  ─  CALCUL DU CARBONE REMINÉRALISÉ (Cri)
+# Script SLURM pour exécuter Step 6 sur Rorqual
+# ────────────────────────────────────────────────────────────────────────────────
+
+set -e  # Arrêter en cas d'erreur
+
+echo "=== ÉTAPE 6 : CALCUL DE CRI ==="
+echo "📅 $(date)"
+echo "📁 Répertoire : $(pwd)"
+echo ""
+
+# Charger les modules nécessaires
+echo "🔄 Chargement des modules..."
+module load StdEnv/2023 apptainer-suid/1.1 gdal
+echo "✅ Modules chargés"
+
+# Aller dans le répertoire de travail
+cd ~/scratch
+
+# Vérifier l'espace disque
+echo "💾 Espace disque disponible :"
+df -h ~/scratch
+
+# Créer le répertoire temporaire si nécessaire
+mkdir -p /scratch/benl/tmp
+echo "📁 Répertoire temporaire créé : /scratch/benl/tmp"
+
+# Créer le répertoire de sortie dans /scratch
+mkdir -p /scratch/benl/output_V6
+echo "📁 Répertoire de sortie créé : /scratch/benl/output_V6"
+
+# Vérifier que l'image Apptainer existe
+echo "🔍 Recherche de l'image Apptainer..."
+SIF_PATH="$HOME/scratch/rocker_geospatial_step5.sif"
+if [[ ! -f "$SIF_PATH" ]]; then
+    echo "❌ Image Apptainer introuvable : $SIF_PATH"
+    echo "   Images disponibles :"
+    find $HOME -name "*.sif" -type f 2>/dev/null | head -10
+    exit 1
+fi
+
+echo "✅ Image trouvée : $SIF_PATH"
+
+# Vérifier que le script R existe
+SCRIPT_PATH="$HOME/scratch/pipeline_V6/pipeline_V6/step6_calculate_cri.R"
+if [[ ! -f "$SCRIPT_PATH" ]]; then
+    echo "❌ Script R introuvable : $SCRIPT_PATH"
+    echo "   Scripts disponibles :"
+    find $HOME/scratch -name "step6*.R" -type f 2>/dev/null
+    exit 1
+fi
+
+echo "✅ Script R trouvé : $SCRIPT_PATH"
+
+# Vérifier que les données f_i existent
+echo "🔍 Vérification des données f_i..."
+FI_FILES=$(find $HOME/scratch/output_V6/ -name "fi_grid_*.parquet" -o -name "fi_grid_*.rds" 2>/dev/null | head -5)
+if [[ -z "$FI_FILES" ]]; then
+    echo "❌ Aucun fichier f_i trouvé dans $HOME/scratch/output_V6/"
+    echo "   Fichiers disponibles :"
+    ls -la $HOME/scratch/output_V6/ 2>/dev/null || echo "   Répertoire vide ou inexistant"
+    echo "   Lancez d'abord Step 5"
+    exit 1
+fi
+
+echo "✅ Fichiers f_i trouvés :"
+echo "$FI_FILES"
+
+# Vérifier que les données de carbone existent
+echo "🔍 Vérification des données de carbone..."
+CARBON_FILES=$(find /home/benl/ -name "*.tif" 2>/dev/null | head -5)
+if [[ -z "$CARBON_FILES" ]]; then
+    echo "⚠️  ATTENTION: Aucun fichier TIF de carbone trouvé dans /home/benl/"
+    echo "   Fichiers disponibles :"
+    ls -la /home/benl/ 2>/dev/null || echo "   Répertoire vide ou inexistant"
+    echo "   Veuillez téléverser les données d'Atwood & al."
+    echo "   Le script continuera avec di=1.0 par défaut"
+fi
+
+echo "✅ Fichiers de carbone trouvés :"
+echo "$CARBON_FILES"
+
+echo ""
+echo "🚀 Lancement de Step 6..."
+echo ""
+
+# Exécuter le script R dans le conteneur Apptainer
+apptainer exec \
+    --bind /scratch,/home $HOME/scratch/rocker_geospatial_step5.sif \
+    Rscript "$SCRIPT_PATH"
+
+if [ $? -eq 0 ]; then
+    echo ""
+    echo "✅ Step 6 terminé avec succès !"
+    echo "📁 Résultats dans /scratch/benl/output_V6/"
+    echo "📊 Fichiers créés :"
+    ls -lh /scratch/benl/output_V6/cri_final_$(date +%Y%m%d)_* 2>/dev/null || echo "   Aucun fichier cri_final trouvé"
+else
+    echo ""
+    echo "❌ Step 6 a échoué"
+    exit 1
+fi
+
+echo ""
+echo "📅 $(date)"
+echo "🎉 Step 6 terminé !" 

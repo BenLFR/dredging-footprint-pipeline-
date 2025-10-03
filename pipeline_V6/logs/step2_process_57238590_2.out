@@ -1,0 +1,46 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 2 ===
+Job ID: 57238590_2
+Node: bc11235
+Début: Thu 10 Jul 2025 07:14:03 AM EDT
+📦 Job fractionnement référence: 57238377
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 8055 Jun 26 11:53 step2_process_navire.R
+✅ Lancement traitement navire 2...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-10 07:14:05 
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 2 
+📋 Split Job ID: 57238377 
+📊 Métadonnées chargées: 11 navires
+🚢 Navire sélectionné: Ham 318 
+📁 Fichier input: ~/scratch/ais_split_57238377/navire_02_Ham_318.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 1291826 observations
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [07:14:13.711] dataset has duplicated rows
+INFO  [07:14:13.865] Building Isolation Forest ...
+INFO  [07:14:27.850] done
+INFO  [07:14:27.852] Computing depth of terminal nodes ...
+INFO  [07:14:28.905] done
+INFO  [07:14:51.210] Completed growing isolation forest
+  ✅ IF terminé: 36849 outliers sur 1291826 points
+🛑 Création de la colonne is_stop...
+✅ Colonne is_stop créée: 780883 arrêts détectés
+🔧 Création de colonnes supplémentaires...
+✅ Colonnes supplémentaires créées (Annee, Course_change, Accel)
+📊 RÉSULTATS NAVIRE: Ham 318 
+  • Observations totales: 1291826 
+  • Outliers détectés: 36849 ( 2.85 %)
+  • Arrêts détectés: 780883 ( 60.45 %)
+💾 Sauvegarde: ~/scratch/ais_results_57238590/02_Ham_318_clean.rds 
+✅ Navire Ham 318 traité avec succès: 2025-07-10 07:17:34 
+📁 Résultat: ~/scratch/ais_results_57238590/02_Ham_318_clean.rds 
+Warning message:
+In rm(dt_nav, if_model) : object 'if_model' not found
+✅ Étape 2 terminée: Thu Jul 10 07:17:35 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_57238590/

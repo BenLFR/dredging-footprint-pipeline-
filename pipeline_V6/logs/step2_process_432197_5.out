@@ -1,0 +1,49 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 5 ===
+Job ID: 432197_5
+Node: rc12808
+Début: Fri 25 Jul 2025 08:20:34 AM EDT
+📦 Job fractionnement référence: 430408
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 10503 Jul 25 08:18 step2_process_navire.R
+✅ Lancement traitement navire 5...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-25 08:20:35 
+✅ R configuré avec library: /home/benl/R/4.3 
+✅ Package qs disponible
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 5 
+📋 Split Job ID: 430408 
+📊 Métadonnées chargées: 10 navires
+🚢 Navire sélectionné: Fairway 
+📁 Fichier input: ~/scratch/ais_split_430408/navire_05_Fairway.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 1038765 observations
+✅ Filtre vitesse physique : 1038765 → 1038686 lignes (99.99 % conservées)
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [08:20:37.533] dataset has duplicated rows
+INFO  [08:20:37.590] Building Isolation Forest ...
+INFO  [08:20:41.810] done
+INFO  [08:20:41.811] Computing depth of terminal nodes ...
+INFO  [08:20:42.243] done
+INFO  [08:20:50.809] Completed growing isolation forest
+  ✅ IF terminé: 30163 outliers sur 1038686 points
+🛑 Création de la colonne is_stop...
+✅ Colonne is_stop créée: 615796 arrêts détectés
+🔧 Création de colonnes supplémentaires...
+✅ Colonnes supplémentaires créées (Annee, Course_change, Accel)
+📊 RÉSULTATS NAVIRE: Fairway 
+  • Observations totales: 1038686 
+  • Outliers détectés: 30163 ( 2.9 %)
+  • Arrêts détectés: 615796 ( 59.29 %)
+💾 Sauvegarde: ~/scratch/ais_results_432197/05_Fairway_clean.rds 
+✅ Navire Fairway traité avec succès: 2025-07-25 08:21:20 
+📁 Résultat: ~/scratch/ais_results_432197/05_Fairway_clean.rds 
+Warning message:
+In readLines(file, warn = readLines.warn) :
+  incomplete final line found on '~/R_scripts/configuration/ship_specs.yaml'
+✅ Étape 2 terminée: Fri 25 Jul 2025 08:21:20 AM EDT
+📁 Résultats sauvés dans: ~/scratch/ais_results_432197/

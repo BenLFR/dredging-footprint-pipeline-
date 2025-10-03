@@ -1,0 +1,26 @@
+🔍 === STEP 0bis : FENÊTRE OPTIMALE (job 56775733) ===
+Node:  bc11236
+Début: Thu 26 Jun 2025 09:37:25 AM EDT
+✅  Répertoire courant: /home/benl/R_scripts/pipeline_V6
+✅  Lancement step0_core_window.R ...
+
+📊  STEP-0  |  Core Period Selection via Coverage Matrix |  début : 2025-06-26 09:37:28 
+
+📁  INPUT  : ~/scratch/AIS_data/*.csv 
+📁  OUTPUT : ~/scratch/output_V6 
+
+🔍  Fichier à traiter : benjamin2.csv 
+
+✅ Matrice couverture : 11 navires × 12 années
+🎯 Fenêtre optimale : 2015-2024 (10 ans)
+   • Couverture médiane : 98.4 %
+   • Couverture minimale : 93.4 %
+   • CV annuel           : 0.025
+   • Score               : 8.374
+📄  Résumé markdown : core_window_report.md
+📋  Configuration YAML : core_window.yaml
+🚢  Liste navires : core_ships.csv
+💾  Fichiers dans ~/scratch/output_V6 
+⏱️  Fin : 2025-06-26 09:38:01 
+✅  STEP 0bis terminé avec succès : Thu Jun 26 09:38:01 EDT 2025
+📄  Fichier de sélection : ~/scratch/output_V6/core_window_report.md

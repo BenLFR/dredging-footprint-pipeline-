@@ -1,0 +1,38 @@
+🚀 === ÉTAPE 1: FRACTIONNEMENT PAR NAVIRE ===
+Job ID: 56776029
+Node: bc11950
+Début: Thu 26 Jun 2025 10:00:48 AM EDT
+✅ Lancement script de fractionnement...
+📋 Configuration: ~/scratch/output_V6/core_window.yaml
+📁 Input: ~/scratch/AIS_data/*.csv
+
+🚀  STEP-1  |  FRACTIONNEMENT AIS PAR NAVIRE  |  début : 2025-06-26 10:00:50 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+⚠️ QS non disponible, fallback vers RDS
+📁  INPUT  :  ~/scratch/AIS_data/*.csv 
+📁  OUTPUT :  ~/scratch/ais_split_56776029 
+📋  CONFIG :  ~/scratch/output_V6/core_window.yaml 
+
+🔍  Lecture configuration step 0...
+📅  Fenêtre temporelle : 2015 - 2024 
+🚢  Navires sélectionnés : 11 
+   • Charles Darwin, Congo River, Cristobal Colon, Fairway, Goryo 6 Ho, Ham 318, Inai Kenanga, Leiv Eiriksson, Queen Of The Netherlands, Vasco Da Gama, Vox Maxima 
+
+🔍  CSV détectés : 13 
+   • benjamin2.csv 
+   • Charles Darwin.csv 
+   • Congo River.csv 
+   • Cristobal Colon.csv 
+   • Fair Way.csv 
+   • Goryo 6 HO.csv 
+   • HAM318.csv 
+   • INAI KENANGA.csv 
+   • LEIV EIRIKSSONN.csv 
+   • Queen of the netherlands.csv 
+   • Rotterdam.csv 
+   • Vasco de Gama.csv 
+   • VOX maxima.csv 
+
+✅  Lecture terminée : 12 218 766 lignes  |  58.0 s
+❌ Étape 1 échouée (code 1): Thu Jun 26 10:01:50 EDT 2025

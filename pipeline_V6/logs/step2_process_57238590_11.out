@@ -1,0 +1,46 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 11 ===
+Job ID: 57238590_11
+Node: bc11933
+Début: Thu 10 Jul 2025 07:14:03 AM EDT
+📦 Job fractionnement référence: 57238377
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 8055 Jun 26 11:53 step2_process_navire.R
+✅ Lancement traitement navire 11...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-10 07:14:05 
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 11 
+📋 Split Job ID: 57238377 
+📊 Métadonnées chargées: 11 navires
+🚢 Navire sélectionné: Vasco Da Gama 
+📁 Fichier input: ~/scratch/ais_split_57238377/navire_11_Vasco_Da_Gama.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 177001 observations
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [07:14:11.970] dataset has duplicated rows
+INFO  [07:14:12.034] Building Isolation Forest ...
+INFO  [07:14:15.125] done
+INFO  [07:14:15.126] Computing depth of terminal nodes ...
+INFO  [07:14:22.383] done
+INFO  [07:14:25.971] Completed growing isolation forest
+  ✅ IF terminé: 5239 outliers sur 177001 points
+🛑 Création de la colonne is_stop...
+✅ Colonne is_stop créée: 143918 arrêts détectés
+🔧 Création de colonnes supplémentaires...
+✅ Colonnes supplémentaires créées (Annee, Course_change, Accel)
+📊 RÉSULTATS NAVIRE: Vasco Da Gama 
+  • Observations totales: 177001 
+  • Outliers détectés: 5239 ( 2.96 %)
+  • Arrêts détectés: 143918 ( 81.31 %)
+💾 Sauvegarde: ~/scratch/ais_results_57238590/11_Vasco_Da_Gama_clean.rds 
+✅ Navire Vasco Da Gama traité avec succès: 2025-07-10 07:16:11 
+📁 Résultat: ~/scratch/ais_results_57238590/11_Vasco_Da_Gama_clean.rds 
+Warning message:
+In rm(dt_nav, if_model) : object 'if_model' not found
+✅ Étape 2 terminée: Thu Jul 10 07:16:11 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_57238590/

@@ -1,0 +1,34 @@
+🚀 Exécution du script R : /home/benl/R_scripts/step5_compute_fi_global.R
+✅ R configuré avec library: /home/benl/R/library 
+✅ sf OK
+✅ dplyr OK
+✅ data.table OK
+✅ geosphere OK
+✅ tidyr OK
+✅ rlang OK
+✅ tidyselect OK
+✅ lubridate OK
+✅ purrr OK
+
+🔍 Recherche du fichier flagOK...
+   Répertoire de recherche : ~/scratch/output_V6/
+   Fichiers trouvés : 1 
+   Fichiers : AIS_data_core_preprocessed_V6_20250711_170227_flagOK.rds 
+✅ Fichier flagOK sélectionné : AIS_data_core_preprocessed_V6_20250711_170227_flagOK.rds 
+✅ Fichier flagOK lu avec succès : 8606652 lignes
+✅ Fusion réalisée :  8606666  pings, dont  7066939  avec lithologie
+   - Pings sans lithologie :  1539727 
+⚠️  Colonne dredging_depth_m manquante - valeur par défaut: 1.0 m
+✅ Pings totaux : 8606666 
+⚠️  Diamètre de pipe manquant pour certains pings - valeur par défaut: 0.5 m
+Distribution des diamètres de pipe (m):
+
+   0.5    1.2    1.3    1.4    2.4 
+  3123 946626 630676  37150  42946 
+Résumé des profondeurs de dragage:
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+      1       1       1       1       1       1 
+✅ Pings dragage : 1660521 
+📊 Profondeur de dragage - Min: 1 Max: 1 Moyenne: 1 m
+
+❌ Étape 5 échouée !

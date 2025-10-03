@@ -1,0 +1,15 @@
+🚀 === ÉTAPE 3: FUSION ET GRID SEARCH ===
+Job ID: 56949474
+Node: bc11925
+Début: Mon 30 Jun 2025 10:38:23 AM EDT
+📦 Job fractionnement référence: 56779162
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 30582 Jun 30 10:33 step3_merge_final.R
+✅ Lancement fusion et grid search...
+Error in source("step3_merge_final.R") : 
+  step3_merge_final.R:737:2: unexpected ','
+736:   list(ais = ais, best = best, auc = auc)
+737: },
+      ^
+Execution halted
+❌ Erreur lors de la fusion: code 1

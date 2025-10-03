@@ -1,0 +1,86 @@
+🚀 === TEST QS PACKAGE + ÉTAPE 1 ===
+Timestamp: Thu 12 Jun 2025 06:39:59 AM EDT
+Node: bc11222.int.ets1.calculquebec.ca
+📦 Chargement modules R...
+
+Lmod is automatically replacing "intel/2020.1.217" with "gcc/9.3.0".
+
+
+Due to MODULEPATH changes, the following have been reloaded:
+  1) mii/1.1.2
+
+The following have been reloaded with a version change:
+  1) StdEnv/2023 => StdEnv/2020          5) imkl/2023.2.0 => imkl/2020.1.217
+  2) gcc/12.3 => gcc/9.3.0               6) libfabric/1.18.0 => libfabric/1.10.1
+  3) gcccore/.12.3 => gcccore/.9.3.0     7) openmpi/4.1.5 => openmpi/4.0.3
+  4) gentoo/2023 => gentoo/2020          8) ucx/1.14.1 => ucx/1.8.0
+
+📁 Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+🔧 R_LIBS configuré: /home/benl/.local/R/4.2.1/
+✅ Vérification fichiers:
+-rw-r-----. 1 benl benl 7231 Jun 12 06:35 /home/benl/R_scripts/pipeline_V6/step1_split_navires.R
+-rw-r-----. 1 benl benl 1304094824 Jun  5 07:51 /home/benl/benjamin2.csv
+🔍 Contenu répertoire actuel:
+total 321
+drwxr-x---. 3 benl benl 25600 Jun 12 06:39 .
+drwxr-x---. 7 benl benl 33792 Jun 11 04:23 ..
+-rwxr-x---. 1 benl benl   432 Jun 12 05:49 install_fst.sh
+drwxr-x---. 2 benl benl 25600 Jun 11 04:39 logs
+-rwxr-x---. 1 benl benl  2634 Jun 11 05:46 run_pipeline_beluga_FINAL.sh
+-rwxr-x---. 1 benl benl  2167 Jun 11 04:20 run_pipeline_beluga_FIXED.sh
+-rwxr-x---. 1 benl benl  1398 Jun 11 04:05 run_pipeline_beluga.sh
+-rwxr-x---. 1 benl benl  1291 Jun 11 05:45 step1_split_navires_FIXED.sh
+-rw-r-----. 1 benl benl  7231 Jun 12 06:35 step1_split_navires.R
+-rwxr-x---. 1 benl benl  1084 Jun 11 04:01 step1_split_navires.sh
+-rwxr-x---. 1 benl benl  1408 Jun 11 05:45 step2_process_array_FIXED.sh
+-rwxr-x---. 1 benl benl  1527 Jun 11 04:02 step2_process_array.sh
+-rw-r-----. 1 benl benl  5820 Jun 12 06:37 step2_process_navire.R
+-rwxr-x---. 1 benl benl  1174 Jun 11 05:45 step3_merge_final_FIXED.sh
+-rw-r-----. 1 benl benl  7686 Jun 11 04:04 step3_merge_final.R
+-rwxr-x---. 1 benl benl  1432 Jun 11 04:04 step3_merge_final.sh
+-rw-r-----. 1 benl benl  1706 Jun 12 06:27 test_qs_simple.R
+-rw-r-----. 1 benl benl  4308 Jun 12 06:27 test_qs_step1_56434331.out
+-rw-r-----. 1 benl benl  1002 Jun 12 06:40 test_qs_step1_56434362.out
+-rwxr-x---. 1 benl benl  5067 Jun 12 06:35 test_step1_avec_qs.sh
+-rwxr-x---. 1 benl benl  2249 Jun 12 05:47 test_step1_interactif.sh
+-rw-r-----. 1 benl benl  3056 Jun 12 05:51 test_step1_sans_fst.sh
+📦 Test ID simulé: TEST_QS_20250612_064001
+
+✅ Lancement script de fractionnement avec QS...
+==================================================
+✅ R configuré avec library: /home/benl/R/library 
+🔧 === TEST R SESSION QS ===
+Répertoire R: /home/benl/R_scripts/pipeline_V6 
+Configuration R_LIBS: /home/benl/.local/R/4.2.1/ 
+Chemin libPaths configuré: /home/benl/.local/R/4.2.1 /cvmfs/soft.computecanada.ca/easybuild/software/2020/avx512/Core/r/4.2.1/lib64/R/library 
+✅ Fichier step1_split_navires.R trouvé
+✅ Fichier benjamin2.csv trouvé
+📦 Vérification packages installés dans ~/.local/R/4.2.1/:
+  Total packages: 248 
+  ✅ data.table trouvé
+  ✅ lubridate trouvé
+  ✅ solitude trouvé
+  ✅ mclust trouvé
+  ✅ dbscan trouvé
+  ✅ depmixS4 trouvé
+  ✅ yaml trouvé
+  ✅ zoo trouvé
+📚 Test chargement packages...
+✅ data.table OK
+✅ lubridate OK
+🔧 Test qs (ou fallback RDS)...
+🔄 Test fallback RDS...
+🚀 Configuration validée - prêt pour step1
+✅ Test qs réussi, lancement du script principal...
+✅ R configuré avec library: /home/benl/R/library 
+
+🚀  STEP-1  |  FRACTIONNEMENT AIS PAR NAVIRE  |  début : 2025-06-12 06:40:08 
+
+Error in library(data.table) : there is no package called ‘data.table’
+Calls: suppressPackageStartupMessages -> withCallingHandlers -> library
+Execution halted
+
+📊 RÉSUMÉ TEST:
+❌ Dossier de sortie non créé
+
+✅ Test avec qs terminé: Thu Jun 12 06:40:08 EDT 2025

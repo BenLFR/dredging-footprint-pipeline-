@@ -1,0 +1,41 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 7 ===
+Job ID: 56668330_7
+Node: bc11227
+Début: Mon Jun 23 06:05:16 EDT 2025
+📦 Job fractionnement référence: 20250623055849
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 6327 Jun 13 09:28 step2_process_navire.R
+✅ Lancement traitement navire 7...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-06-23 06:05:20 
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 7 
+📋 Split Job ID: 20250623055849 
+📊 Métadonnées chargées: 11 navires
+🚢 Navire sélectionné: 
+📁 Fichier input: ~/scratch/ais_split_20250623055849/navire_07_Cristobal_Colon.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 905946 observations
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [06:05:32.003] dataset has duplicated rows
+INFO  [06:05:32.125] Building Isolation Forest ...
+INFO  [06:05:43.478] done
+INFO  [06:05:43.479] Computing depth of terminal nodes ...
+INFO  [06:05:51.016] done
+INFO  [06:06:06.432] Completed growing isolation forest
+  ✅ IF terminé: 26627 outliers sur 905946 points
+📊 RÉSULTATS NAVIRE: 
+  • Observations totales: 905946 
+  • Outliers détectés: 26627 ( 2.94 %)
+💾 Sauvegarde: ~/scratch/ais_split_20250623055849/navire_07_Cristobal_Colon_clean.rds 
+✅ Navire traité avec succès: 2025-06-23 06:06:45 
+📁 Résultat: ~/scratch/ais_split_20250623055849/navire_07_Cristobal_Colon_clean.rds 
+Warning message:
+In rm(dt_nav, if_model) : object 'if_model' not found
+✅ Étape 2 terminée: Mon Jun 23 06:06:45 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_56668330/

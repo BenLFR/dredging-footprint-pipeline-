@@ -1,0 +1,110 @@
+🚀 === ÉTAPE 3 OPTIMIZED: FUSION ET GRID SEARCH ===
+Job ID: 56945215
+Node: bc12206
+Début: Mon 30 Jun 2025 06:09:58 AM EDT
+💾 Mémoire allouée: 128 GB
+🖥️  CPU: 16 cores
+📦 Job fractionnement référence: 56779162
+📁 Dossier de résultats: auto-détection par le script R
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 30621 Jun 30 05:47 step3_merge_final.R
+🧹 Nettoyage mémoire système...
+⚠️  Impossible de nettoyer le cache (normal sur certains systèmes)
+✅ Lancement fusion et grid search optimisé...
+🚀 === ÉTAPE 3: FUSION ET GRID SEARCH (AVEC CHECK-POINTING) ===
+📦 Job fractionnement: 56779162 
+📁 Dossier résultats:  
+🖥️  Cores: 16 
+⏱️  Début: 2025-06-30 06:10:01 
+
+🗑️  Suppression du checkpoint GMM fautif pour forcer le recalcul
+🔍 Auto-détection du dossier de résultats...
+✅ Dossier trouvé: /home/benl/scratch/ais_results_56779162 
+✅ Fichiers d'entrée vérifiés: 11 fichiers *_clean.rds trouvés
+
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-06-30 06:10:01 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+💾  Source : /home/benl/scratch/ais_results_56779162 
+💾  Sortie : ~/scratch/output_V6 
+
+✅  Packages chargés | 16 threads data.table
+✅  YAML chargé
+🔄  Reload checkpoint: stage3A_fusion.rds 
+🔧  Vérification des types de colonnes...
+ Types des colonnes critiques:
+   Navire    : character
+   ssvid     : integer
+   Seg_id    : character
+   Annee     : numeric
+🔍 Vérifications supplémentaires critiques...
+✅ Colonne 'is_stop' présente
+✅ Colonnes géographiques présentes
+✅ Colonnes géographiques converties en numeric
+✅ Aucun doublon détecté
+📊 Utilisation mémoire: 0.94 GB
+✅ Types de colonnes vérifiés et corrigés
+
+⏱️  Détection pics temporels isolés…
+📐  Filtrage contextuel…
+🔧  Harmonisation des types pour la jointure des percentiles...
+🔧  Vérification des types avant jointure:
+   Table principale - Navire: character 
+   Table percentiles - Navire: character 
+🔄  Reload checkpoint: stage3B_dbscan.rds 
+🔧  Cadence AIS & seuils adaptatifs par navire
+                      Navire  p50_dt seuil_adaptatif n_min prop_long
+                      <char>   <num>           <num> <num>     <num>
+ 1:              Congo River  97.000         291.000     3 0.1492676
+ 2:          Cristobal Colon 108.000         324.000     3 0.2095158
+ 3:                  Ham 318 130.690         392.070     3 0.2076991
+ 4:           Charles Darwin 136.000         408.000     3 0.1950150
+ 5:           Leiv Eiriksson 140.556         421.668     3 0.1719962
+ 6:                  Fairway 150.000         450.000     3 0.2229586
+ 7: Queen Of The Netherlands 176.000         528.000     3 0.2418194
+ 8:               Vox Maxima 179.000         537.000     3 0.2829589
+ 9:             Inai Kenanga 180.000         540.000     3 0.2631950
+10:               Goryo 6 Ho 188.000         564.000     3 0.2574560
+11:            Vasco Da Gama 361.000        1200.000     3 0.6178954
+⚙️  Compute & save checkpoint: stage3C_gmm.rds 
+🔧  GMM « stop + 4 » - début
+converged at iteration 60 with logLik: 1800339 
+converged at iteration 131 with logLik: 1408168 
+✅ GMM terminé - Checkpoint sauvegardé
+✅ Checkpoint sauvegardé: stage3C_gmm.rds 
+⚙️  Compute & save checkpoint: stage3D_gridsearch.rds 
+🔍  Grid-search (poids score dragage) - début
+
+🏆  Best weights GMM-based : Error in cat("\n🏆  Best weights GMM-based :", best, "| AUC =", round(max(auc),  : 
+  argument 2 (type 'list') cannot be handled by 'cat'
+Calls: source ... withVisible -> eval -> eval -> checkpoint -> force -> cat
+In addition: Warning messages:
+1: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 17 from 9600583.52494337 to 9252418.15433451
+2: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 17 from 12246941.6329525 to 11789955.9792344
+3: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 17 from 21636831.8710627 to 21500971.3274911
+4: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 18 from 16187603.3571674 to 15942487.9612189
+5: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 7 from 19890979.7715305 to 19271564.5032386
+6: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 16 from 18694317.2832071 to 17651642.3614259
+7: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 58 from 13065827.9565293 to 12023510.961734
+8: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 21 from 2634828.39865953 to 2546930.26244851
+9: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 73 from 7441602.45185906 to 7291046.94470686
+Execution halted
+❌ Erreur lors de la fusion: code 1
+📋 Logs d'erreur disponibles dans:
+   - logs/step3_merge_56945215.out
+   - logs/step3_merge_56945215.err

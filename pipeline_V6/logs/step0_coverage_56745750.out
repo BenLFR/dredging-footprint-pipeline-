@@ -1,0 +1,18 @@
+📊 === ÉTAPE 0: ANALYSE COUVERTURE TEMPORELLE ===
+Job ID: 56745750
+Node  : bc11951
+Début : Wed 25 Jun 2025 10:50:25 AM EDT
+✅ Lancement analyse couverture...
+✅ R configuré avec library: /home/benl/R/library 
+
+📊  STEP-0  |  Analyse Couverture Temporelle  |  début : 2025-06-25 10:50:28 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+📁  INPUT  : /home/benl/scratch/AIS_data/benjamin2.csv 
+📁  OUTPUT : /home/benl/scratch/output_V6 
+
+🔍  CSV détectés : 1 
+   • benjamin2.csv 
+
+✅  Lecture terminée : 10 432 017 lignes  |  2.1 s
+❌ Erreur Step 0, code 1

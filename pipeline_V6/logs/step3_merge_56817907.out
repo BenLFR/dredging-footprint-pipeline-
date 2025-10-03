@@ -1,0 +1,92 @@
+🚀 === ÉTAPE 3 FIXED: FUSION ET GRID SEARCH ===
+Job ID: 56817907
+Node: bc12210
+Début: Fri 27 Jun 2025 06:16:25 AM EDT
+📦 Job fractionnement référence: 56779162
+📁 Dossier de résultats spécifié: /home/benl/scratch/ais_results_56779162
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_56779162
+🔍 Vérification des fichiers d'entrée...
+   Répertoire: /home/benl/scratch/ais_results_56779162
+✅ Fichiers d'entrée vérifiés: 11 fichiers *_clean.rds trouvés
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 25173 Jun 27 06:14 step3_merge_final.R
+✅ Lancement fusion et grid search avec corrections...
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-06-27 06:16:27 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_56779162 
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+💾  Source : /home/benl/scratch/ais_results_56779162 
+💾  Sortie : ~/scratch/output_V6 
+
+✅  Packages chargés | 16 threads data.table
+✅  YAML chargé
+⚠️  Paramètre manquant dans YAML: contamination_rate - Utilisation valeur par défaut: 0.02 
+⚠️  Paramètre manquant dans YAML: if_num_trees - Utilisation valeur par défaut: 25 
+⚠️  Paramètre manquant dans YAML: if_sample_size - Utilisation valeur par défaut: 256 
+⚠️  Paramètre manquant dans YAML: spike_factor - Utilisation valeur par défaut: 5 
+⚠️  Paramètre manquant dans YAML: min_spike_duration - Utilisation valeur par défaut: 2 
+⚠️  Paramètre manquant dans YAML: percentile_lower - Utilisation valeur par défaut: 0.05 
+⚠️  Paramètre manquant dans YAML: percentile_upper - Utilisation valeur par défaut: 0.95 
+⚠️  Paramètre manquant dans YAML: min_context_points - Utilisation valeur par défaut: 200 
+⚠️  Paramètre manquant dans YAML: max_accel_ms2 - Utilisation valeur par défaut: 0.3 
+⚠️  Paramètre manquant dans YAML: max_turn_at_speed - Utilisation valeur par défaut: 30 
+⚠️  Paramètre manquant dans YAML: max_dredging_speed - Utilisation valeur par défaut: 4 
+🔍  Fichiers trouvés : 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   • 04_Fairway_clean.rds 
+   • 05_Queen_Of_The_Netherlands_clean.rds 
+   …
+✅  Fusion : 10 095 781 lignes | 13.5 s
+
+🔧  Vérification des types de colonnes...
+📊 Types des colonnes critiques:
+   Navire    : character
+   ssvid     : integer
+   Seg_id    : character
+   Annee     : numeric
+🔍 Vérifications supplémentaires critiques...
+✅ Colonne 'is_stop' présente
+✅ Colonnes géographiques présentes
+✅ Colonnes géographiques converties en numeric
+✅ Aucun doublon détecté
+📊 Utilisation mémoire: 0.94 GB
+✅ Types de colonnes vérifiés et corrigés
+
+⏱️  Détection pics temporels isolés…
+📐  Filtrage contextuel…
+🔧  Harmonisation des types pour la jointure des percentiles...
+🔧  Vérification des types avant jointure:
+   Table principale - Navire: character 
+   Table percentiles - Navire: character 
+🔍  Détection des arrêts spatiaux par DBSCAN...
+📊 Traitement DBSCAN pour 96 combinaisons navire/année
+🔧  Cadence AIS & seuils adaptatifs par navire
+                      Navire p50_dt seuil_adaptatif n_min prop_long
+                      <char>  <num>           <num> <num>     <num>
+ 1:              Congo River 101.00          303.00     3 0.1642439
+ 2:          Cristobal Colon 111.00          333.00     3 0.2193848
+ 3:                  Ham 318 141.43          424.29     3 0.2194936
+ 4:           Charles Darwin 142.00          426.00     3 0.2051589
+ 5:           Leiv Eiriksson 151.00          453.00     3 0.1833931
+ 6:                  Fairway 156.00          468.00     3 0.2308524
+ 7: Queen Of The Netherlands 177.00          531.00     3 0.2537631
+ 8:               Vox Maxima 179.00          537.00     3 0.2916646
+ 9:             Inai Kenanga 180.00          540.00     3 0.2740136
+10:               Goryo 6 Ho 188.00          564.00     3 0.2599166
+11:            Vasco Da Gama 370.00         1200.00     3 0.6352964
+Error in next <- if (i < length(rle_lbl$values)) rle_lbl$values[i + 1] else NA : 
+  invalid (NULL) left side of assignment
+Calls: source ... eval -> eval -> [ -> [.data.table -> smooth_transition
+Execution halted
+❌ Erreur lors de la fusion: code 1
+📋 Logs d'erreur disponibles dans:
+   - logs/step3_merge_56817907.out
+   - logs/step3_merge_56817907.err

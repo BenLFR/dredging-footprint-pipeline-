@@ -1,0 +1,18 @@
+🚀 Exécution du script R : /home/benl/R_scripts/step5_compute_fi_global.R
+✅ R configuré avec library: /home/benl/R/library 
+✅ sf OK
+✅ dplyr OK
+✅ data.table OK
+✅ geosphere OK
+✅ tidyr OK
+✅ rlang OK
+✅ tidyselect OK
+✅ lubridate OK
+✅ purrr OK
+
+🔍 Recherche du fichier flagOK...
+   Répertoire de recherche : ~/scratch/output_V6/
+   Fichiers trouvés : 1 
+   Fichiers : AIS_data_core_preprocessed_V6_20250711_170227_flagOK.rds 
+✅ Fichier flagOK sélectionné : AIS_data_core_preprocessed_V6_20250711_170227_flagOK.rds 
+❌ Étape 5 échouée !

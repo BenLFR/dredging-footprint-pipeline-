@@ -1,0 +1,85 @@
+🚀 === ÉTAPE 1: FRACTIONNEMENT PAR NAVIRE ===
+Job ID: 57238377
+Node: bc11203
+Début: Thu 10 Jul 2025 06:37:10 AM EDT
+✅ Lancement script de fractionnement...
+📋 Configuration: ~/scratch/output_V6/core_window.yaml
+📁 Input: ~/scratch/AIS_data/benjamin2.csv
+
+🚀  STEP-1  |  FRACTIONNEMENT AIS PAR NAVIRE  |  début : 2025-07-10 06:37:12 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+⚠️ QS non disponible, fallback vers RDS
+📁  INPUT  :  ~/scratch/AIS_data/benjamin2.csv 
+📁  OUTPUT :  ~/scratch/ais_split_57238377 
+📋  CONFIG :  ~/scratch/output_V6/core_window.yaml 
+
+🔍  Lecture configuration step 0...
+📅  Fenêtre temporelle : 2015 - 2024 
+🚢  Navires sélectionnés : 11 
+   • Charles Darwin, Congo River, Cristobal Colon, Fairway, Goryo 6 Ho, Ham 318, Inai Kenanga, Leiv Eiriksson, Queen Of The Netherlands, Vasco Da Gama, Vox Maxima 
+
+🔍  CSV détectés : 1 
+   • benjamin2.csv 
+
+✅  Lecture terminée : 10 432 017 lignes  |  60.7 s
+🔍  Normalisation des noms de navires...
+   • Noms avant normalisation : Fairway, Queen Of The Netherlands, Ham 318 Sleephopperzuiger, Vox Maxima, Vasco Da Gama, Cristobal Colon, Leiv Eiriksson, Charles Darwin, Congo River, Goryo 6 Ho, Inai Kenanga 
+   • Noms après normalisation : Charles Darwin, Congo River, Cristobal Colon, Fairway, Goryo 6 Ho, Ham 318, Inai Kenanga, Leiv Eiriksson, Queen Of The Netherlands, Vasco Da Gama, Vox Maxima 
+ℹ️  Aucun changement de noms nécessaire
+🔍  Application des filtres step 0...
+📊  Filtrage : 10 432 017 → 10 095 781 lignes (96.8% conservées)
+✅  Filtrage terminé
+
+🚢  Navires détectés : 11 
+
+  |                                                                              |                                                                      |   0%  |                                                                              |======                                                                |   9%  |                                                                              |=============                                                         |  18%  |                                                                              |===================                                                   |  27%  |                                                                              |=========================                                             |  36%  |                                                                              |================================                                      |  45%  |                                                                              |======================================                                |  55%  |                                                                              |=============================================                         |  64%  |                                                                              |===================================================                   |  73%  |                                                                              |=========================================================             |  82%  |                                                                              |================================================================      |  91%  |                                                                              |======================================================================| 100%
+
+✅  Intégrité OK :  10095781  lignes vérifiées.
+
+📊  RÉCAP ---------------------------------------------------------
+                      Navire n_observations
+                      <char>          <int>
+ 1:           Charles Darwin        1372116
+ 2:                  Ham 318        1291826
+ 3:           Leiv Eiriksson        1197293
+ 4:                  Fairway        1038765
+ 5: Queen Of The Netherlands        1028255
+ 6:               Goryo 6 Ho         942182
+ 7:          Cristobal Colon         838311
+ 8:              Congo River         832988
+ 9:             Inai Kenanga         803229
+10:               Vox Maxima         573815
+11:            Vasco Da Gama         177001
+                                                              file_path
+                                                                 <char>
+ 1:           ~/scratch/ais_split_57238377/navire_01_Charles_Darwin.rds
+ 2:                  ~/scratch/ais_split_57238377/navire_02_Ham_318.rds
+ 3:           ~/scratch/ais_split_57238377/navire_03_Leiv_Eiriksson.rds
+ 4:                  ~/scratch/ais_split_57238377/navire_04_Fairway.rds
+ 5: ~/scratch/ais_split_57238377/navire_05_Queen_Of_The_Netherlands.rds
+ 6:               ~/scratch/ais_split_57238377/navire_06_Goryo_6_Ho.rds
+ 7:          ~/scratch/ais_split_57238377/navire_07_Cristobal_Colon.rds
+ 8:              ~/scratch/ais_split_57238377/navire_08_Congo_River.rds
+ 9:             ~/scratch/ais_split_57238377/navire_09_Inai_Kenanga.rds
+10:               ~/scratch/ais_split_57238377/navire_10_Vox_Maxima.rds
+11:            ~/scratch/ais_split_57238377/navire_11_Vasco_Da_Gama.rds
+
+💾  11 fichiers .rds (62.9 MB cumulés) écrits dans : ~/scratch/ais_split_57238377
+
+🏁  STEP-1 terminé avec succès : 2025-07-10 06:42:29 
+✅ Étape 1 terminée avec succès: Thu Jul 10 06:42:30 EDT 2025
+📁 Fichiers sauvés dans le dossier de sortie configuré
+📊 RÉSUMÉ FRACTIONNEMENT:
+-rw-r-----. 1 benl benl 9.0M Jul 10 06:38 navire_01_Charles_Darwin.rds
+-rw-r-----. 1 benl benl 8.7M Jul 10 06:39 navire_02_Ham_318.rds
+-rw-r-----. 1 benl benl 7.2M Jul 10 06:39 navire_03_Leiv_Eiriksson.rds
+-rw-r-----. 1 benl benl 7.2M Jul 10 06:40 navire_04_Fairway.rds
+-rw-r-----. 1 benl benl 7.0M Jul 10 06:40 navire_05_Queen_Of_The_Netherlands.rds
+-rw-r-----. 1 benl benl 5.0M Jul 10 06:40 navire_06_Goryo_6_Ho.rds
+-rw-r-----. 1 benl benl 4.6M Jul 10 06:41 navire_07_Cristobal_Colon.rds
+-rw-r-----. 1 benl benl 4.9M Jul 10 06:41 navire_08_Congo_River.rds
+-rw-r-----. 1 benl benl 4.9M Jul 10 06:42 navire_09_Inai_Kenanga.rds
+-rw-r-----. 1 benl benl 3.9M Jul 10 06:42 navire_10_Vox_Maxima.rds
+-rw-r-----. 1 benl benl 1.2M Jul 10 06:42 navire_11_Vasco_Da_Gama.rds
+Nombre de fichiers .rds générés: 11

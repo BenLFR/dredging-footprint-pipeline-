@@ -1,0 +1,31 @@
+✅ R cherchera les packages dans : /home/benl/R/library | /home/benl/.local/R/4.2.1 | /cvmfs/soft.computecanada.ca/easybuild/software/2020/avx512/Core/r/4.2.1/lib64/R/library 
+🚀 === ÉTAPE 3: FUSION ET GRID SEARCH (AVEC CHECK-POINTING) ===
+📦 Job fractionnement: 56779162 
+📁 Dossier résultats: /home/benl/scratch/ais_results_56779162 
+🖥️  Cores: 16 
+⏱️  Début: 2025-07-06 13:00:40 
+
+🗑️  Suppression du checkpoint GMM fautif pour forcer le recalcul
+🗑️  Suppression du checkpoint DBSCAN fautif pour forcer le recalcul
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_56779162 
+✅ Fichiers d'entrée vérifiés: 11 fichiers *_clean.rds trouvés
+
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-07-06 13:00:40 
+
+✅ R configuré avec library: /home/benl/R/library | /home/benl/.local/R/4.2.1 | /cvmfs/soft.computecanada.ca/easybuild/software/2020/avx512/Core/r/4.2.1/lib64/R/library 
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+💾  Source : /home/benl/scratch/ais_results_56779162 
+💾  Sortie : /home/benl/scratch/output_V6 
+💾  Checkpoints : /home/benl/scratch/output_V6/checkpoints 
+
+Error: package or namespace load failed for ‘lubridate’ in dyn.load(file, DLLpath = DLLpath, ...):
+ unable to load shared object '/home/benl/R/library/timechange/libs/timechange.so':
+  /home/benl/R/library/timechange/libs/timechange.so: undefined symbol: R_getVar
+In addition: Warning message:
+package ‘lubridate’ was built under R version 4.5.0 
+Execution halted

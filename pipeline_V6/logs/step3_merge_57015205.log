@@ -1,0 +1,68 @@
+🚀 === ÉTAPE 3: FUSION ET GRID SEARCH (AVEC CHECK-POINTING) ===
+📦 Job fractionnement: 56779162 
+📁 Dossier résultats: /home/benl/scratch/ais_results_56779162 
+🖥️  Cores: 16 
+⏱️  Début: 2025-07-02 07:29:15 
+
+🗑️  Suppression du checkpoint GMM fautif pour forcer le recalcul
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_56779162 
+✅ Fichiers d'entrée vérifiés: 11 fichiers *_clean.rds trouvés
+
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-07-02 07:29:15 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+💾  Source : /home/benl/scratch/ais_results_56779162 
+💾  Sortie : /home/benl/scratch/output_V6 
+💾  Checkpoints : /home/benl/scratch/output_V6/checkpoints 
+
+✅  Packages chargés | 16 threads data.table
+✅  YAML chargé
+🔄  Reload checkpoint: stage3A_fusion.rds 
+🔧  Vérification des types de colonnes...
+ Types des colonnes critiques:
+   Navire    : character
+   ssvid     : integer
+   Seg_id    : character
+   Annee     : numeric
+🔍 Vérifications supplémentaires critiques...
+✅ Colonne 'is_stop' présente
+✅ Colonnes géographiques présentes
+✅ Colonnes géographiques converties en numeric
+✅ Aucun doublon détecté
+📊 Utilisation mémoire: 0.94 GB
+✅ Types de colonnes vérifiés et corrigés
+
+⏱️  Détection pics temporels isolés…
+📐  Filtrage contextuel…
+🔧  Harmonisation des types pour la jointure des percentiles...
+🔧  Vérification des types avant jointure:
+   Table principale - Navire: character 
+   Table percentiles - Navire: character 
+🔄  Reload checkpoint: stage3B_dbscan.rds 
+🔧  Cadence AIS & seuils adaptatifs par navire
+                      Navire  p50_dt seuil_adaptatif n_min prop_long
+                      <char>   <num>           <num> <num>     <num>
+ 1:              Congo River  97.000         291.000     3 0.1492676
+ 2:          Cristobal Colon 108.000         324.000     3 0.2095158
+ 3:                  Ham 318 130.690         392.070     3 0.2076991
+ 4:           Charles Darwin 136.000         408.000     3 0.1950150
+ 5:           Leiv Eiriksson 140.556         421.668     3 0.1719962
+ 6:                  Fairway 150.000         450.000     3 0.2229586
+ 7: Queen Of The Netherlands 176.000         528.000     3 0.2418194
+ 8:               Vox Maxima 179.000         537.000     3 0.2829589
+ 9:             Inai Kenanga 180.000         540.000     3 0.2631950
+10:               Goryo 6 Ho 188.000         564.000     3 0.2574560
+11:            Vasco Da Gama 361.000        1200.000     3 0.6178954
+⚙️  Compute & save checkpoint: stage3C_gmm.rds 
+🔧  GMM « stop + 4 fixes » – début
+     → μ (kn) estimés : 1.7 9.07 12.63 1.65 
+Error in which(is_stop_spatial == FALSE & Speed >= 0.5 & Speed <= 20) : 
+  object 'is_stop_spatial' not found
+Calls: source ... withVisible -> eval -> eval -> checkpoint -> force -> which
+Execution halted

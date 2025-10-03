@@ -1,0 +1,4 @@
+WARNING: While bind mounting '/lustre10/scratch:/scratch': destination is already in the mount point list
+Spherical geometry (s2) switched off
+Warning message:
+⚠️  Plus de 5 % des cellules utilisent le k_fast de secours (1.0) 

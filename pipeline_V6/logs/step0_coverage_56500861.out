@@ -1,0 +1,33 @@
+📊 === ÉTAPE 0: ANALYSE COUVERTURE TEMPORELLE ===
+Job ID: 56500861
+Node: bc12303
+Début: Tue 17 Jun 2025 08:38:54 AM EDT
+✅ Lancement analyse couverture...
+
+📊  STEP-0  |  Analyse Couverture Temporelle  |  début : 2025-06-17 08:38:57 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+📁  INPUT  : ~/scratch/AIS_data/*.csv 
+📁  OUTPUT : ~/scratch/output_V6 
+
+🔍  CSV détectés : 13 
+   • benjamin2.csv 
+   • Charles Darwin.csv 
+   • Congo River.csv 
+   • Cristobal Colon.csv 
+   • Fair Way.csv 
+   • Goryo 6 HO.csv 
+   • HAM318.csv 
+   • INAI KENANGA.csv 
+   • LEIV EIRIKSSONN.csv 
+   • Queen of the netherlands.csv 
+   • Rotterdam.csv 
+   • Vasco de Gama.csv 
+   • VOX maxima.csv 
+
+✅  Lecture terminée : 0 lignes  |  0.7 s
+Error in as.POSIXct(Timestamp, tz = "UTC") : object 'Timestamp' not found
+Calls: source ... eval -> [ -> [.data.table -> eval -> eval -> as.POSIXct
+In addition: There were 50 or more warnings (use warnings() to see the first 50)
+Execution halted
+❌ Erreur lors de l'analyse: code 1

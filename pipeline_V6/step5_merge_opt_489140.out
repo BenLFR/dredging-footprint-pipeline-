@@ -1,0 +1,16 @@
+🚀 Lancement Step 5 merge OPTIMISÉ avec SLURM
+📁 Répertoire : /home/benl/R_scripts/pipeline_V6
+💾 Mémoire : 32GB (optimisée)
+⏱️  Temps max : 6h
+🎯 Scénario : default
+🔧 Version : optimisée (gestion mémoire GeoTIFF)
+✅ sf OK
+✅ dplyr OK
+✅ data.table OK
+✅ tidyr OK
+✅ rlang OK
+✅ tidyselect OK
+✅ lubridate OK
+✅ yaml OK
+🔧 Fusion finale - Scenario : default 
+❌ Step 5 merge optimisé échoué

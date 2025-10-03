@@ -1,0 +1,31 @@
+🚀 === ÉTAPE 3 FIXED: FUSION ET GRID SEARCH ===
+Job ID: 56817491
+Node: bc11949
+Début: Fri 27 Jun 2025 06:09:22 AM EDT
+📦 Job fractionnement référence: 56779162
+📁 Dossier de résultats spécifié: /home/benl/scratch/ais_results_56779162
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_56779162
+🔍 Vérification des fichiers d'entrée...
+   Répertoire: /home/benl/scratch/ais_results_56779162
+✅ Fichiers d'entrée vérifiés: 11 fichiers *_clean.rds trouvés
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 25086 Jun 27 05:49 step3_merge_final.R
+✅ Lancement fusion et grid search avec corrections...
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-06-27 06:09:37 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_56779162 
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+Error in dir.create(output_dir, showWarnings = FALSE, recursive = TRUE) : 
+  object 'output_dir' not found
+Calls: source -> withVisible -> eval -> eval -> dir.create
+Execution halted
+❌ Erreur lors de la fusion: code 1
+📋 Logs d'erreur disponibles dans:
+   - logs/step3_merge_56817491.out
+   - logs/step3_merge_56817491.err

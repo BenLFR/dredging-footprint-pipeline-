@@ -1,0 +1,46 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 7 ===
+Job ID: 56779162_7
+Node: bc11238
+Début: Thu 26 Jun 2025 12:09:20 PM EDT
+📦 Job fractionnement référence: 56777970
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 8055 Jun 26 11:53 step2_process_navire.R
+✅ Lancement traitement navire 7...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-06-26 12:09:21 
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 7 
+📋 Split Job ID: 56777970 
+📊 Métadonnées chargées: 11 navires
+🚢 Navire sélectionné: Cristobal Colon 
+📁 Fichier input: ~/scratch/ais_split_56777970/navire_07_Cristobal_Colon.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 838311 observations
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [12:09:27.855] dataset has duplicated rows
+INFO  [12:09:27.958] Building Isolation Forest ...
+INFO  [12:09:34.437] done
+INFO  [12:09:34.439] Computing depth of terminal nodes ...
+INFO  [12:09:35.244] done
+INFO  [12:09:49.049] Completed growing isolation forest
+  ✅ IF terminé: 24891 outliers sur 838311 points
+🛑 Création de la colonne is_stop...
+✅ Colonne is_stop créée: 597208 arrêts détectés
+🔧 Création de colonnes supplémentaires...
+✅ Colonnes supplémentaires créées (Annee, Course_change, Accel)
+📊 RÉSULTATS NAVIRE: Cristobal Colon 
+  • Observations totales: 838311 
+  • Outliers détectés: 24891 ( 2.97 %)
+  • Arrêts détectés: 597208 ( 71.24 %)
+💾 Sauvegarde: ~/scratch/ais_results_56779162/07_Cristobal_Colon_clean.rds 
+✅ Navire Cristobal Colon traité avec succès: 2025-06-26 12:10:34 
+📁 Résultat: ~/scratch/ais_results_56779162/07_Cristobal_Colon_clean.rds 
+Warning message:
+In rm(dt_nav, if_model) : object 'if_model' not found
+✅ Étape 2 terminée: Thu Jun 26 12:10:34 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_56779162/

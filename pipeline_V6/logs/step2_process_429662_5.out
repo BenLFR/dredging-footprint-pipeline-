@@ -1,0 +1,44 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 5 ===
+Job ID: 429662_5
+Node: rc12514
+Début: Fri Jul 25 05:39:28 EDT 2025
+📦 Auto-détection Step 1: step1_20250724110029 (répertoire: /home/benl/scratch/output_V6/step1_20250724110029)
+   → Fichiers navire trouvés: 10
+✅ Répertoire d'entrée: ~/scratch/output_V6/step1_20250724110029
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 10852 Jul 25 05:20 step2_process_navire.R
+✅ Lancement traitement navire 5...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-25 05:39:29 
+✅ R configuré avec library: /home/benl/R/library 
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 5 
+📋 Split Job ID: step1_20250724110029 
+📊 Métadonnées chargées: 10 navires
+🚢 Navire sélectionné: Fairway 
+📁 Fichier input: ~/scratch/output_V6/step1_20250724110029/navire_05_Fairway.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 1038765 observations
+✅ Filtre vitesse physique : 1038765 → 1038686 lignes (99.99 % conservées)
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [05:39:32.360] dataset has duplicated rows
+INFO  [05:39:32.413] Building Isolation Forest ...
+INFO  [05:39:39.372] done
+INFO  [05:39:39.373] Computing depth of terminal nodes ...
+Error in dyn.load(file, DLLpath = DLLpath, ...) : 
+  unable to load shared object '/home/benl/R/library/igraph/libs/igraph.so':
+  libicui18n.so.73: cannot open shared object file: No such file or directory
+Calls: source ... withCallingHandlers -> <Anonymous> -> value -> value.list
+In addition: Warning messages:
+1: package ‘lubridate’ was built under R version 4.5.0 
+2: package ‘zoo’ was built under R version 4.5.0 
+3: In readLines(file, warn = readLines.warn) :
+  incomplete final line found on '~/R_scripts/configuration/ship_specs.yaml'
+Timing stopped at: 12.23 0.217 7.771
+Execution halted
+✅ Étape 2 terminée: Fri Jul 25 05:39:39 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_429662/

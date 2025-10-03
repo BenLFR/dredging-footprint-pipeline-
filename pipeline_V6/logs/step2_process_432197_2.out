@@ -1,0 +1,49 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 2 ===
+Job ID: 432197_2
+Node: rc12804
+Début: Fri 25 Jul 2025 08:20:34 AM EDT
+📦 Job fractionnement référence: 430408
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 10503 Jul 25 08:18 step2_process_navire.R
+✅ Lancement traitement navire 2...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-25 08:20:34 
+✅ R configuré avec library: /home/benl/R/4.3 
+✅ Package qs disponible
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 2 
+📋 Split Job ID: 430408 
+📊 Métadonnées chargées: 10 navires
+🚢 Navire sélectionné: Ham 318 
+📁 Fichier input: ~/scratch/ais_split_430408/navire_02_Ham_318.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 1291826 observations
+✅ Filtre vitesse physique : 1291826 → 1291802 lignes (100.00 % conservées)
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [08:20:37.433] dataset has duplicated rows
+INFO  [08:20:37.500] Building Isolation Forest ...
+INFO  [08:20:45.108] done
+INFO  [08:20:45.109] Computing depth of terminal nodes ...
+INFO  [08:20:45.537] done
+INFO  [08:20:56.001] Completed growing isolation forest
+  ✅ IF terminé: 38433 outliers sur 1291802 points
+🛑 Création de la colonne is_stop...
+✅ Colonne is_stop créée: 780881 arrêts détectés
+🔧 Création de colonnes supplémentaires...
+✅ Colonnes supplémentaires créées (Annee, Course_change, Accel)
+📊 RÉSULTATS NAVIRE: Ham 318 
+  • Observations totales: 1291802 
+  • Outliers détectés: 38433 ( 2.98 %)
+  • Arrêts détectés: 780881 ( 60.45 %)
+💾 Sauvegarde: ~/scratch/ais_results_432197/02_Ham_318_clean.rds 
+✅ Navire Ham 318 traité avec succès: 2025-07-25 08:21:34 
+📁 Résultat: ~/scratch/ais_results_432197/02_Ham_318_clean.rds 
+Warning message:
+In readLines(file, warn = readLines.warn) :
+  incomplete final line found on '~/R_scripts/configuration/ship_specs.yaml'
+✅ Étape 2 terminée: Fri 25 Jul 2025 08:21:34 AM EDT
+📁 Résultats sauvés dans: ~/scratch/ais_results_432197/

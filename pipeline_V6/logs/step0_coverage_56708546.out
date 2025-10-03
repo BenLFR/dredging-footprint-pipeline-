@@ -1,0 +1,14 @@
+📊 === ÉTAPE 0: ANALYSE COUVERTURE TEMPORELLE ===
+Job ID: 56708546
+Node: bc11903
+Début: Tue 24 Jun 2025 09:10:30 AM EDT
+✅ Lancement analyse couverture...
+
+📊  STEP-0  |  Analyse Couverture Temporelle  |  début : 2025-06-24 09:10:33 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+Error in data.table(ssvid = c(209469000, 210138000, 245508000, 246351000,  : 
+  could not find function "data.table"
+Calls: source -> withVisible -> eval -> eval
+Execution halted
+❌ Erreur lors de l'analyse: code 1

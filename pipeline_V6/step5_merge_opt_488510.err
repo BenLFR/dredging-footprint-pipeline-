@@ -1,0 +1,6 @@
+WARNING: While bind mounting '/lustre10/scratch:/scratch': destination is already in the mount point list
+Spherical geometry (s2) switched off
+Error in yaml.load(string, error.label = error.label, ...) : 
+  (~/scratch/configuration/fi_parameters.yaml) Duplicate map key: 'ARCT'
+Calls: <Anonymous> -> yaml.load
+Execution halted

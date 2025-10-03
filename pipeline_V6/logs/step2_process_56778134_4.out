@@ -1,0 +1,46 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 4 ===
+Job ID: 56778134_4
+Node: bc11216
+Début: Thu 26 Jun 2025 11:21:32 AM EDT
+📦 Job fractionnement référence: 56777970
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 7733 Jun 23 11:08 step2_process_navire.R
+✅ Lancement traitement navire 4...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-06-26 11:21:34 
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 4 
+📋 Split Job ID: 56777970 
+📊 Métadonnées chargées: 11 navires
+🚢 Navire sélectionné: 
+📁 Fichier input: ~/scratch/ais_split_56777970/navire_04_Fairway.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 1038765 observations
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [11:21:40.112] dataset has duplicated rows
+INFO  [11:21:40.229] Building Isolation Forest ...
+INFO  [11:21:51.208] done
+INFO  [11:21:51.211] Computing depth of terminal nodes ...
+INFO  [11:21:52.393] done
+INFO  [11:22:09.915] Completed growing isolation forest
+  ✅ IF terminé: 30243 outliers sur 1038765 points
+🛑 Création de la colonne is_stop...
+✅ Colonne is_stop créée: 615809 arrêts détectés
+🔧 Création de colonnes supplémentaires...
+✅ Colonnes supplémentaires créées (Annee, Course_change, Accel)
+📊 RÉSULTATS NAVIRE: 
+  • Observations totales: 1038765 
+  • Outliers détectés: 30243 ( 2.91 %)
+  • Arrêts détectés: 615809 ( 59.28 %)
+💾 Sauvegarde: ~/scratch/ais_split_56777970/navire_04_Fairway_clean.rds 
+✅ Navire traité avec succès: 2025-06-26 11:23:13 
+📁 Résultat: ~/scratch/ais_split_56777970/navire_04_Fairway_clean.rds 
+Warning message:
+In rm(dt_nav, if_model) : object 'if_model' not found
+✅ Étape 2 terminée: Thu Jun 26 11:23:13 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_56778134/

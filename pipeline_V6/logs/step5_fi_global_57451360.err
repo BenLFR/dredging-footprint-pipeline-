@@ -1,0 +1,54 @@
+Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: ‘data.table’
+
+The following objects are masked from ‘package:dplyr’:
+
+    between, first, last
+
+
+Attaching package: ‘rlang’
+
+The following object is masked from ‘package:data.table’:
+
+    :=
+
+
+Attaching package: ‘lubridate’
+
+The following objects are masked from ‘package:data.table’:
+
+    hour, isoweek, mday, minute, month, quarter, second, wday, week,
+    yday, year
+
+The following objects are masked from ‘package:base’:
+
+    date, intersect, setdiff, union
+
+
+Attaching package: ‘purrr’
+
+The following objects are masked from ‘package:rlang’:
+
+    %@%, flatten, flatten_chr, flatten_dbl, flatten_int, flatten_lgl,
+    flatten_raw, invoke, splice
+
+The following object is masked from ‘package:data.table’:
+
+    transpose
+
+Warning message:
+🔶 Certains navires n'ont pas de specs YAML (ssvid manquant). 
+/localscratch/spool/slurmd/job57451360/slurm_script: line 21: 3621511 Killed                  apptainer exec $HOME/scratch/rocker_geospatial_4.5.0.sif Rscript "$SCRIPT_PATH"
+slurmstepd: error: Detected 1 oom_kill event in StepId=57451360.batch. Some of the step tasks have been OOM Killed.

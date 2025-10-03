@@ -1,0 +1,46 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 5 ===
+Job ID: 57238590_5
+Node: bc12046
+Début: Thu 10 Jul 2025 07:14:03 AM EDT
+📦 Job fractionnement référence: 57238377
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 8055 Jun 26 11:53 step2_process_navire.R
+✅ Lancement traitement navire 5...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-10 07:14:07 
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 5 
+📋 Split Job ID: 57238377 
+📊 Métadonnées chargées: 11 navires
+🚢 Navire sélectionné: Queen Of The Netherlands 
+📁 Fichier input: ~/scratch/ais_split_57238377/navire_05_Queen_Of_The_Netherlands.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 1028255 observations
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [07:14:11.998] dataset has duplicated rows
+INFO  [07:14:12.104] Building Isolation Forest ...
+INFO  [07:14:21.115] done
+INFO  [07:14:21.116] Computing depth of terminal nodes ...
+INFO  [07:14:22.356] done
+INFO  [07:14:39.398] Completed growing isolation forest
+  ✅ IF terminé: 30197 outliers sur 1028255 points
+🛑 Création de la colonne is_stop...
+✅ Colonne is_stop créée: 664552 arrêts détectés
+🔧 Création de colonnes supplémentaires...
+✅ Colonnes supplémentaires créées (Annee, Course_change, Accel)
+📊 RÉSULTATS NAVIRE: Queen Of The Netherlands 
+  • Observations totales: 1028255 
+  • Outliers détectés: 30197 ( 2.94 %)
+  • Arrêts détectés: 664552 ( 64.63 %)
+💾 Sauvegarde: ~/scratch/ais_results_57238590/05_Queen_Of_The_Netherlands_clean.rds 
+✅ Navire Queen Of The Netherlands traité avec succès: 2025-07-10 07:16:43 
+📁 Résultat: ~/scratch/ais_results_57238590/05_Queen_Of_The_Netherlands_clean.rds 
+Warning message:
+In rm(dt_nav, if_model) : object 'if_model' not found
+✅ Étape 2 terminée: Thu Jul 10 07:16:44 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_57238590/

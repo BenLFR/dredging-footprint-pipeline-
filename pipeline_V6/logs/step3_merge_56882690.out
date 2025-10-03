@@ -1,0 +1,64 @@
+🚀 === ÉTAPE 3 FIXED: FUSION ET GRID SEARCH ===
+Job ID: 56882690
+Node: bc12037
+Début: Sat 28 Jun 2025 11:15:33 AM EDT
+📦 Job fractionnement référence: 56779162
+📁 Dossier de résultats: auto-détection
+🔍 Auto-détection du dossier de résultats...
+✅ Dossier trouvé: /home/benl/scratch/ais_results_56779162
+🔍 Vérification des fichiers d'entrée...
+   Répertoire: /home/benl/scratch/ais_results_56779162
+✅ Fichiers d'entrée vérifiés: 11 fichiers *_clean.rds trouvés
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 26938 Jun 28 10:50 step3_merge_final.R
+✅ Lancement fusion et grid search avec corrections...
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-06-28 11:15:35 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_56779162 
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+💾  Source : /home/benl/scratch/ais_results_56779162 
+💾  Sortie : ~/scratch/output_V6 
+
+✅  Packages chargés | 16 threads data.table
+✅  YAML chargé
+🔍  Fichiers trouvés : 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   • 04_Fairway_clean.rds 
+   • 05_Queen_Of_The_Netherlands_clean.rds 
+   …
+✅  Fusion : 10 095 781 lignes | 11.1 s
+
+🔧  Vérification des types de colonnes...
+📊 Types des colonnes critiques:
+   Navire    : character
+   ssvid     : integer
+   Seg_id    : character
+   Annee     : numeric
+🔍 Vérifications supplémentaires critiques...
+✅ Colonne 'is_stop' présente
+✅ Colonnes géographiques présentes
+✅ Colonnes géographiques converties en numeric
+✅ Aucun doublon détecté
+📊 Utilisation mémoire: 0.94 GB
+✅ Types de colonnes vérifiés et corrigés
+
+⏱️  Détection pics temporels isolés…
+📐  Filtrage contextuel…
+🔧  Harmonisation des types pour la jointure des percentiles...
+🔧  Vérification des types avant jointure:
+   Table principale - Navire: character 
+   Table percentiles - Navire: character 
+🔍  Détection des arrêts spatiaux par DBSCAN...
+📊 Traitement DBSCAN pour 96 combinaisons navire/année
+❌ Erreur lors de la fusion: code 137
+📋 Logs d'erreur disponibles dans:
+   - logs/step3_merge_56882690.out
+   - logs/step3_merge_56882690.err

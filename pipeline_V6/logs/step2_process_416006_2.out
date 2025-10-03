@@ -1,0 +1,40 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 2 ===
+Job ID: 416006_2
+Node: rc12511
+Début: Thu 24 Jul 2025 06:27:56 PM EDT
+📦 Job fractionnement référence: step1_20250724110029
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 10310 Jul 24 11:08 step2_process_navire.R
+✅ Lancement traitement navire 2...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-24 18:27:57 
+✅ R configuré avec library: /home/benl/R/library 
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 2 
+📋 Split Job ID: step1_20250724110029 
+📊 Métadonnées chargées: 10 navires
+🚢 Navire sélectionné: Ham 318 
+📁 Fichier input: ~/scratch/output_V6/step1_20250724110029/navire_02_Ham_318.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 1291826 observations
+✅ Filtre vitesse physique : 1291826 → 1291802 lignes (100.00 % conservées)
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [18:28:00.159] dataset has duplicated rows
+INFO  [18:28:00.220] Building Isolation Forest ...
+Error in dyn.load(file, DLLpath = DLLpath, ...) : 
+  unable to load shared object '/home/benl/R/library/ranger/libs/ranger.so':
+  /cvmfs/soft.computecanada.ca/gentoo/2020/usr/lib/gcc/x86_64-pc-linux-gnu/11.3.0/libstdc++.so.6: version `GLIBCXX_3.4.30' not found (required by /home/benl/R/library/ranger/libs/ranger.so)
+Calls: source ... <Anonymous> -> loadNamespace -> library.dynam -> dyn.load
+In addition: Warning messages:
+1: package ‘lubridate’ was built under R version 4.5.0 
+2: package ‘zoo’ was built under R version 4.5.0 
+3: In readLines(file, warn = readLines.warn) :
+  incomplete final line found on '~/R_scripts/configuration/ship_specs.yaml'
+Timing stopped at: 1.073 0.028 1.11
+Execution halted
+✅ Étape 2 terminée: Thu Jul 24 18:28:00 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_416006/

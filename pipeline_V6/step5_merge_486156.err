@@ -1,0 +1,49 @@
+WARNING: While bind mounting '/lustre10/scratch:/scratch': destination is already in the mount point list
+Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
+Spherical geometry (s2) switched off
+
+Attaching package: 'dplyr'
+
+The following objects are masked from 'package:stats':
+
+    filter, lag
+
+The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: 'data.table'
+
+The following objects are masked from 'package:dplyr':
+
+    between, first, last
+
+
+Attaching package: 'rlang'
+
+The following object is masked from 'package:data.table':
+
+    :=
+
+The following object is masked from 'package:base':
+
+    %||%
+
+
+Attaching package: 'lubridate'
+
+The following objects are masked from 'package:data.table':
+
+    hour, isoweek, mday, minute, month, quarter, second, wday, week,
+    yday, year
+
+The following objects are masked from 'package:base':
+
+    date, intersect, setdiff, union
+
+Warning messages:
+1: In readLines(file, warn = readLines.warn) :
+  invalid input found on input connection '~/scratch/configuration/fi_parameters.yaml'
+2: In readLines(file, warn = readLines.warn) :
+  incomplete final line found on '~/scratch/configuration/fi_parameters.yaml'

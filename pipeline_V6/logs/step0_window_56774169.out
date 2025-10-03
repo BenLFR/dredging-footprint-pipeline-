@@ -1,0 +1,15 @@
+🔍 === STEP 0bis : FENÊTRE OPTIMALE (job 56774169) ===
+Node:  bc11233
+Début: Thu 26 Jun 2025 08:48:37 AM EDT
+✅  Répertoire courant: /home/benl/R_scripts/pipeline_V6
+✅  Lancement step0_core_window.R ...
+
+📊  STEP-0  |  Core Period Selection via Coverage Matrix |  début : 2025-06-26 08:48:39 
+
+📁  INPUT  : ~/scratch/AIS_data/*.csv 
+📁  OUTPUT : ~/scratch/output_V6 
+
+🔍  Fichier à traiter : benjamin2.csv 
+
+✅ Matrice couverture : 11 navires × 12 années
+❌  STEP 0bis a échoué (code 1)

@@ -1,0 +1,44 @@
+🏁 === ÉTAPE 4: AJOUT LITHOLOGIE ===
+Job ID: 57284770
+Node: bc12046
+Début: Fri 11 Jul 2025 06:47:55 PM EDT
+✅ Lancement ajout lithologie...
+📁 Source: ~/scratch/output_V6/
+💾 Espace disque disponible:
+Filesystem                                     Size  Used Avail Use% Mounted on
+10.72.112.13@o2ib:10.72.112.14@o2ib:/lustre04  2.6P  2.4P  229T  92% /lustre04
+📚 Chargement des packages...
+✅ Package data.table chargé
+Linking to GEOS 3.10.2, GDAL 3.5.1, PROJ 9.0.1; sf_use_s2() is TRUE
+✅ Package sf chargé
+✅ Tous les packages chargés avec succès
+
+📖 Lecture des données...
+📄 Fichier AIS source: AIS_data_core_preprocessed_V6_20250711_170227.rds 
+🔑 Clés définies sur AIS: Navire, Timestamp
+💾 Sauvegarde de la carte sédimentaire en RDS (optimisation I-2)...
+✅ Carte sédimentaire sauvegardée: seabed_lithology_with_pl.rds 
+🔍 Application du filtre spatial...
+🌍 Points sédimentaires après filtre : 277814 
+🔧 Seuil appariement : 10 km
+🌳 Recherche des plus proches voisins...
+📊 Affectation des lithologies et filtrage...
+📊 Ratio AIS/Sediment = 31.0
+💾 Sauvegarde des résultats...
+✅  1 pings avec lithologie (0 %)  /  8606651 sans lithologie
+
+— Distribution des lithologies (pings avec lithologie) —
+   lithologie     N
+       <char> <int>
+1:       clay     1
+
+🏁 Étape 4 terminée avec succès : 2025-07-11 19:00:03 
+Warning message:
+In `[.data.table`(ais_dt, , `:=`(geometry, NULL)) :
+  Tried to assign NULL to column 'geometry', but this column does not exist to remove
+✅ Ajout lithologie terminé avec succès: Fri Jul 11 19:00:04 EDT 2025
+📊 === RÉSUMÉ FINAL ===
+-rw-r-----. 1 benl benl 326M Jul 11 19:00 /home/benl/scratch/output_V6/AIS_with_lithology_20250711_184813.rds
+📦 Taille du fichier de sortie: 306M
+📊 Nombre de lignes: [1] 8606652
+🎉 ÉTAPE 4 TERMINÉE !

@@ -1,0 +1,43 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 4 ===
+Job ID: 56502733_4
+Node: bc11253
+Début: Tue Jun 17 10:33:51 EDT 2025
+📦 Job fractionnement référence: test_step1_final
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 6327 Jun 13 09:28 step2_process_navire.R
+✅ Lancement traitement navire 4...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-06-17 10:33:54 
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 4 
+📋 Split Job ID: test_step1_final 
+📊 Métadonnées chargées: 11 navires
+🚢 Navire sélectionné: 
+📁 Fichier input: /home/benl/scratch/test_step1_final/navire_04_Queen_Of_The_Netherlands.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 1080409 observations
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [10:33:58.721] dataset has duplicated rows
+INFO  [10:33:58.890] Building Isolation Forest ...
+INFO  [10:34:09.561] done
+INFO  [10:34:09.564] Computing depth of terminal nodes ...
+INFO  [10:34:10.608] done
+INFO  [10:34:28.892] Completed growing isolation forest
+  ✅ IF terminé: 31432 outliers sur 1080409 points
+📊 RÉSULTATS NAVIRE: 
+  • Observations totales: 1080409 
+  • Outliers détectés: 31432 ( 2.91 %)
+💾 Sauvegarde: /home/benl/scratch/test_step1_final/navire_04_Queen_Of_The_Netherlands_clean.rds 
+✅ Navire traité avec succès: 2025-06-17 10:35:18 
+📁 Résultat: /home/benl/scratch/test_step1_final/navire_04_Queen_Of_The_Netherlands_clean.rds 
+Warning messages:
+1: In readLines(con, warn = readLines.warn) :
+  incomplete final line found on '~/R_scripts/configuration/outlier_config_V6.yaml'
+2: In rm(dt_nav, if_model) : object 'if_model' not found
+✅ Étape 2 terminée: Tue Jun 17 10:35:18 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_56502733/

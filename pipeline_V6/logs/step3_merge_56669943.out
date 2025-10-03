@@ -1,0 +1,51 @@
+�� === ÉTAPE 3 FIXED: FUSION ET GRID SEARCH ===
+Job ID: 56669943
+Node: bc12022
+Début: Mon Jun 23 08:12:33 EDT 2025
+�� Job fractionnement référence: 20250623055849
+🔍 Vérification des fichiers d'entrée...
+   Répertoire attendu: /home/benl/scratch/ais_split_20250623055849
+✅ Fichiers d'entrée vérifiés: 11 fichiers *_clean.rds trouvés
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 19166 Jun 23 04:39 step3_merge_final.R
+✅ Lancement fusion et grid search...
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-06-23 08:12:36 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Utilisation du répertoire standard: ~/scratch/ais_split_20250623055849 
+💾  Source : ~/scratch/ais_split_20250623055849 
+💾  Sortie : ~/scratch/output_V6 
+
+✅  Packages chargés | 16 threads data.table
+✅  YAML chargé
+⚠️  Paramètre manquant dans YAML: contamination_rate - Utilisation valeur par défaut: 0.02 
+⚠️  Paramètre manquant dans YAML: if_num_trees - Utilisation valeur par défaut: 25 
+⚠️  Paramètre manquant dans YAML: if_sample_size - Utilisation valeur par défaut: 256 
+⚠️  Paramètre manquant dans YAML: spike_factor - Utilisation valeur par défaut: 5 
+⚠️  Paramètre manquant dans YAML: min_spike_duration - Utilisation valeur par défaut: 2 
+⚠️  Paramètre manquant dans YAML: percentile_lower - Utilisation valeur par défaut: 0.05 
+⚠️  Paramètre manquant dans YAML: percentile_upper - Utilisation valeur par défaut: 0.95 
+⚠️  Paramètre manquant dans YAML: min_context_points - Utilisation valeur par défaut: 200 
+⚠️  Paramètre manquant dans YAML: max_accel_ms2 - Utilisation valeur par défaut: 0.3 
+⚠️  Paramètre manquant dans YAML: max_turn_at_speed - Utilisation valeur par défaut: 30 
+⚠️  Paramètre manquant dans YAML: max_dredging_speed - Utilisation valeur par défaut: 4 
+🔍  Fichiers trouvés : 11 
+   • navire_01_Charles_Darwin_clean.rds 
+   • navire_02_Ham_318_Sleephopperzuiger_clean.rds 
+   • navire_03_Leiv_Eiriksson_clean.rds 
+   • navire_04_Queen_Of_The_Netherlands_clean.rds 
+   • navire_05_Fairway_clean.rds 
+   …
+✅  Fusion : 10 432 017 lignes | 9.8 s
+
+⏱️  Détection pics temporels isolés…
+📐  Filtrage contextuel…
+Error in bmerge(i, x, leftcols, rightcols, roll, rollends, nomatch, mult,  : 
+  Incompatible join types: x.Navire (character) and i.ssvid (integer)
+Calls: source ... [.data.table -> bmerge -> stopf -> raise_condition -> signal
+Execution halted
+❌ Erreur lors de la fusion: code 1
+📋 Logs d'erreur disponibles dans:
+   - logs/step3_merge_56669943.out
+   - logs/step3_merge_56669943.err

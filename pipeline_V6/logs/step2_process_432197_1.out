@@ -1,0 +1,49 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 1 ===
+Job ID: 432197_1
+Node: rc12801
+Début: Fri 25 Jul 2025 08:20:33 AM EDT
+📦 Job fractionnement référence: 430408
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 10503 Jul 25 08:18 step2_process_navire.R
+✅ Lancement traitement navire 1...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-25 08:20:34 
+✅ R configuré avec library: /home/benl/R/4.3 
+✅ Package qs disponible
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 1 
+📋 Split Job ID: 430408 
+📊 Métadonnées chargées: 10 navires
+🚢 Navire sélectionné: Charles Darwin 
+📁 Fichier input: ~/scratch/ais_split_430408/navire_01_Charles_Darwin.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 1372116 observations
+✅ Filtre vitesse physique : 1372116 → 1360768 lignes (99.17 % conservées)
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [08:20:37.192] dataset has duplicated rows
+INFO  [08:20:37.262] Building Isolation Forest ...
+INFO  [08:20:43.637] done
+INFO  [08:20:43.638] Computing depth of terminal nodes ...
+INFO  [08:20:44.157] done
+INFO  [08:20:54.394] Completed growing isolation forest
+  ✅ IF terminé: 40412 outliers sur 1360768 points
+🛑 Création de la colonne is_stop...
+✅ Colonne is_stop créée: 869714 arrêts détectés
+🔧 Création de colonnes supplémentaires...
+✅ Colonnes supplémentaires créées (Annee, Course_change, Accel)
+📊 RÉSULTATS NAVIRE: Charles Darwin 
+  • Observations totales: 1360768 
+  • Outliers détectés: 40412 ( 2.97 %)
+  • Arrêts détectés: 869714 ( 63.91 %)
+💾 Sauvegarde: ~/scratch/ais_results_432197/01_Charles_Darwin_clean.rds 
+✅ Navire Charles Darwin traité avec succès: 2025-07-25 08:21:32 
+📁 Résultat: ~/scratch/ais_results_432197/01_Charles_Darwin_clean.rds 
+Warning message:
+In readLines(file, warn = readLines.warn) :
+  incomplete final line found on '~/R_scripts/configuration/ship_specs.yaml'
+✅ Étape 2 terminée: Fri 25 Jul 2025 08:21:32 AM EDT
+📁 Résultats sauvés dans: ~/scratch/ais_results_432197/

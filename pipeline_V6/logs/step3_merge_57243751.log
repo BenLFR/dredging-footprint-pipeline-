@@ -1,0 +1,394 @@
+✅ R cherchera les packages dans : /home/benl/R/library | /home/benl/.local/R/4.2.1 | /cvmfs/soft.computecanada.ca/easybuild/software/2020/avx512/Core/r/4.2.1/lib64/R/library 
+🚀 === ÉTAPE 3: FUSION ET GRID SEARCH (AVEC CHECK-POINTING) ===
+📦 Job fractionnement: 57239565 
+📁 Dossier résultats: /home/benl/scratch/ais_results_57239565 
+🖥️  Cores: 16 
+⏱️  Début: 2025-07-10 13:47:15 
+
+🗑️  Suppression du checkpoint DBSCAN fautif pour forcer le recalcul
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_57239565 
+✅ Fichiers d'entrée vérifiés: 11 fichiers *_clean.rds trouvés
+
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-07-10 13:47:15 
+
+✅ R cherchera les packages dans : /home/benl/R/library | /home/benl/.local/R/4.2.1 | /cvmfs/soft.computecanada.ca/easybuild/software/2020/avx512/Core/r/4.2.1/lib64/R/library 
+
+🔍 DIAGNOSTIC DES PACKAGES REQUIS:
+   glmnet       : ✅ OK
+   doParallel   : ✅ OK
+   pROC         : ✅ OK
+   data.table   : ✅ OK
+   dbscan       : ✅ OK
+   mclust       : ✅ OK
+   yaml         : ✅ OK
+   geosphere    : ✅ OK
+   lubridate    : ✅ OK
+   zoo          : ✅ OK
+   solitude     : ✅ OK
+   depmixS4     : ✅ OK
+
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+💾  Source : /home/benl/scratch/ais_results_57239565 
+💾  Sortie : /home/benl/scratch/output_V6 
+💾  Checkpoints : /home/benl/scratch/output_V6/checkpoints 
+
+✅  Packages chargés | 16 threads data.table
+✅  YAML chargé
+⚙️  Compute & save checkpoint: stage3A_fusion.rds 
+🔍  Fichiers trouvés : 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   • 04_Fairway_clean.rds 
+   • 05_Queen_Of_The_Netherlands_clean.rds 
+   …
+✅  Fusion : 10 083 220 lignes | 24.1 s
+
+✅ Checkpoint sauvegardé: stage3A_fusion.rds 
+🔧  Vérification des types de colonnes...
+ Types des colonnes critiques:
+   Navire    : character
+   ssvid     : integer
+   Seg_id    : character
+   Annee     : numeric
+🔍 Vérifications supplémentaires critiques...
+✅ Colonne 'is_stop' présente
+✅ Colonnes géographiques présentes
+✅ Colonnes géographiques converties en numeric
+✅ Aucun doublon détecté
+📊 Utilisation mémoire: 1.16 GB
+✅ Types de colonnes vérifiés et corrigés
+
+📊 === CONTRÔLE STRICT DES EFFECTIFS ===
+📈 Nombre de points au début: 10083220
+[DIAGNOSTIC] Isolation Forest : 299431 points supprimés (2.97%), 9783789 restants
+⏱️  Détection pics temporels isolés…
+[DIAGNOSTIC] Filtre Spikes : 62769 points supprimés (0.64%), 9721020 restants
+📐  Filtrage contextuel…
+🔧  Harmonisation des types pour la jointure des percentiles...
+🔧  Vérification des types avant jointure:
+   Table principale - Navire: character 
+   Table percentiles - Navire: character 
+[DIAGNOSTIC] Percentiles contextuels : 92378 points supprimés (0.95%), 9628642 restants
+⚙️  Compute & save checkpoint: stage3B_dbscan.rds 
+🔍  Détection des arrêts spatiaux par DBSCAN...
+📊 Traitement DBSCAN pour 97 combinaisons navire/année
+⚠️  Gros arrêt détecté pour Charles Darwin 2015 ( 35591 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2016 ( 39358 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2017 ( 72688 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2018 ( 74005 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2019 ( 29051 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2020 ( 36303 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2021 ( 98392 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2022 ( 94386 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2023 ( 161233 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2024 ( 186416 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2015 ( 29227 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2016 ( 18729 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2017 ( 36364 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2018 ( 35992 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2019 ( 56231 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2020 ( 75620 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2021 ( 92048 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2022 ( 85228 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2023 ( 206965 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2024 ( 108436 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2015 ( 17898 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2016 ( 6036 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2017 ( 40645 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2018 ( 91330 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2019 ( 43468 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2020 ( 74870 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2021 ( 66176 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2022 ( 98244 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2023 ( 140908 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2024 ( 195507 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2015 ( 32174 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2016 ( 26655 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2017 ( 26136 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2018 ( 33450 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2019 ( 20046 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2020 ( 31552 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2021 ( 58263 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2022 ( 78329 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2023 ( 76127 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2024 ( 198317 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2015 ( 20461 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2016 ( 18552 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2017 ( 23935 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2018 ( 98501 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2019 ( 84571 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2020 ( 28188 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2021 ( 42821 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2022 ( 70627 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2023 ( 58040 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2024 ( 181486 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2015 ( 57791 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2016 ( 72094 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2017 ( 137934 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2018 ( 164277 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2019 ( 180360 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2020 ( 179405 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2021 ( 75302 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2023 ( 15395 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2024 ( 7604 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2015 ( 13811 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2016 ( 12960 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2017 ( 29059 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2018 ( 24364 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2019 ( 8975 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2020 ( 18576 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2021 ( 36090 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2022 ( 92063 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2023 ( 113853 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2024 ( 224421 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Congo River 2020 ( 32364 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Congo River 2021 ( 35864 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Congo River 2022 ( 87109 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Congo River 2023 ( 103544 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Congo River 2024 ( 180783 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2015 ( 12076 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2017 ( 36599 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2018 ( 49383 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2019 ( 86705 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2020 ( 130473 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2021 ( 92297 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2022 ( 76379 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2023 ( 63206 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2024 ( 139361 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2015 ( 22995 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2016 ( 44606 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2017 ( 70134 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2018 ( 23792 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2019 ( 47938 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2023 ( 84525 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2024 ( 131991 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vasco Da Gama 2015 ( 31672 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vasco Da Gama 2016 ( 49227 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vasco Da Gama 2017 ( 39922 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vasco Da Gama 2018 ( 17576 points) - Échantillonnage pour eps
+✅ DBSCAN terminé - Checkpoint sauvegardé
+[DIAGNOSTIC] Après DBSCAN (is_stop_spatial TRUE): 6635393 points (68.91% du total)
+✅ Vérification: Colonne 'is_stop_spatial' présente
+✅ Checkpoint sauvegardé: stage3B_dbscan.rds 
+🔧  Cadence AIS & seuils adaptatifs par navire
+                      Navire p50_dt seuil_adaptatif n_min prop_long
+                      <char>  <num>           <num> <num>     <num>
+ 1:              Congo River     96             288     3 0.1456267
+ 2:          Cristobal Colon    108             324     3 0.2078678
+ 3:                  Ham 318    126             378     3 0.1991403
+ 4:           Charles Darwin    133             399     3 0.1899389
+ 5:           Leiv Eiriksson    141             423     3 0.1722061
+ 6:                  Fairway    149             447     3 0.2198434
+ 7: Queen Of The Netherlands    176             528     3 0.2422998
+ 8:               Vox Maxima    179             537     3 0.2768514
+ 9:             Inai Kenanga    180             540     3 0.2628408
+10:               Goryo 6 Ho    188             564     3 0.2579729
+11:            Vasco Da Gama    360            1200     3 0.6129337
+[DIAGNOSTIC] Filtrage intervalles longs : 1021990 points supprimés (10.61%), 8606652 restants
+[DIAGNOSTIC] Nombre de points conservés avant GMM: 8606652 (85.36% du total initial)
+
+[DIAGNOSTIC] Distribution du dataset juste avant le GMM :
+
+          Charles Darwin              Congo River          Cristobal Colon 
+                 1158034                   673389                   668981 
+                 Fairway               Goryo 6 Ho                  Ham 318 
+                  865386                   822943                  1108642 
+            Inai Kenanga           Leiv Eiriksson Queen Of The Netherlands 
+                  712228                  1066611                   896468 
+           Vasco Da Gama               Vox Maxima 
+                  161953                   472017 
+Total points restants : 8606652 
+⚙️  Compute & save checkpoint: stage3C_gmm.rds 
+🔧  GMM « stop + K mobiles » – sélection K par BIC (3-5) - ROBUSTE
+   📊 Quantiles recalculés après filtres - Accel 95%: 0.0044 | Course 95%: 127.6 °
+   Échantillon pour BIC: 1000000 points (sur 2894088 )
+   ➜  K retenu par BIC : 4 composantes mobiles
+   Échantillon pour ajustement final: 2000000 points (sur 2894088 )
+   μ mobiles triés : 1.68 / 5.29 / 9.33 / 12.59 kn
+   🏷️  Labels attribués par vitesse: slow_maneuvers → dredging → loaded_transit → unloaded_transit 
+   📊 Vitesses correspondantes: 1.68 kn → 5.29 kn → 9.33 kn → 12.59 kn 
+   🎯 Seuil de lissage (75e percentile n_min): 3 
+✅  GMM ROBUSTE terminé – 487650 681699 1078676 5680710 677424 états après lissage
+   ⚠️  QA: Incohérence détectée dans le mapping p_dredge
+✅ Checkpoint sauvegardé: stage3C_gmm.rds 
+⚙️  Compute & save checkpoint: stage3D_gridsearch.rds 
+🔍  Grid-search (poids score dragage) - CORRIGÉ POUR ÉVITER DATA LEAKAGE
+   Validation croisée par année: 10 folds
+   ✅ Probabilité dragage: p3 (composante 2, vitesse 5.29 kn, K=4)
+⛔ Non-finis par colonne : p_dredge:0, norm_course:0, norm_acc:0, speed_bin:0, speed_norm:0 
+✅ Valeurs non-finies remplacées par 0
+   🔍 Nettoyage des NA dans la variable cible...
+   📊 Points avec NA dans target: 0 (0.00%)
+   ✅ Données préservées: %d points pour entraînement, %d points pour prédiction complète
+ 8606652 8606652   Vérification des valeurs manquantes dans les prédicteurs...
+   Valeurs NA par prédicteur: p_dredge:0, norm_course:0, norm_acc:0, speed_bin:0, speed_norm:0 
+   Vérification du mapping p_dredge:
+   Colonnes p disponibles: p1, p2, p3, p4, p5 
+   Colonne p_dredge créée: OUI 
+   Valeurs p_dredge: 0.000192232639837375, 0.0192665107061114, 0.000246423651862941, 0.00100194944072688, 0.0278292022076372 
+   Valeurs NA remplacées par 0
+   Prédicteurs utilisés: p_dredge, norm_course, norm_acc, speed_bin, speed_norm 
+   Classes cibles: 8119002 487650 
+
+[DIAGNOSTIC] Effectifs par behavior_smooth :
+
+        dredging   loaded_transit   slow_maneuvers            stops 
+          487650           681699          1078676          5680710 
+         unknown unloaded_transit 
+             493           677424 
+Effectifs par année :
+
+   2015    2016    2017    2018    2019    2020    2021    2022    2023    2024 
+  99630  192170  547750  670874  615241  664711  651413 1128573 1574168 2462122 
+   📊 Distribution détaillée des classes par année/navire (données d'entraînement):
+, ,  = Charles Darwin
+
+            
+target_train   2015   2016   2017   2018   2019   2020   2021   2022   2023
+           0  11076  24245  70698  65255  42368  50581 112181 139342 241885
+           1   3341   3987   6868   3144   9754  10197   3509  12302  11864
+            
+target_train   2024
+           0 325858
+           1   9579
+
+, ,  = Congo River
+
+            
+target_train   2015   2016   2017   2018   2019   2020   2021   2022   2023
+           0      0      0      0      0      0  27933  22533  96736 159440
+           1      0      0      0      0      0   6571   2445  17792  17266
+            
+target_train   2024
+           0 309905
+           1  12768
+
+, ,  = Cristobal Colon
+
+            
+target_train   2015   2016   2017   2018   2019   2020   2021   2022   2023
+           0   1248   3868   5815   3930   2653   9195  33831 103945 136142
+           1     98    377    531     18     69     66   1228   8799  11734
+            
+target_train   2024
+           0 332844
+           1  12590
+
+, ,  = Fairway
+
+            
+target_train   2015   2016   2017   2018   2019   2020   2021   2022   2023
+           0   2231   3881  14823  54043  10599  34741  71422 149784 164967
+           1    844    313   1035  10697   3018   4923   4929  14507  16446
+            
+target_train   2024
+           0 294910
+           1   7273
+
+, ,  = Goryo 6 Ho
+
+            
+target_train   2015   2016   2017   2018   2019   2020   2021   2022   2023
+           0  27325  50135 131690 161862 179247 178335  75016     38  14802
+           1      0      0      0      3      0      0      0      0    185
+            
+target_train   2024
+           0   4215
+           1     90
+
+, ,  = Ham 318
+
+            
+target_train   2015   2016   2017   2018   2019   2020   2021   2022   2023
+           0   1224   2093  38220  53227  87314 106486  94376 169111 307289
+           1    553    218   6600   7215  12668   7607   6375  22196   7640
+            
+target_train   2024
+           0 163273
+           1  14957
+
+, ,  = Inai Kenanga
+
+            
+target_train   2015   2016   2017   2018   2019   2020   2021   2022   2023
+           0   4831   1198  37506  67979  75409 127074  91158  79368  76262
+           1      7    110   3212   6725      0      2   1018    996    728
+            
+target_train   2024
+           0 138645
+           1      0
+
+, ,  = Leiv Eiriksson
+
+            
+target_train   2015   2016   2017   2018   2019   2020   2021   2022   2023
+           0   5601   3707  36359  73652  53122  76736  69211 162561 165827
+           1    893    225    538    207   4841   1692    445  14700   7042
+            
+target_train   2024
+           0 375358
+           1  13894
+
+, ,  = Queen Of The Netherlands
+
+            
+target_train   2015   2016   2017   2018   2019   2020   2021   2022   2023
+           0   5893   4933  40416 111329  87545  21398  56695 119844 117716
+           1    911    237   6186   9734   6429   1174   5041  16552  21414
+            
+target_train   2024
+           0 252844
+           1  10177
+
+, ,  = Vasco Da Gama
+
+            
+target_train   2015   2016   2017   2018   2019   2020   2021   2022   2023
+           0  28646  48167  47451  25060     21      0      0      0      0
+           1    126    297   6347   5838      0      0      0      0      0
+            
+target_train   2024
+           0      0
+           1      0
+
+, ,  = Vox Maxima
+
+            
+target_train   2015   2016   2017   2018   2019   2020   2021   2022   2023
+           0   3682  37958  85945  10882  40057      0      0      0  94099
+           1   1100   6221   7510     74    127      0      0      0   1420
+            
+target_train   2024
+           0 176671
+           1   6271
+
+   Vérification des packages requis...
+Loading required package: Matrix
+Loaded glmnet 4.1-9
+Loading required package: foreach
+Loading required package: iterators
+   Configuration du parallélisme glmnet...
+   Parallélisme configuré pour glmnet ( 12  cœurs)
+   Conversion en matrice creuse pour économiser la mémoire...
+   Matrice creuse globale créée: 286.1 MB
+   Matrice creuse d'entraînement: 286.1 MB (vs 328.3 MB dense)
+   📊 Distribution des classes par fold (données d'entraînement):
+            
+target_train       1       2       3       4       5       6       7       8
+           0   91757  180185  508923  627219  578335  632479  626423 1020729
+           1    7873   11985   38827   43655   36906   32232   24990  107844
+            
+target_train       9      10
+           0 1478429 2374523
+           1   95739   87599
+     Fold 1/10 (année 2015)...
+       Dredging (train/test): 479777/7873, Non-dredging (train/test): 8027245/91757
+       AUC fold 1: 0.9665
+     Fold 2/10 (année 2016)...
+       Dredging (train/test): 475665/11985, Non-dredging (train/test): 7938817/180185

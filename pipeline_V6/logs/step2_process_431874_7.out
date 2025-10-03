@@ -1,0 +1,32 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 7 ===
+Job ID: 431874_7
+Node: rc31703
+Début: Fri Jul 25 07:38:08 EDT 2025
+📦 Job fractionnement référence: 430408
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 11362 Jul 25 06:15 step2_process_navire.R
+✅ Lancement traitement navire 7...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-25 07:38:08 
+✅ R configuré avec library: /home/benl/R/library 
+✅ Packages chargés - Configuration mono-thread activée
+📌 Script hash reçu: non défini 
+📋 Task ID: 7 
+📋 Split Job ID: 430408 
+📊 Métadonnées chargées: 10 navires
+🚢 Navire sélectionné: Cristobal Colon 
+📁 Fichier input: ~/scratch/ais_split_430408/navire_07_Cristobal_Colon.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 838311 observations
+Error in bmerge(i, x, leftcols, rightcols, roll, rollends, nomatch, mult,  : 
+  Incompatible join types: x.ssvid (integer) and i.ssvid (character)
+Calls: source ... [.data.table -> bmerge -> stopf -> raise_condition -> signal
+In addition: Warning messages:
+1: package ‘lubridate’ was built under R version 4.5.0 
+2: package ‘zoo’ was built under R version 4.5.0 
+3: In readLines(file, warn = readLines.warn) :
+  incomplete final line found on '~/R_scripts/configuration/ship_specs.yaml'
+Execution halted
+✅ Étape 2 terminée: Fri Jul 25 07:38:09 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_431874/

@@ -1,0 +1,232 @@
+✅ R cherchera les packages dans : /home/benl/R/library | /home/benl/.local/R/4.2.1 | /cvmfs/soft.computecanada.ca/easybuild/software/2020/avx512/Core/r/4.2.1/lib64/R/library 
+🚀 === ÉTAPE 3: FUSION ET GRID SEARCH (AVEC CHECK-POINTING) ===
+📦 Job fractionnement: 56779162 
+📁 Dossier résultats: /home/benl/scratch/ais_results_56779162 
+🖥️  Cores: 16 
+⏱️  Début: 2025-07-07 11:16:46 
+
+🗑️  Suppression du checkpoint GMM fautif pour forcer le recalcul
+🗑️  Suppression du checkpoint DBSCAN fautif pour forcer le recalcul
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_56779162 
+✅ Fichiers d'entrée vérifiés: 11 fichiers *_clean.rds trouvés
+
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-07-07 11:16:46 
+
+✅ R cherchera les packages dans : /home/benl/R/library | /home/benl/.local/R/4.2.1 | /cvmfs/soft.computecanada.ca/easybuild/software/2020/avx512/Core/r/4.2.1/lib64/R/library 
+
+🔍 DIAGNOSTIC DES PACKAGES REQUIS:
+   glmnet       : ✅ OK
+   doParallel   : ✅ OK
+   pROC         : ✅ OK
+   data.table   : ✅ OK
+   dbscan       : ✅ OK
+   mclust       : ✅ OK
+   yaml         : ✅ OK
+   geosphere    : ✅ OK
+   lubridate    : ✅ OK
+   zoo          : ✅ OK
+   solitude     : ✅ OK
+   depmixS4     : ✅ OK
+
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+💾  Source : /home/benl/scratch/ais_results_56779162 
+💾  Sortie : /home/benl/scratch/output_V6 
+💾  Checkpoints : /home/benl/scratch/output_V6/checkpoints 
+
+✅  Packages chargés | 16 threads data.table
+✅  YAML chargé
+🔄  Reload checkpoint: stage3A_fusion.rds 
+🔧  Vérification des types de colonnes...
+ Types des colonnes critiques:
+   Navire    : character
+   ssvid     : integer
+   Seg_id    : character
+   Annee     : numeric
+🔍 Vérifications supplémentaires critiques...
+✅ Colonne 'is_stop' présente
+✅ Colonnes géographiques présentes
+✅ Colonnes géographiques converties en numeric
+✅ Aucun doublon détecté
+📊 Utilisation mémoire: 0.94 GB
+✅ Types de colonnes vérifiés et corrigés
+
+⏱️  Détection pics temporels isolés…
+📐  Filtrage contextuel…
+🔧  Harmonisation des types pour la jointure des percentiles...
+🔧  Vérification des types avant jointure:
+   Table principale - Navire: character 
+   Table percentiles - Navire: character 
+⚙️  Compute & save checkpoint: stage3B_dbscan.rds 
+🔍  Détection des arrêts spatiaux par DBSCAN...
+📊 Traitement DBSCAN pour 96 combinaisons navire/année
+⚠️  Gros arrêt détecté pour Charles Darwin 2015 ( 38045 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2016 ( 41566 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2017 ( 73339 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2018 ( 75700 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2019 ( 33583 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2020 ( 38995 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2021 ( 100057 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2022 ( 93468 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2023 ( 161829 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Charles Darwin 2024 ( 186581 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2015 ( 29905 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2016 ( 19870 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2017 ( 37953 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2018 ( 42797 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2019 ( 58631 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2020 ( 74511 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2021 ( 93444 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2022 ( 87098 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2023 ( 208055 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Ham 318 2024 ( 109750 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2015 ( 18504 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2016 ( 8328 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2017 ( 38330 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2018 ( 91709 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2019 ( 40833 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2020 ( 76598 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2021 ( 65529 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2022 ( 98495 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2023 ( 141064 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Leiv Eiriksson 2024 ( 195503 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2015 ( 32597 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2016 ( 28271 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2017 ( 21080 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2018 ( 36929 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2019 ( 22993 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2020 ( 34326 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2021 ( 60650 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2022 ( 78422 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2023 ( 76375 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Fairway 2024 ( 198294 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2015 ( 21564 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2016 ( 11721 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2017 ( 24750 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2018 ( 98852 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2019 ( 84642 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2020 ( 32221 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2021 ( 44337 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2022 ( 70884 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2023 ( 57023 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Queen Of The Netherlands 2024 ( 181691 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2015 ( 57812 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2016 ( 72133 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2017 ( 137947 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2018 ( 164287 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2019 ( 180371 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2020 ( 178292 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2021 ( 75310 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2023 ( 15620 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Goryo 6 Ho 2024 ( 5586 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2015 ( 10112 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2016 ( 15776 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2017 ( 30370 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2018 ( 25044 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2019 ( 8651 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2020 ( 19347 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2021 ( 37335 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2022 ( 92294 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2023 ( 113415 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Cristobal Colon 2024 ( 224436 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Congo River 2020 ( 34509 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Congo River 2021 ( 39216 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Congo River 2022 ( 86652 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Congo River 2023 ( 103510 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Congo River 2024 ( 180968 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2015 ( 12096 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2017 ( 35632 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2018 ( 51180 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2019 ( 86734 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2020 ( 130490 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2021 ( 91215 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2022 ( 76427 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2023 ( 63177 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Inai Kenanga 2024 ( 139636 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2015 ( 25186 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2016 ( 45733 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2017 ( 69976 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2018 ( 25557 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2019 ( 48454 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2023 ( 84488 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vox Maxima 2024 ( 127383 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vasco Da Gama 2015 ( 32538 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vasco Da Gama 2016 ( 49646 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vasco Da Gama 2017 ( 39858 points) - Échantillonnage pour eps
+⚠️  Gros arrêt détecté pour Vasco Da Gama 2018 ( 16673 points) - Échantillonnage pour eps
+✅ DBSCAN terminé - Checkpoint sauvegardé
+✅ Vérification: Colonne 'is_stop_spatial' présente
+✅ Checkpoint sauvegardé: stage3B_dbscan.rds 
+🔧  Cadence AIS & seuils adaptatifs par navire
+                      Navire  p50_dt seuil_adaptatif n_min prop_long
+                      <char>   <num>           <num> <num>     <num>
+ 1:              Congo River  97.000         291.000     3 0.1492676
+ 2:          Cristobal Colon 108.000         324.000     3 0.2095158
+ 3:                  Ham 318 130.690         392.070     3 0.2076991
+ 4:           Charles Darwin 136.000         408.000     3 0.1950150
+ 5:           Leiv Eiriksson 140.556         421.668     3 0.1719962
+ 6:                  Fairway 150.000         450.000     3 0.2229586
+ 7: Queen Of The Netherlands 176.000         528.000     3 0.2418194
+ 8:               Vox Maxima 179.000         537.000     3 0.2829589
+ 9:             Inai Kenanga 180.000         540.000     3 0.2631950
+10:               Goryo 6 Ho 188.000         564.000     3 0.2574560
+11:            Vasco Da Gama 361.000        1200.000     3 0.6178954
+⚙️  Compute & save checkpoint: stage3C_gmm.rds 
+🔧  GMM « stop + K mobiles » – sélection K par BIC (3-5) - ROBUSTE
+   Échantillon pour BIC: 1000000 points (sur 2896820 )
+   ➜  K retenu par BIC : 3 composantes mobiles
+   Échantillon pour ajustement final: 2000000 points (sur 2896820 )
+   μ mobiles triés : 1.72 / 7.82 / 12.55 kn
+✅  GMM ROBUSTE terminé – 783861 853811 1353488 5607038 états après lissage
+✅ Checkpoint sauvegardé: stage3C_gmm.rds 
+⚙️  Compute & save checkpoint: stage3D_gridsearch.rds 
+🔍  Grid-search (poids score dragage) - CORRIGÉ POUR ÉVITER DATA LEAKAGE
+   Validation croisée par année: 10 folds
+   Vérification des valeurs manquantes dans les prédicteurs...
+   Valeurs NA par prédicteur: p3:0, norm_course:0, norm_acc:0, speed_bin:0, speed_norm:0 
+   Valeurs NA remplacées par 0
+   Prédicteurs utilisés: p3, norm_course, norm_acc, speed_bin, speed_norm 
+   Classes cibles: 7814337 783861 
+   Vérification des packages requis...
+Loading required package: Matrix
+Loaded glmnet 4.1-9
+Loading required package: foreach
+Loading required package: iterators
+   Configuration du parallélisme glmnet...
+   Parallélisme configuré pour glmnet ( 12  cœurs)
+     Fold 1/10 (année 2015)...
+       Erreur fold 1: missing value where TRUE/FALSE needed
+     Fold 2/10 (année 2016)...
+       Erreur fold 2: missing value where TRUE/FALSE needed
+     Fold 3/10 (année 2017)...
+       Erreur fold 3: missing value where TRUE/FALSE needed
+     Fold 4/10 (année 2018)...
+       Erreur fold 4: missing value where TRUE/FALSE needed
+     Fold 5/10 (année 2019)...
+       Erreur fold 5: missing value where TRUE/FALSE needed
+     Fold 6/10 (année 2020)...
+       Erreur fold 6: missing value where TRUE/FALSE needed
+     Fold 7/10 (année 2021)...
+       Erreur fold 7: missing value where TRUE/FALSE needed
+     Fold 8/10 (année 2022)...
+       Erreur fold 8: missing value where TRUE/FALSE needed
+     Fold 9/10 (année 2023)...
+       Erreur fold 9: missing value where TRUE/FALSE needed
+     Fold 10/10 (année 2024)...
+       Erreur fold 10: missing value where TRUE/FALSE needed
+   AUC moyen CV: 0.0000 ± 0.0000 (n=10 folds)
+Error in best_models[[best_fold]] : subscript out of bounds
+Calls: source -> withVisible -> eval -> eval -> checkpoint -> force
+In addition: Warning messages:
+1: package ‘zoo’ was built under R version 4.5.0 
+2: package ‘dbscan’ was built under R version 4.5.0 
+3: package ‘mclust’ was built under R version 4.5.0 
+4: package ‘Rsolnp’ was built under R version 4.5.0 
+5: package ‘pROC’ was built under R version 4.5.0 
+6: package ‘foreach’ was built under R version 4.5.0 
+7: package ‘iterators’ was built under R version 4.5.0 
+Execution halted

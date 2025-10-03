@@ -1,0 +1,23 @@
+🚀 === ÉTAPE 3 OPTIMIZED: FUSION ET GRID SEARCH ===
+Job ID: 56947107
+Node: bc11944
+Début: Mon 30 Jun 2025 10:15:34 AM EDT
+💾 Mémoire allouée: 128 GB
+🖥️  CPU: 16 cores
+📦 Job fractionnement référence: 56779162
+📁 Dossier de résultats: auto-détection par le script R
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 30582 Jun 30 08:18 step3_merge_final.R
+🧹 Nettoyage mémoire système...
+⚠️  Impossible de nettoyer le cache (normal sur certains systèmes)
+✅ Lancement fusion et grid search optimisé...
+Error in source("step3_merge_final.R") : 
+  step3_merge_final.R:737:2: unexpected ','
+736:   list(ais = ais, best = best, auc = auc)
+737: },
+      ^
+Execution halted
+❌ Erreur lors de la fusion: code 1
+📋 Logs d'erreur disponibles dans:
+   - logs/step3_merge_56947107.out
+   - logs/step3_merge_56947107.err

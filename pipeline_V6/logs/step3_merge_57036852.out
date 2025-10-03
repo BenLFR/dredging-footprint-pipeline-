@@ -1,0 +1,63 @@
+=== ETAPE 3 OPTIMIZED: FUSION ET GRID SEARCH ===
+Job ID: 57036852
+Node: bc11954
+Debut: Wed 02 Jul 2025 05:51:36 PM EDT
+Memoire allouee: 128 GB
+CPU: 16 cores
+Job fractionnement reference: 56779162
+Dossier de resultats: auto-detection
+Auto-detection du dossier de resultats...
+Dossier trouve: /home/benl/scratch/ais_results_56779162
+Verification des fichiers d'entree...
+Fichiers d'entree verifies: 11 fichiers *_clean.rds trouves
+Repertoire de travail: /home/benl/R_scripts/pipeline_V6
+Verification fichier R: -rw-r-----. 1 benl benl 44988 Jul  2 17:48 step3_merge_final.R
+Nettoyage memoire systeme...
+Impossible de nettoyer le cache (normal sur certains systemes)
+Lancement fusion et grid search optimise...
+🚀 === ÉTAPE 3: FUSION ET GRID SEARCH (AVEC CHECK-POINTING) ===
+📦 Job fractionnement: 56779162 
+📁 Dossier résultats: /home/benl/scratch/ais_results_56779162 
+🖥️  Cores: 16 
+⏱️  Début: 2025-07-02 17:51:48 
+
+🗑️  Suppression du checkpoint DBSCAN fautif pour forcer le recalcul
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_56779162 
+✅ Fichiers d'entrée vérifiés: 11 fichiers *_clean.rds trouvés
+
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-07-02 17:51:49 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+💾  Source : /home/benl/scratch/ais_results_56779162 
+💾  Sortie : /home/benl/scratch/output_V6 
+💾  Checkpoints : /home/benl/scratch/output_V6/checkpoints 
+
+Error in library(geosphere) : there is no package called ‘geosphere’
+Calls: source ... suppressPackageStartupMessages -> withCallingHandlers -> library
+Execution halted
+Fusion et grid search termines avec succes: Wed Jul  2 17:52:06 EDT 2025
+=== RESUME FINAL ===
+Fichiers generes dans /home/benl/scratch/output_V6/:
+-rw-r-----. 1 benl benl  88M Jun 30 13:16 /home/benl/scratch/output_V6/AIS_data_core_preprocessed_V6_20250630_130426.rds
+-rw-r-----. 1 benl benl  88M Jun 30 13:17 /home/benl/scratch/output_V6/AIS_data_core_preprocessed_V6_20250630_131048.rds
+-rw-r-----. 1 benl benl 132M Jul  1 07:26 /home/benl/scratch/output_V6/AIS_data_core_preprocessed_V6_20250701_071858.rds
+-rw-r-----. 1 benl benl 132M Jul  1 10:40 /home/benl/scratch/output_V6/AIS_data_core_preprocessed_V6_20250701_103249.rds
+-rw-r-----. 1 benl benl 208 Jun 30 13:16 /home/benl/scratch/output_V6/dragage_gridsearch_results_V6_20250630_130426.rds
+-rw-r-----. 1 benl benl 208 Jun 30 13:17 /home/benl/scratch/output_V6/dragage_gridsearch_results_V6_20250630_131048.rds
+-rw-r-----. 1 benl benl 204 Jul  1 07:26 /home/benl/scratch/output_V6/dragage_gridsearch_results_V6_20250701_071858.rds
+-rw-r-----. 1 benl benl 204 Jul  1 10:40 /home/benl/scratch/output_V6/dragage_gridsearch_results_V6_20250701_103249.rds
+
+=== VÉRIFICATION DES STATISTIQUES GMM ===
+Extraction des statistiques GMM depuis les logs...
+📊 Statistiques GMM détectées:
+   Aucune statistique GMM trouvée
+
+🔄 Réordonnance des composantes:
+   Aucune information de réordonnance trouvée
+ETAPE 3 OPTIMIZED TERMINEE !

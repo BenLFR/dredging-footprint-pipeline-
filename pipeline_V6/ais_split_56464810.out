@@ -1,0 +1,27 @@
+🚀 === PIPELINE V6 BELUGA - DÉMARRAGE SIMPLIFIÉ ===
+Timestamp: Fri 13 Jun 2025 05:26:33 AM EDT
+📂 Répertoire pipeline: /home/benl/R_scripts/pipeline_V6
+📊 Données source: ~/scratch/benjamin2.csv
+📦 Lancement Étape 1: Fractionnement...
+✅ Job 1 (Split) soumis: 56464838
+🔄 Lancement Étape 2: Traitement par navire (max 12)...
+✅ Job 2 (Process Array) soumis: 56464839
+🏁 Lancement Étape 3: Fusion et Grid Search...
+✅ Job 3 (Merge Final) soumis: 56464840
+
+📋 === JOBS SOUMIS ===
+  1. Split:    56464838
+  2. Process:  56464839 (dépend de 56464838, array 1-12)
+  3. Merge:    56464840 (dépend de 56464839)
+
+🔍 Surveillance avec:
+  squeue -u $USER
+  watch -n 5 'squeue -u $USER'
+
+📁 Logs dans: /home/benl/R_scripts/pipeline_V6/logs/
+📊 Résultats finaux dans: ~/scratch/output/
+
+⏱️ Temps estimé total: ~4-6h
+🎯 Pipeline V6 lancé avec succès!
+
+📝 Note: Les tasks array >nb_navires s'arrêteront automatiquement

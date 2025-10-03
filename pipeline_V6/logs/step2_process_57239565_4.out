@@ -1,0 +1,50 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 4 ===
+Job ID: 57239565_4
+Node: bc11933
+Début: Thu 10 Jul 2025 10:11:40 AM EDT
+📦 Job fractionnement référence: 57238377
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 10307 Jul 10 09:05 step2_process_navire.R
+✅ Lancement traitement navire 4...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-10 10:12:01 
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 4 
+📋 Split Job ID: 57238377 
+📊 Métadonnées chargées: 11 navires
+🚢 Navire sélectionné: Fairway 
+📁 Fichier input: ~/scratch/ais_split_57238377/navire_04_Fairway.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 1038765 observations
+✅ Filtre vitesse physique : 1038765 → 1038686 lignes (99.99 % conservées)
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [11:01:02.747] dataset has duplicated rows
+INFO  [11:01:02.864] Building Isolation Forest ...
+INFO  [11:01:13.601] done
+INFO  [11:01:13.603] Computing depth of terminal nodes ...
+INFO  [11:01:14.328] done
+INFO  [11:01:31.788] Completed growing isolation forest
+  ✅ IF terminé: 30744 outliers sur 1038686 points
+🛑 Création de la colonne is_stop...
+✅ Colonne is_stop créée: 615796 arrêts détectés
+🔧 Création de colonnes supplémentaires...
+✅ Colonnes supplémentaires créées (Annee, Course_change, Accel)
+📊 RÉSULTATS NAVIRE: Fairway 
+  • Observations totales: 1038686 
+  • Outliers détectés: 30744 ( 2.96 %)
+  • Arrêts détectés: 615796 ( 59.29 %)
+💾 Sauvegarde: ~/scratch/ais_results_57239565/04_Fairway_clean.rds 
+✅ Navire Fairway traité avec succès: 2025-07-10 11:05:21 
+📁 Résultat: ~/scratch/ais_results_57239565/04_Fairway_clean.rds 
+Warning messages:
+1: In readLines(file, warn = readLines.warn) :
+  incomplete final line found on '~/R_scripts/configuration/ship_specs.yaml'
+2: In rbindlist(spec_list, fill = TRUE) :
+  Column 4 ['suction_pipe_diameter_mm'] of item 11 is length 0. This (and 1 other like it) has been filled with NA (NULL for list columns) to make each item uniform.
+✅ Étape 2 terminée: Thu Jul 10 11:05:22 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_57239565/

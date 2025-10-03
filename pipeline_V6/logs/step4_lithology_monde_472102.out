@@ -1,0 +1,40 @@
+🏁 === ÉTAPE 4: AJOUT LITHOLOGIE (MONDE) ===
+Job ID: 472102
+Node: rc31905
+Début: Sat 26 Jul 2025 05:48:48 AM EDT
+✅ Lancement ajout lithologie clean (monde)...
+📁 Source: ~/scratch/output_V6/
+💾 Espace disque disponible:
+Filesystem                                   Size  Used Avail Use% Mounted on
+10.85.48.1@o2ib2:10.85.48.2@o2ib2:/lustre08   48G   37G   11G  78% /home
+📖 Lecture des données...
+🔍 Application du filtre BBOX...
+🌳 Construction KD-Tree et recherche des plus proches voisins...
+📊 Affectation des lithologies et filtrage...
+💾 Sauvegarde des résultats...
+✅  7066919 pings gardés (82.1 %)  /  1539733 rejetés
+
+— Distribution des lithologies (pings retenus) —
+                          lithologie       N
+                              <char>   <int>
+ 1:                             sand 2511272
+ 2:                  Calcareous ooze 2243614
+ 3:                             clay 1921959
+ 4: fine-grained calcareous sediment  223946
+ 5:     ash and volcanic sand/gravel   76637
+ 6:                    siliceous mud   57146
+ 7:        shell and coral fragments   16120
+ 8:                      diatom ooze   13276
+ 9:                             silt    1169
+10:                       mixed ooze     794
+11:                           gravel     608
+12:                 radiolarian ooze     378
+
+🏁 Étape 4 terminée avec succès : 2025-07-26 05:50:00 
+✅ Ajout lithologie clean (monde) terminé avec succès: Sat 26 Jul 2025 05:50:00 AM EDT
+📊 === RÉSUMÉ FINAL ===
+-rw-r-----. 1 benl benl 261M Jul 17 08:51 /home/benl/scratch/output_V6/AIS_with_lithology_clean_20250711_193119.rds
+-rw-r-----. 1 benl benl 261M Jul 26 05:49 /home/benl/scratch/output_V6/AIS_with_lithology_clean_20250726_054850.rds
+📦 Taille du fichier de sortie: 202M
+📊 Nombre de lignes: [1] 7066919
+🎉 ÉTAPE 4 (MONDE) TERMINÉE !

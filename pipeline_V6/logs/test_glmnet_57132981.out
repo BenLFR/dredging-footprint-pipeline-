@@ -1,0 +1,10 @@
+=== TEST GLMNET DANS CONTEXTE SLURM ===
+Job ID: 57132981
+Node: bc11220
+Debut: Sun 06 Jul 2025 08:41:32 AM EDT
+Test de chargement de glmnet...
+✅ R configuré avec library: /home/benl/R/library 
+✅ R cherchera les packages dans : /home/benl/R/library | /home/benl/.local/R/4.2.1 | /cvmfs/soft.computecanada.ca/easybuild/software/2020/avx512/Core/r/4.2.1/lib64/R/library 
+✅ glmnet chargé avec succès
+Version glmnet: ❌ Erreur lors du chargement de glmnet: ❌ Test échoué : certains packages manquent
+Fin du test: Sun Jul  6 08:41:41 EDT 2025

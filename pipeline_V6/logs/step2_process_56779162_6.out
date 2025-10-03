@@ -1,0 +1,46 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 6 ===
+Job ID: 56779162_6
+Node: bc11238
+Début: Thu 26 Jun 2025 12:09:19 PM EDT
+📦 Job fractionnement référence: 56777970
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 8055 Jun 26 11:53 step2_process_navire.R
+✅ Lancement traitement navire 6...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-06-26 12:09:21 
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 6 
+📋 Split Job ID: 56777970 
+📊 Métadonnées chargées: 11 navires
+🚢 Navire sélectionné: Goryo 6 Ho 
+📁 Fichier input: ~/scratch/ais_split_56777970/navire_06_Goryo_6_Ho.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 942182 observations
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [12:09:25.594] dataset has duplicated rows
+INFO  [12:09:25.732] Building Isolation Forest ...
+INFO  [12:09:37.328] done
+INFO  [12:09:37.331] Computing depth of terminal nodes ...
+INFO  [12:09:38.003] done
+INFO  [12:09:54.750] Completed growing isolation forest
+  ✅ IF terminé: 28100 outliers sur 942182 points
+🛑 Création de la colonne is_stop...
+✅ Colonne is_stop créée: 927540 arrêts détectés
+🔧 Création de colonnes supplémentaires...
+✅ Colonnes supplémentaires créées (Annee, Course_change, Accel)
+📊 RÉSULTATS NAVIRE: Goryo 6 Ho 
+  • Observations totales: 942182 
+  • Outliers détectés: 28100 ( 2.98 %)
+  • Arrêts détectés: 927540 ( 98.45 %)
+💾 Sauvegarde: ~/scratch/ais_results_56779162/06_Goryo_6_Ho_clean.rds 
+✅ Navire Goryo 6 Ho traité avec succès: 2025-06-26 12:10:49 
+📁 Résultat: ~/scratch/ais_results_56779162/06_Goryo_6_Ho_clean.rds 
+Warning message:
+In rm(dt_nav, if_model) : object 'if_model' not found
+✅ Étape 2 terminée: Thu Jun 26 12:10:50 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_56779162/

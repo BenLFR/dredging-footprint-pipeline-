@@ -1,0 +1,130 @@
+�� === ÉTAPE 3 CORRIGÉE: FUSION ET GRID SEARCH ===
+Job ID: 56668583
+Node: bc12238
+Début: Mon Jun 23 07:42:10 EDT 2025
+�� Job fractionnement référence: 20250623055849
+🔍 Vérification des fichiers d'entrée...
+❌ ERREUR: Répertoire ~/scratch/ais_split_20250623055849 non trouvé
+   Répertoires disponibles:
+/home/benl/scratch/ais_split_20250617101825:
+total 58
+drwxr-x---.  2 benl benl 25600 Jun 17 10:18 .
+drwx------. 25 benl benl 33792 Jun 23 06:05 ..
+
+/home/benl/scratch/ais_split_20250617102034:
+total 67617
+drwxr-x---.  2 benl benl   25600 Jun 17 10:22 .
+drwx------. 25 benl benl   33792 Jun 23 06:05 ..
+-rw-r-----.  1 benl benl 9891424 Jun 17 10:20 navire_01_Charles_Darwin.rds
+-rw-r-----.  1 benl benl 9240012 Jun 17 10:21 navire_02_Ham_318_Sleephopperzuiger.rds
+-rw-r-----.  1 benl benl 7623896 Jun 17 10:21 navire_03_Leiv_Eiriksson.rds
+-rw-r-----.  1 benl benl 7731572 Jun 17 10:21 navire_04_Queen_Of_The_Netherlands.rds
+-rw-r-----.  1 benl benl 7572900 Jun 17 10:22 navire_05_Fairway.rds
+-rw-r-----.  1 benl benl 5212080 Jun 17 10:22 navire_06_Goryo_6_Ho.rds
+-rw-r-----.  1 benl benl 5146400 Jun 17 10:22 navire_07_Cristobal_Colon.rds
+-rw-r-----.  1 benl benl 5034808 Jun 17 10:22 navire_08_Congo_River.rds
+-rw-r-----.  1 benl benl 5045884 Jun 17 10:22 navire_09_Inai_Kenanga.rds
+-rw-r-----.  1 benl benl 4661288 Jun 17 10:22 navire_10_Vox_Maxima.rds
+-rw-r-----.  1 benl benl 1311968 Jun 17 10:22 navire_11_Vasco_Da_Gama.rds
+-rw-r-----.  1 benl benl    1388 Jun 17 10:22 navires_metadata.csv
+
+/home/benl/scratch/ais_split_20250623055849:
+total 152551
+drwxr-x---.  2 benl benl   33792 Jun 23 06:09 .
+drwx------. 25 benl benl   33792 Jun 23 06:05 ..
+-rw-r-----.  1 benl benl 9895864 Jun 23 06:07 navire_01_Charles_Darwin_clean.rds
+-rw-r-----.  1 benl benl 9891424 Jun 23 05:59 navire_01_Charles_Darwin.rds
+-rw-r-----.  1 benl benl 9241848 Jun 23 06:07 navire_02_Ham_318_Sleephopperzuiger_clean.rds
+-rw-r-----.  1 benl benl 9240012 Jun 23 05:59 navire_02_Ham_318_Sleephopperzuiger.rds
+-rw-r-----.  1 benl benl 7625160 Jun 23 06:07 navire_03_Leiv_Eiriksson_clean.rds
+-rw-r-----.  1 benl benl 7623896 Jun 23 06:00 navire_03_Leiv_Eiriksson.rds
+-rw-r-----.  1 benl benl 7733644 Jun 23 06:07 navire_04_Queen_Of_The_Netherlands_clean.rds
+-rw-r-----.  1 benl benl 7731572 Jun 23 06:00 navire_04_Queen_Of_The_Netherlands.rds
+-rw-r-----.  1 benl benl 7574584 Jun 23 06:07 navire_05_Fairway_clean.rds
+-rw-r-----.  1 benl benl 7572900 Jun 23 06:00 navire_05_Fairway.rds
+-rw-r-----.  1 benl benl 5213840 Jun 23 06:06 navire_06_Goryo_6_Ho_clean.rds
+-rw-r-----.  1 benl benl 5212080 Jun 23 06:00 navire_06_Goryo_6_Ho.rds
+-rw-r-----.  1 benl benl 5148548 Jun 23 06:06 navire_07_Cristobal_Colon_clean.rds
+-rw-r-----.  1 benl benl 5146400 Jun 23 06:00 navire_07_Cristobal_Colon.rds
+-rw-r-----.  1 benl benl 5036192 Jun 23 06:06 navire_08_Congo_River_clean.rds
+-rw-r-----.  1 benl benl 5034808 Jun 23 06:01 navire_08_Congo_River.rds
+-rw-r-----.  1 benl benl 5047076 Jun 23 06:06 navire_09_Inai_Kenanga_clean.rds
+-rw-r-----.  1 benl benl 5045884 Jun 23 06:01 navire_09_Inai_Kenanga.rds
+-rw-r-----.  1 benl benl 4665632 Jun 23 06:06 navire_10_Vox_Maxima_clean.rds
+-rw-r-----.  1 benl benl 4661288 Jun 23 06:01 navire_10_Vox_Maxima.rds
+-rw-r-----.  1 benl benl 1314344 Jun 23 06:09 navire_11_Vasco_Da_Gama_clean.rds
+-rw-r-----.  1 benl benl 1311968 Jun 23 06:01 navire_11_Vasco_Da_Gama.rds
+-rw-r-----.  1 benl benl    1388 Jun 23 06:01 navires_metadata.csv
+
+/home/benl/scratch/ais_split_56435769:
+total 58
+drwxr-x---.  2 benl benl 25600 Jun 12 08:41 .
+drwx------. 25 benl benl 33792 Jun 23 06:05 ..
+
+/home/benl/scratch/ais_split_56464772:
+total 58
+drwxr-x---.  2 benl benl 25600 Jun 13 05:17 .
+drwx------. 25 benl benl 33792 Jun 23 06:05 ..
+
+/home/benl/scratch/ais_split_56464838:
+total 58
+drwxr-x---.  2 benl benl 25600 Jun 13 05:29 .
+drwx------. 25 benl benl 33792 Jun 23 06:05 ..
+
+/home/benl/scratch/ais_split_56464858:
+total 58
+drwxr-x---.  2 benl benl 25600 Jun 13 05:38 .
+drwx------. 25 benl benl 33792 Jun 23 06:05 ..
+
+/home/benl/scratch/ais_split_56464861:
+total 58
+drwxr-x---.  2 benl benl 25600 Jun 13 05:41 .
+drwx------. 25 benl benl 33792 Jun 23 06:05 ..
+
+/home/benl/scratch/ais_split_56464868:
+total 58
+drwxr-x---.  2 benl benl 25600 Jun 13 05:50 .
+drwx------. 25 benl benl 33792 Jun 23 06:05 ..
+
+/home/benl/scratch/ais_split_56464874:
+total 58
+drwxr-x---.  2 benl benl 25600 Jun 13 05:56 .
+drwx------. 25 benl benl 33792 Jun 23 06:05 ..
+
+/home/benl/scratch/ais_split_56464906:
+total 58
+drwxr-x---.  2 benl benl 25600 Jun 13 06:30 .
+drwx------. 25 benl benl 33792 Jun 23 06:05 ..
+
+/home/benl/scratch/ais_split_56502198:
+total 58
+drwxr-x---.  2 benl benl 25600 Jun 17 10:05 .
+drwx------. 25 benl benl 33792 Jun 23 06:05 ..
+
+/home/benl/scratch/ais_split_test_step1_final:
+total 135183
+drwxr-x---.  2 benl benl   33792 Jun 17 10:31 .
+drwx------. 25 benl benl   33792 Jun 23 06:05 ..
+-rw-r-----.  1 benl benl 9895864 Jun 17 10:31 navire_01_Charles_Darwin_clean.rds
+-rw-r-----.  1 benl benl 9891424 Jun 17 10:31 navire_01_Charles_Darwin.rds
+-rw-r-----.  1 benl benl 9241848 Jun 17 10:31 navire_02_Ham_318_Sleephopperzuiger_clean.rds
+-rw-r-----.  1 benl benl 9240012 Jun 17 10:31 navire_02_Ham_318_Sleephopperzuiger.rds
+-rw-r-----.  1 benl benl 7625160 Jun 17 10:31 navire_03_Leiv_Eiriksson_clean.rds
+-rw-r-----.  1 benl benl 7623896 Jun 17 10:31 navire_03_Leiv_Eiriksson.rds
+-rw-r-----.  1 benl benl 7733644 Jun 17 10:31 navire_04_Queen_Of_The_Netherlands_clean.rds
+-rw-r-----.  1 benl benl 7731572 Jun 17 10:31 navire_04_Queen_Of_The_Netherlands.rds
+-rw-r-----.  1 benl benl 7574584 Jun 17 10:31 navire_05_Fairway_clean.rds
+-rw-r-----.  1 benl benl 7572900 Jun 17 10:31 navire_05_Fairway.rds
+-rw-r-----.  1 benl benl 5213840 Jun 17 10:31 navire_06_Goryo_6_Ho_clean.rds
+-rw-r-----.  1 benl benl 5212080 Jun 17 10:31 navire_06_Goryo_6_Ho.rds
+-rw-r-----.  1 benl benl 5148548 Jun 17 10:31 navire_07_Cristobal_Colon_clean.rds
+-rw-r-----.  1 benl benl 5146400 Jun 17 10:31 navire_07_Cristobal_Colon.rds
+-rw-r-----.  1 benl benl 5036192 Jun 17 10:31 navire_08_Congo_River_clean.rds
+-rw-r-----.  1 benl benl 5034808 Jun 17 10:31 navire_08_Congo_River.rds
+-rw-r-----.  1 benl benl 5047076 Jun 17 10:31 navire_09_Inai_Kenanga_clean.rds
+-rw-r-----.  1 benl benl 5045884 Jun 17 10:31 navire_09_Inai_Kenanga.rds
+-rw-r-----.  1 benl benl 4665632 Jun 17 10:31 navire_10_Vox_Maxima_clean.rds
+-rw-r-----.  1 benl benl 4661288 Jun 17 10:31 navire_10_Vox_Maxima.rds
+-rw-r-----.  1 benl benl 1314344 Jun 17 10:31 navire_11_Vasco_Da_Gama_clean.rds
+-rw-r-----.  1 benl benl 1311968 Jun 17 10:31 navire_11_Vasco_Da_Gama.rds
+-rw-r-----.  1 benl benl    1399 Jun 17 10:31 navires_metadata.csv

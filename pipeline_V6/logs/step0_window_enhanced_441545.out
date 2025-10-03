@@ -1,0 +1,58 @@
+🔍 === STEP 0bis ENHANCED : FENÊTRE OPTIMALE (job 441545) ===
+Node:  rc32012
+Début: Fri 25 Jul 2025 11:13:41 AM EDT
+✅  Répertoire courant: /home/benl/R_scripts/pipeline_V6
+✅  Lancement step0_core_window_enhanced.R ...
+
+📊  STEP-0 ENHANCED  |  Core Period Selection via Coverage Matrix |  début : 2025-07-25 11:13:42 
+
+📁  INPUT  : ~/AIS_data/benjamin3_clean.csv 
+📁  OUTPUT : ~/scratch/output_V6 
+
+🔍  Fichier détecté : benjamin3_clean.csv 
+
+✅ 11 321 384 lignes chargées.
+
+✅ Matrice couverture : 11 navires × 12 années
+📊 Matrice de couverture exportée : coverage_matrix.csv
+🔍 Analyse de toutes les fenêtres candidates (min 5 ans)...
+  |                                                                              |                                                                      |   0%  |                                                                              |==                                                                    |   4%  |                                                                              |=====                                                                 |   7%  |                                                                              |========                                                              |  11%  |                                                                              |==========                                                            |  14%  |                                                                              |============                                                          |  18%  |                                                                              |===============                                                       |  21%  |                                                                              |==================                                                    |  25%  |                                                                              |====================                                                  |  29%  |                                                                              |======================                                                |  32%  |                                                                              |=========================                                             |  36%  |                                                                              |============================                                          |  39%  |                                                                              |==============================                                        |  43%  |                                                                              |================================                                      |  46%  |                                                                              |===================================                                   |  50%  |                                                                              |======================================                                |  54%  |                                                                              |========================================                              |  57%  |                                                                              |==========================================                            |  61%  |                                                                              |=============================================                         |  64%  |                                                                              |================================================                      |  68%  |                                                                              |==================================================                    |  71%  |                                                                              |====================================================                  |  75%  |                                                                              |=======================================================               |  79%  |                                                                              |==========================================================            |  82%  |                                                                              |============================================================          |  86%  |                                                                              |==============================================================        |  89%  |                                                                              |=================================================================     |  93%  |                                                                              |====================================================================  |  96%  |                                                                              |======================================================================| 100%
+✅ 36 fenêtres candidates analysées
+🎯 Fenêtre optimale : 2015-2024 (10 ans)
+   • Couverture médiane : 98.4 %
+   • Couverture minimale : 93.4 %
+   • CV annuel           : 0.023
+   • Score               : 8.395
+   • Navires actifs      : 11
+
+🏆 TOP 10 FENÊTRES CANDIDATES:
+    1. 2015-2024 (10 ans) | Score: 8.395 | Médiane: 98.4% | Navires: 11
+    2. 2016-2024 (9 ans) | Score: 7.588 | Médiane: 98.9% | Navires: 11
+    3. 2015-2023 (9 ans) | Score: 7.512 | Médiane: 97.8% | Navires: 11
+    4. 2017-2024 (8 ans) | Score: 6.748 | Médiane: 99.0% | Navires: 11
+    5. 2016-2023 (8 ans) | Score: 6.696 | Médiane: 98.2% | Navires: 11
+    6. 2015-2022 (8 ans) | Score: 6.671 | Médiane: 97.7% | Navires: 11
+    7. 2013-2024 (12 ans) | Score: 6.383 | Médiane: 97.7% | Navires: 11
+    8. 2018-2024 (7 ans) | Score: 6.203 | Médiane: 99.2% | Navires: 11
+    9. 2017-2023 (7 ans) | Score: 5.893 | Médiane: 98.9% | Navires: 11
+   10. 2014-2024 (11 ans) | Score: 5.878 | Médiane: 97.8% | Navires: 11
+
+📊 Avantage de la meilleure fenêtre: 0.806 (10.6%)
+🔍  Navires actifs dans la fenêtre : 11 (sur 11 total)
+
+📄  Résumé markdown : core_window_enhanced_report.md
+📋  Configuration YAML : core_window.yaml
+🚢  Liste navires : core_ships.csv
+📊  Toutes les fenêtres : all_candidate_windows.csv
+🏆  Top 20 fenêtres : top_20_windows.csv
+📈  Stats annuelles : yearly_coverage_stats.csv
+💾  Fichiers dans ~/scratch/output_V6 
+⏱️  Fin : 2025-07-25 11:13:54 
+
+✅ STEP-0 ENHANCED terminé avec succès : 2025-07-25 11:13:54 
+📄  Fichier de sélection : ~/scratch/output_V6/core_window_enhanced_report.md 
+✅  STEP 0bis ENHANCED terminé avec succès : Fri 25 Jul 2025 11:13:54 AM EDT
+📄  Fichier de sélection : ~/scratch/output_V6/core_window_report.md
+📊  Analyse complète : ~/scratch/output_V6/all_windows_analysis.csv
+🏆  Top 20 fenêtres : ~/scratch/output_V6/top_20_windows.csv
+📈  Statistiques annuelles : ~/scratch/output_V6/annual_statistics.csv

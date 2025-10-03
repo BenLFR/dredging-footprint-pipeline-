@@ -1,0 +1,54 @@
+✅ R cherchera les packages dans : /home/benl/R/library | /home/benl/.local/R/4.2.1 | /cvmfs/soft.computecanada.ca/easybuild/software/2020/avx512/Core/r/4.2.1/lib64/R/library 
+🚀 === ÉTAPE 3: FUSION ET GRID SEARCH (AVEC CHECK-POINTING) ===
+📦 Job fractionnement: 56779162 
+📁 Dossier résultats: /home/benl/scratch/ais_results_56779162 
+🖥️  Cores: 16 
+⏱️  Début: 2025-07-09 20:02:20 
+
+🗑️  Suppression du checkpoint GMM fautif pour forcer le recalcul
+🗑️  Suppression du checkpoint DBSCAN fautif pour forcer le recalcul
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_56779162 
+✅ Fichiers d'entrée vérifiés: 11 fichiers *_clean.rds trouvés
+
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-07-09 20:02:21 
+
+✅ R cherchera les packages dans : /home/benl/R/library | /home/benl/.local/R/4.2.1 | /cvmfs/soft.computecanada.ca/easybuild/software/2020/avx512/Core/r/4.2.1/lib64/R/library 
+
+🔍 DIAGNOSTIC DES PACKAGES REQUIS:
+   glmnet       : ✅ OK
+   doParallel   : ✅ OK
+   pROC         : ✅ OK
+   data.table   : ✅ OK
+   dbscan       : ✅ OK
+   mclust       : ✅ OK
+   yaml         : ✅ OK
+   geosphere    : ✅ OK
+   lubridate    : ✅ OK
+   zoo          : ✅ OK
+   solitude     : ✅ OK
+   depmixS4     : ✅ OK
+   caret        : ❌ MANQUANT
+
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+💾  Source : /home/benl/scratch/ais_results_56779162 
+💾  Sortie : /home/benl/scratch/output_V6 
+💾  Checkpoints : /home/benl/scratch/output_V6/checkpoints 
+
+Error: package or namespace load failed for ‘ggplot2’ in dyn.load(file, DLLpath = DLLpath, ...):
+ unable to load shared object '/home/benl/R/library/cli/libs/cli.so':
+  /cvmfs/soft.computecanada.ca/gentoo/2020/lib64/libc.so.6: version `GLIBC_2.32' not found (required by /home/benl/R/library/cli/libs/cli.so)
+Error: package ‘ggplot2’ could not be loaded
+In addition: Warning messages:
+1: package ‘zoo’ was built under R version 4.5.0 
+2: package ‘dbscan’ was built under R version 4.5.0 
+3: package ‘mclust’ was built under R version 4.5.0 
+4: package ‘Rsolnp’ was built under R version 4.5.0 
+5: package ‘pROC’ was built under R version 4.5.0 
+6: package ‘caret’ was built under R version 4.5.0 
+7: package ‘ggplot2’ was built under R version 4.5.0 
+Execution halted

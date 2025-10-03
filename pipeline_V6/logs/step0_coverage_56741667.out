@@ -1,0 +1,49 @@
+📊 === ÉTAPE 0: ANALYSE COUVERTURE TEMPORELLE ===
+Job ID: 56741667
+Node: bc12047
+Début: Wed 25 Jun 2025 06:36:46 AM EDT
+✅ Lancement analyse couverture...
+
+📊  STEP-0  |  Analyse Couverture Temporelle (Méthode A)  |  début : 2025-06-25 06:36:49 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+🔧  Arguments CLI reçus :  
+📋  Paramètres finaux :
+   • β (beta_len) : 1 
+   • γ (gamma_med) : 1 
+   • δ (delta_min) : 2 
+   • λ (lambda_cv) : 1 
+   • Fenêtre min : 5 ans
+   • Présence min : 0.5 
+   • Couverture min : 0.1 
+   • Perte max : 0.15 
+
+📁  INPUT  : ~/scratch/AIS_data/benjamin2.csv 
+📁  OUTPUT : ~/scratch/output_V6 
+
+🔍  Fichier à traiter : benjamin2.csv 
+
+✅ Données lues : 10 432 017 lignes
+✅  Lecture terminée : 10 432 017 lignes  |  52.0 s
+🛳️  Navires détectés : 11 
+✔️  Années couvertes : 2013-2024 
+
+📊  Calcul matrice couverture...
+✅  Matrice couverture : 11 navires × 12 années
+🔍  Recherche fenêtre optimale (méthode A)...
+✅  Meilleure fenêtre trouvée : 2015 - 2024 | Score : 10 
+📊  Perte de données : 3.2 %
+🚢  Navires retenus : 11 
+💾  Sauvegarde résultats...
+
+📊  RÉSULTATS FINAUX  ---------------------------------------------
+🎯  Fenêtre retenue : 2015 - 2024 
+   • Score : 10 
+   • Durée : 10 années
+   • Navires : 11 
+   • Perte : 3.2 %
+
+💾  Fichiers sauvegardés dans ~/scratch/output_V6 
+⏱️  Fin : 2025-06-25 06:38:58 
+✅ Analyse couverture terminée avec succès: Wed Jun 25 06:38:59 EDT 2025
+📊 Résultats dans: ~/scratch/output_V6/

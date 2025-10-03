@@ -1,0 +1,54 @@
+🚀 === ÉTAPE 1: FRACTIONNEMENT PAR NAVIRE ===
+Job ID: 432562
+Node: rc31702
+Début: Fri 25 Jul 2025 08:59:53 AM EDT
+✅ Lancement script de fractionnement...
+📋 Configuration: ~/scratch/output_V6/core_window.yaml
+�� Input: ~/scratch/AIS_data/AIS_data_step0_input_ready_clean.rds
+
+🚀  STEP-1  |  FRACTIONNEMENT AIS PAR NAVIRE  |  début : 2025-07-25 08:59:54 
+
+✅ R configuré avec library: /home/benl/R/library 
+⚠️ QS non disponible, fallback vers RDS
+📁  INPUT  :  ~/scratch/AIS_data/*.csv 
+📁  OUTPUT :  ~/scratch/ais_split_432562 
+📋  CONFIG :  ~/scratch/output_V6/core_window.yaml 
+
+🔍  Lecture configuration step 0...
+📅  Fenêtre temporelle : 2015 - 2024 
+🚢  Navires sélectionnés : 11 
+   • Charles Darwin, Congo River, Cristobal Colon, Fairway, Ham 318, Inai Kenanga, Leiv Eiriksson, Queen Of The Netherlands, unknown_312062000, Vasco Da Gama, Vox Maxima 
+
+🔍  Lecture du fichier d'entrée via AIS_INPUT_FILE: ~/scratch/AIS_data/AIS_data_step0_input_ready_clean.rds 
+✅  Lecture terminée : 10 366 921 lignes  |  8.2 s
+🔍  Normalisation des noms de navires...
+   • Noms avant normalisation : unknown_1, Vasco Da Gama 
+   • Noms après normalisation : Vasco Da Gama, unknown_1 
+ℹ️  Aucun changement de noms nécessaire
+🔍  Application des filtres step 0...
+📊  Filtrage : 10 366 921 → 1 066 393 lignes (10.3% conservées)
+⚠️  Navires manquants dans la fenêtre : Charles Darwin, Congo River, Cristobal Colon, Fairway, Ham 318, Inai Kenanga, Leiv Eiriksson, Queen Of The Netherlands, unknown_312062000, Vox Maxima 
+✅  Filtrage terminé
+
+🚢  Navires détectés : 1 
+
+  |                                                                              |                                                                      |   0%  |                                                                              |======================================================================| 100%
+
+✅  Intégrité OK :  1066393  lignes vérifiées.
+
+📊  RÉCAP ---------------------------------------------------------
+          Navire n_observations
+          <char>          <int>
+1: Vasco Da Gama        1066393
+                                                file_path
+                                                   <char>
+1: ~/scratch/ais_split_432562/navire_01_Vasco_Da_Gama.rds
+
+💾  1 fichiers .rds (6.4 MB cumulés) écrits dans : ~/scratch/ais_split_432562
+
+🏁  STEP-1 terminé avec succès : 2025-07-25 09:00:18 
+✅ Étape 1 terminée avec succès: Fri Jul 25 09:00:18 EDT 2025
+📁 Fichiers sauvés dans le dossier de sortie configuré
+📊 RÉSUMÉ FRACTIONNEMENT:
+-rw-r-----. 1 benl benl 6.5M Jul 25 09:00 navire_01_Vasco_Da_Gama.rds
+Nombre de fichiers .rds générés: 1

@@ -1,0 +1,75 @@
+🔒 === ÉTAPE 3 OPTIMIZED: FUSION ET GRID SEARCH (AVEC VERROU NA) ===
+Job ID: 445153
+Node: rc31804
+Debut: Fri 25 Jul 2025 12:48:16 PM EDT
+Memoire allouee: 256 GB (OPTIMISÉE)
+CPU: 16 cores
+Temps maximum: 12 heures (OPTIMISÉ)
+Job fractionnement reference: 443953
+Dossier de resultats: auto-detection
+🔍 Vérification du patch NA définitif...
+✅ Patch NA définitif détecté
+✅ Verrou global détecté
+🗑️  Suppression du checkpoint fautif...
+✅ Checkpoint fautif supprimé
+🔍 Vérification des checkpoints valides...
+✅ Checkpoint fusion présent (sera réutilisé)
+-rw-r-----. 1 benl benl 90M Jul 17 08:48 /home/benl/scratch/output_V6/checkpoints/stage3A_fusion.rds
+✅ Checkpoint DBSCAN présent (sera réutilisé)
+-rw-r-----. 1 benl benl 88M Jul 17 08:48 /home/benl/scratch/output_V6/checkpoints/stage3B_dbscan.rds
+⏱️  Estimation du temps de reprise...
+   • Fusion: ~15 min (checkpoint réutilisé)
+   • DBSCAN: ~20 min (checkpoint réutilisé)
+   • GMM + Grid-search: ~60 min (recalculé avec 5 folds)
+   • Total estimé: ~60 min au lieu de 5h
+Auto-detection du dossier de resultats...
+Dossier trouve: /home/benl/scratch/ais_results_443953
+Verification des fichiers d'entree...
+Fichiers d'entree verifies: 10 fichiers *_clean.rds trouves
+Repertoire de travail: /home/benl/R_scripts/pipeline_V6
+Verification fichier R: -rw-r-----. 1 benl benl 66715 Jul 25 12:40 step3_merge_final.R
+Nettoyage memoire systeme...
+🚀 Lancement fusion et grid search optimise (AVEC VERROU NA ET 256G RAM)...
+✅ R cherchera les packages dans : /home/benl/R/4.3 | /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v4/Compiler/gcccore/r/4.3.1/lib64/R/library 
+🎯 Configuration optimisée: 5 folds de validation croisée
+🚀 === ÉTAPE 3: FUSION ET GRID SEARCH (AVEC CHECK-POINTING) ===
+📦 Job fractionnement: 443953 
+📁 Dossier résultats: /home/benl/scratch/ais_results_443953 
+🖥️  Cores: 16 
+⏱️  Début: 2025-07-25 12:48:18 
+
+🗑️  Suppression du checkpoint DBSCAN fautif pour forcer le recalcul
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_443953 
+✅ Fichiers d'entrée vérifiés: 10 fichiers *_clean.rds trouvés
+
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-07-25 12:48:18 
+
+✅ R cherchera les packages dans : /home/benl/R/4.3 | /cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v4/Compiler/gcccore/r/4.3.1/lib64/R/library 
+
+🔍 DIAGNOSTIC DES PACKAGES REQUIS:
+   glmnet       : ❌ MANQUANT
+   doParallel   : ❌ MANQUANT
+   pROC         : ❌ MANQUANT
+   data.table   : ✅ OK
+   dbscan       : ❌ MANQUANT
+   mclust       : ✅ OK
+   yaml         : ✅ OK
+   geosphere    : ❌ MANQUANT
+   lubridate    : ✅ OK
+   zoo          : ✅ OK
+   solitude     : ✅ OK
+   depmixS4     : ❌ MANQUANT
+
+✅ Fichiers *_clean.rds trouvés: 10 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 7 autres
+💾  Source : /home/benl/scratch/ais_results_443953 
+💾  Sortie : /home/benl/scratch/output_V6 
+💾  Checkpoints : /home/benl/scratch/output_V6/checkpoints 
+
+Error in library(dbscan) : there is no package called ‘dbscan’
+Calls: source ... suppressPackageStartupMessages -> withCallingHandlers -> library
+Execution halted

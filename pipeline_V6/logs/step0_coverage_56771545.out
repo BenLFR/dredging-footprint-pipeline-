@@ -1,0 +1,86 @@
+📊 === ÉTAPE 0: ANALYSE COUVERTURE TEMPORELLE ===
+Job ID: 56771545
+Node: bc21116
+Début: Thu 26 Jun 2025 05:21:42 AM EDT
+✅ Lancement analyse couverture...
+
+📊  STEP-0  |  Analyse Couverture Temporelle (Méthode A)  |  début : 2025-06-26 05:21:45 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+🔧  Arguments CLI reçus :
+📋  Paramètres finaux :
+   • β (beta_len) : 1 
+   • γ (gamma_med) : 1 
+   • δ (delta_min) : 2 
+   • λ (lambda_cv) : 1 
+   • Fenêtre min : 5 ans
+   • Présence min : 0.5 
+   • Couverture min : 0.1 
+   • Perte max : 0.15
+
+📁  INPUT  : ~/scratch/AIS_data/*.csv 
+📁  OUTPUT : ~/scratch/output_V6 
+
+🔍  Fichier à traiter : benjamin2.csv 
+
+✅  Lecture terminée : 10 432 017 lignes  |  3.4 s
+🛳️  Navires détectés : 11 
+                          N
+Navire                     189314 639077 803229 832988 905946 954488 1057785
+  Charles Darwin                0      0      0      0      0      0       0
+  Congo River                   0      0      0      1      0      0       0
+  Cristobal Colon               0      0      0      0      1      0       0
+  Fairway                       0      0      0      0      0      0       1
+  Goryo 6 Ho                    0      0      0      0      0      1       0
+  Ham 318                       0      0      0      0      0      0       0
+  Inai Kenanga                  0      0      1      0      0      0       0
+  Leiv Eiriksson                0      0      0      0      0      0       0
+  Queen Of The Netherlands      0      0      0      0      0      0       0
+  Vasco Da Gama                 1      0      0      0      0      0       0
+  Vox Maxima                    0      1      0      0      0      0       0
+                          N
+Navire                     1080409 1222900 1311228 1434653
+  Charles Darwin                 0       0       0       1
+  Congo River                    0       0       0       0
+  Cristobal Colon                0       0       0       0
+  Fairway                        0       0       0       0
+  Goryo 6 Ho                     0       0       0       0
+  Ham 318                        0       0       1       0
+  Inai Kenanga                   0       0       0       0
+  Leiv Eiriksson                 0       1       0       0
+  Queen Of The Netherlands       1       0       0       0
+  Vasco Da Gama                  0       0       0       0
+  Vox Maxima                     0       0       0       0
+✔️  Ping par navire (top 3) :
+           Navire       N
+           <char>   <int>
+1: Charles Darwin 1434653
+2:        Ham 318 1311228
+3: Leiv Eiriksson 1222900
+✔️  Années couvertes : 2013-2024 
+
+📊  Calcul matrice couverture...
+✅  Matrice couverture : 11 navires × 12 années
+📊  Filtrage adaptatif (perte max 5%)...
+✅  Filtrage adaptatif : 10 navires conservés | perte visée ≤ 5.0 %, réelle = 1.8 %
+📊  Filtrage adaptatif terminé — navires gardés : Charles Darwin, Ham 318, Leiv Eiriksson, Queen Of The Netherlands, Fairway, Goryo 6 Ho, Cristobal Colon, Congo River, Inai Kenanga, Vox Maxima 
+✅  Après filtrage adaptatif : 10 navires × 12 années
+🔍  Recherche fenêtre optimale (méthode A)...
+✅  Meilleure fenêtre trouvée : 2013 - 2024 | Score : 12 
+📊  Vérification perte de points...
+📊  Perte de données : 12.2 %
+🚢  Navires retenus : 9 
+💾  Sauvegarde résultats...
+
+📊  RÉSULTATS FINAUX  ---------------------------------------------
+🎯  Fenêtre retenue : 2013 - 2024 
+   • Score : 12 
+   • Durée : 12 années
+   • Navires : 9 
+   • Perte : 12.2 %
+
+💾  Fichiers sauvegardés dans ~/scratch/output_V6 
+⏱️  Fin : 2025-06-26 05:22:16 
+✅ Analyse couverture terminée avec succès: Thu Jun 26 05:22:16 EDT 2025
+📊 Résultats dans: ~/scratch/output_V6/
+📄 core_window.yaml disponible : ~/scratch/output_V6/core_window.yaml

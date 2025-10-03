@@ -1,0 +1,9 @@
+🔍 === STEP 0bis ENHANCED : FENÊTRE OPTIMALE (job 386426) ===
+Node:  rc12802
+Début: Thu Jul 24 08:29:40 EDT 2025
+✅  Répertoire courant: /home/benl/R_scripts/pipeline_V6
+✅  Lancement step0_core_window_enhanced.R ...
+
+📊  STEP-0 ENHANCED  |  Core Period Selection via Coverage Matrix |  début : 2025-07-24 08:29:41 
+
+❌  STEP 0bis ENHANCED a échoué (code 1)

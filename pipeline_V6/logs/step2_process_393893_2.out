@@ -1,0 +1,18 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 2 ===
+Job ID: 393893_2
+Node: rc31808
+Début: Thu Jul 24 11:11:06 EDT 2025
+📦 Job fractionnement référence: step1_20250724110029
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 10310 Jul 24 11:08 step2_process_navire.R
+✅ Lancement traitement navire 2...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-24 11:11:07 
+✅ R configuré avec library: /home/benl/R/library 
+Error in library(solitude) : there is no package called ‘solitude’
+Calls: source ... suppressPackageStartupMessages -> withCallingHandlers -> library
+In addition: Warning message:
+package ‘lubridate’ was built under R version 4.5.0 
+Execution halted
+✅ Étape 2 terminée: Thu Jul 24 11:11:08 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_393893/

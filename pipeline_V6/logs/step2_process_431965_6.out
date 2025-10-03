@@ -1,0 +1,42 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 6 ===
+Job ID: 431965_6
+Node: rc31703
+Début: Fri Jul 25 07:53:17 EDT 2025
+📦 Job fractionnement référence: 430408
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 10516 Jul 25 07:48 step2_process_navire.R
+✅ Lancement traitement navire 6...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-25 07:53:17 
+✅ R configuré avec library: /home/benl/R/library 
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 6 
+📋 Split Job ID: 430408 
+📊 Métadonnées chargées: 10 navires
+🚢 Navire sélectionné: Queen Of The Netherlands 
+📁 Fichier input: ~/scratch/ais_split_430408/navire_06_Queen_Of_The_Netherlands.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 1028255 observations
+✅ Filtre vitesse physique : 1028255 → 1027414 lignes (99.92 % conservées)
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [07:53:19.891] dataset has duplicated rows
+INFO  [07:53:19.965] Building Isolation Forest ...
+INFO  [07:53:27.658] done
+INFO  [07:53:27.659] Computing depth of terminal nodes ...
+Error in dyn.load(file, DLLpath = DLLpath, ...) : 
+  unable to load shared object '/home/benl/R/library/igraph/libs/igraph.so':
+  libicui18n.so.73: cannot open shared object file: No such file or directory
+Calls: source ... withCallingHandlers -> <Anonymous> -> value -> value.list
+In addition: Warning messages:
+1: package ‘lubridate’ was built under R version 4.5.0 
+2: package ‘zoo’ was built under R version 4.5.0 
+3: In readLines(file, warn = readLines.warn) :
+  incomplete final line found on '~/R_scripts/configuration/ship_specs.yaml'
+Timing stopped at: 11.96 0.256 8.555
+Execution halted
+✅ Étape 2 terminée: Fri Jul 25 07:53:28 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_431965/

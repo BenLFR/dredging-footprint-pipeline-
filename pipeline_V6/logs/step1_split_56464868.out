@@ -1,0 +1,36 @@
+🚀 === ÉTAPE 1: FRACTIONNEMENT PAR NAVIRE ===
+Job ID: 56464868
+Node: bc11231
+Début: Fri 13 Jun 2025 05:50:46 AM EDT
+✅ Lancement script de fractionnement...
+📂 Répertoire: /home/benl/R_scripts/pipeline_V6
+📊 Sortie: ~/scratch/ais_split_56464868/
+
+🚀  STEP-1  |  FRACTIONNEMENT AIS PAR NAVIRE  |  début : 2025-06-13 05:50:49 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+⚠️ QS non disponible, fallback vers RDS
+📁  INPUT  :  ~/scratch/AIS_data/*.csv 
+📁  OUTPUT :  ~/scratch/ais_split_56464868 
+
+🔍  CSV détectés : 13 
+   • benjamin2.csv 
+   • Charles Darwin.csv 
+   • Congo River.csv 
+   • Cristobal Colon.csv 
+   • Fair Way.csv 
+   • Goryo 6 HO.csv 
+   • HAM318.csv 
+   • INAI KENANGA.csv 
+   • LEIV EIRIKSSONN.csv 
+   • Queen of the netherlands.csv 
+   • Rotterdam.csv 
+   • Vasco de Gama.csv 
+   • VOX maxima.csv 
+
+✅  Lecture terminée : 12 218 766 lignes  |  25.6 s
+Error in check_duplicate_names(x) : 
+  x has duplicated column name [Speed]. Please remove or rename the duplicate and try again.
+Calls: source ... check_duplicate_names -> stopf -> raise_condition -> signal
+Execution halted
+❌ Erreur lors du fractionnement: code 1

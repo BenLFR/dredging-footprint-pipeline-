@@ -1,0 +1,46 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 1 ===
+Job ID: 56779162_1
+Node: bc11256
+Début: Thu 26 Jun 2025 12:04:10 PM EDT
+📦 Job fractionnement référence: 56777970
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 8055 Jun 26 11:53 step2_process_navire.R
+✅ Lancement traitement navire 1...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-06-26 12:04:13 
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 1 
+📋 Split Job ID: 56777970 
+📊 Métadonnées chargées: 11 navires
+🚢 Navire sélectionné: Charles Darwin 
+📁 Fichier input: ~/scratch/ais_split_56777970/navire_01_Charles_Darwin.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 1372116 observations
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [12:04:19.484] dataset has duplicated rows
+INFO  [12:04:19.668] Building Isolation Forest ...
+INFO  [12:04:36.082] done
+INFO  [12:04:36.084] Computing depth of terminal nodes ...
+INFO  [12:04:37.950] done
+INFO  [12:05:03.072] Completed growing isolation forest
+  ✅ IF terminé: 39470 outliers sur 1372116 points
+🛑 Création de la colonne is_stop...
+✅ Colonne is_stop créée: 870545 arrêts détectés
+🔧 Création de colonnes supplémentaires...
+✅ Colonnes supplémentaires créées (Annee, Course_change, Accel)
+📊 RÉSULTATS NAVIRE: Charles Darwin 
+  • Observations totales: 1372116 
+  • Outliers détectés: 39470 ( 2.88 %)
+  • Arrêts détectés: 870545 ( 63.45 %)
+💾 Sauvegarde: ~/scratch/ais_results_56779162/01_Charles_Darwin_clean.rds 
+✅ Navire Charles Darwin traité avec succès: 2025-06-26 12:06:30 
+📁 Résultat: ~/scratch/ais_results_56779162/01_Charles_Darwin_clean.rds 
+Warning message:
+In rm(dt_nav, if_model) : object 'if_model' not found
+✅ Étape 2 terminée: Thu Jun 26 12:06:30 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_56779162/

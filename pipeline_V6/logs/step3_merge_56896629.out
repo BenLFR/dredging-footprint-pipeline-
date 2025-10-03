@@ -1,0 +1,74 @@
+=== ETAPE 3 OPTIMIZED: FUSION ET GRID SEARCH ===
+Job ID: 56896629
+Node: bc12041
+Debut: Sat 28 Jun 2025 08:15:38 PM EDT
+Memoire allouee: 128 GB
+CPU: 16 cores
+Job fractionnement reference: 56779162
+Dossier de resultats: auto-detection
+Auto-detection du dossier de resultats...
+Dossier trouve: /home/benl/scratch/ais_results_56779162
+Verification des fichiers d'entree...
+Fichiers d'entree verifies: 11 fichiers *_clean.rds trouves
+Repertoire de travail: /home/benl/R_scripts/pipeline_V6
+Verification fichier R: -rw-r-----. 1 benl benl 28615 Jun 28 19:46 step3_merge_final.R
+Nettoyage memoire systeme...
+Impossible de nettoyer le cache (normal sur certains systemes)
+Lancement fusion et grid search optimise...
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-06-28 20:15:43 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_56779162 
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+💾  Source : /home/benl/scratch/ais_results_56779162 
+💾  Sortie : ~/scratch/output_V6 
+
+✅  Packages chargés | 16 threads data.table
+✅  YAML chargé
+🔍  Fichiers trouvés : 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   • 04_Fairway_clean.rds 
+   • 05_Queen_Of_The_Netherlands_clean.rds 
+   …
+✅  Fusion : 10 095 781 lignes | 11.3 s
+
+🔧  Vérification des types de colonnes...
+📊 Types des colonnes critiques:
+   Navire    : character
+   ssvid     : integer
+   Seg_id    : character
+   Annee     : numeric
+🔍 Vérifications supplémentaires critiques...
+✅ Colonne 'is_stop' présente
+✅ Colonnes géographiques présentes
+✅ Colonnes géographiques converties en numeric
+✅ Aucun doublon détecté
+📊 Utilisation mémoire: 0.94 GB
+✅ Types de colonnes vérifiés et corrigés
+
+⏱️  Détection pics temporels isolés…
+📐  Filtrage contextuel…
+🔧  Harmonisation des types pour la jointure des percentiles...
+🔧  Vérification des types avant jointure:
+   Table principale - Navire: character 
+   Table percentiles - Navire: character 
+🔍  Détection des arrêts spatiaux par DBSCAN...
+📊 Traitement DBSCAN pour 96 combinaisons navire/année
+Error in `[.data.table`(ais, , `:=`(Course_change = { : 
+  Supplied 9643334 items to be assigned to 9643333 items of column 'Accel'. If you wish to 'recycle' the RHS please use rep() to make this intent clear to readers of your code.
+Calls: source -> withVisible -> eval -> eval -> [ -> [.data.table
+In addition: Warning message:
+In diff(Speed)/pmax(dt_sec, 1) :
+  longer object length is not a multiple of shorter object length
+Execution halted
+Erreur lors de la fusion: code 1
+Logs d'erreur disponibles dans:
+   - logs/step3_merge_56896629.out
+   - logs/step3_merge_56896629.err

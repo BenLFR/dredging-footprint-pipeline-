@@ -1,0 +1,15 @@
+🔄 === ÉTAPE 2: TRAITEMENT NAVIRE 7 ===
+Array Job ID: 56402463
+Task ID: 7
+Node: bc12045
+Début: Wed 11 Jun 2025 04:39:20 AM EDT
+✅ Lancement traitement navire 7...
+📁 Source: ~/scratch/ais_split_56402462/
+Error in file(filename, "r", encoding = encoding) : 
+  cannot open the connection
+Calls: source -> file
+In addition: Warning message:
+In file(filename, "r", encoding = encoding) :
+  cannot open file 'step2_process_navire.R': No such file or directory
+Execution halted
+❌ Erreur navire 7: code 1

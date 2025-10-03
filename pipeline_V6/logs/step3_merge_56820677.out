@@ -1,0 +1,73 @@
+🚀 === ÉTAPE 3: FUSION ET GRID SEARCH ===
+Job ID: 56820677
+Node: bc12240
+Début: Fri 27 Jun 2025 10:09:19 AM EDT
+📦 Job fractionnement référence: 56779162
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 26093 Jun 27 08:29 step3_merge_final.R
+✅ Lancement fusion et grid search...
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-06-27 10:09:21 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Utilisation du répertoire results: ~/scratch/ais_results_56779162 
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+💾  Source : ~/scratch/ais_results_56779162 
+💾  Sortie : ~/scratch/output_V6 
+
+✅  Packages chargés | 16 threads data.table
+✅  YAML chargé
+🔍  Fichiers trouvés : 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   • 04_Fairway_clean.rds 
+   • 05_Queen_Of_The_Netherlands_clean.rds 
+   …
+✅  Fusion : 10 095 781 lignes | 12.0 s
+
+🔧  Vérification des types de colonnes...
+📊 Types des colonnes critiques:
+   Navire    : character
+   ssvid     : integer
+   Seg_id    : character
+   Annee     : numeric
+🔍 Vérifications supplémentaires critiques...
+✅ Colonne 'is_stop' présente
+✅ Colonnes géographiques présentes
+✅ Colonnes géographiques converties en numeric
+✅ Aucun doublon détecté
+📊 Utilisation mémoire: 0.94 GB
+✅ Types de colonnes vérifiés et corrigés
+
+⏱️  Détection pics temporels isolés…
+📐  Filtrage contextuel…
+🔧  Harmonisation des types pour la jointure des percentiles...
+🔧  Vérification des types avant jointure:
+   Table principale - Navire: character 
+   Table percentiles - Navire: character 
+🔍  Détection des arrêts spatiaux par DBSCAN...
+📊 Traitement DBSCAN pour 96 combinaisons navire/année
+🔧  Cadence AIS & seuils adaptatifs par navire
+                      Navire  p50_dt seuil_adaptatif n_min prop_long
+                      <char>   <num>           <num> <num>     <num>
+ 1:              Congo River  97.000         291.000     3 0.1492676
+ 2:          Cristobal Colon 108.000         324.000     3 0.2095158
+ 3:                  Ham 318 130.690         392.070     3 0.2076991
+ 4:           Charles Darwin 136.000         408.000     3 0.1950150
+ 5:           Leiv Eiriksson 140.556         421.668     3 0.1719962
+ 6:                  Fairway 150.000         450.000     3 0.2229586
+ 7: Queen Of The Netherlands 176.000         528.000     3 0.2418194
+ 8:               Vox Maxima 179.000         537.000     3 0.2829589
+ 9:             Inai Kenanga 180.000         540.000     3 0.2631950
+10:               Goryo 6 Ho 188.000         564.000     3 0.2574560
+11:            Vasco Da Gama 361.000        1200.000     3 0.6178954
+Error in smooth_transition(behavior, Speed, cost, thr = unique(n_min)[1],  : 
+  object 'cost' not found
+Calls: source ... eval -> eval -> [ -> [.data.table -> smooth_transition
+Execution halted
+❌ Erreur lors de la fusion: code 1

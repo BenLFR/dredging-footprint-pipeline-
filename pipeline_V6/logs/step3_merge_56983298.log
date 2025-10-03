@@ -1,0 +1,116 @@
+🚀 === ÉTAPE 3: FUSION ET GRID SEARCH (AVEC CHECK-POINTING) ===
+📦 Job fractionnement: 56779162 
+📁 Dossier résultats: /home/benl/scratch/ais_results_56779162 
+🖥️  Cores: 16 
+⏱️  Début: 2025-07-01 08:58:57 
+
+🗑️  Suppression du checkpoint GMM fautif pour forcer le recalcul
+✅ Utilisation du dossier spécifié: /home/benl/scratch/ais_results_56779162 
+✅ Fichiers d'entrée vérifiés: 11 fichiers *_clean.rds trouvés
+
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-07-01 08:58:57 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+💾  Source : /home/benl/scratch/ais_results_56779162 
+💾  Sortie : /home/benl/scratch/output_V6 
+💾  Checkpoints : /home/benl/scratch/output_V6/checkpoints 
+
+✅  Packages chargés | 16 threads data.table
+✅  YAML chargé
+🔄  Reload checkpoint: stage3A_fusion.rds 
+🔧  Vérification des types de colonnes...
+ Types des colonnes critiques:
+   Navire    : character
+   ssvid     : integer
+   Seg_id    : character
+   Annee     : numeric
+🔍 Vérifications supplémentaires critiques...
+✅ Colonne 'is_stop' présente
+✅ Colonnes géographiques présentes
+✅ Colonnes géographiques converties en numeric
+✅ Aucun doublon détecté
+📊 Utilisation mémoire: 0.94 GB
+✅ Types de colonnes vérifiés et corrigés
+
+⏱️  Détection pics temporels isolés…
+📐  Filtrage contextuel…
+🔧  Harmonisation des types pour la jointure des percentiles...
+🔧  Vérification des types avant jointure:
+   Table principale - Navire: character 
+   Table percentiles - Navire: character 
+🔄  Reload checkpoint: stage3B_dbscan.rds 
+🔧  Cadence AIS & seuils adaptatifs par navire
+                      Navire  p50_dt seuil_adaptatif n_min prop_long
+                      <char>   <num>           <num> <num>     <num>
+ 1:              Congo River  97.000         291.000     3 0.1492676
+ 2:          Cristobal Colon 108.000         324.000     3 0.2095158
+ 3:                  Ham 318 130.690         392.070     3 0.2076991
+ 4:           Charles Darwin 136.000         408.000     3 0.1950150
+ 5:           Leiv Eiriksson 140.556         421.668     3 0.1719962
+ 6:                  Fairway 150.000         450.000     3 0.2229586
+ 7: Queen Of The Netherlands 176.000         528.000     3 0.2418194
+ 8:               Vox Maxima 179.000         537.000     3 0.2829589
+ 9:             Inai Kenanga 180.000         540.000     3 0.2631950
+10:               Goryo 6 Ho 188.000         564.000     3 0.2574560
+11:            Vasco Da Gama 361.000        1200.000     3 0.6178954
+⚙️  Compute & save checkpoint: stage3C_gmm.rds 
+🔧  GMM « stop + 4 » - début
+🔍  STATISTIQUES GMM - Vérification cohérence:
+   Modèle GMM: V avec 5 composantes
+   Composantes par vitesse croissante:
+     Comp 1: μ = 1.513 kn, σ² = 0.103 kn²
+     Comp 2: μ = 1.756 kn, σ² = 0.410 kn²
+     Comp 3: μ = 5.039 kn, σ² = 3.538 kn²
+     Comp 4: μ = 11.286 kn, σ² = 3.848 kn²
+     Comp 5: μ = 14.996 kn, σ² = 1.879 kn²
+   Vérifications de cohérence:
+     ✅ Vitesses positives
+     ✅ Variances positives
+     ✅ Composantes ordonnées par vitesse croissante
+     🎯 Composante dragage estimée: Comp 2 (μ = 1.76 kn)
+   Fin vérification GMM
+
+converged at iteration 130 with logLik: 1408168 
+converged at iteration 45 with logLik: 221599 
+✅ GMM terminé - Checkpoint sauvegardé
+🔄  STATISTIQUES GMM APRÈS RÉORDONNANCE (PATCH):
+   Ordre des composantes après tri par vitesse croissante:
+     Comp 1 (orig 1): μ = 1.513 kn, σ² = 0.103 kn²
+     Comp 2 (orig 2): μ = 1.756 kn, σ² = 0.410 kn²
+     Comp 3 (orig 3): μ = 5.039 kn, σ² = 3.538 kn²
+     Comp 4 (orig 4): μ = 11.286 kn, σ² = 3.848 kn²
+     Comp 5 (orig 5): μ = 14.996 kn, σ² = 1.879 kn²
+   ✅ Réordonnance terminée
+
+✅ Checkpoint sauvegardé: stage3C_gmm.rds 
+⚙️  Compute & save checkpoint: stage3D_gridsearch.rds 
+🔍  Grid-search (poids score dragage) - début
+🏆  Best w1=0.60 w2=0.10 w3=0.30 | AUC=1.0000
+✅ Grid-search terminé - Checkpoint sauvegardé
+✅ Checkpoint sauvegardé: stage3D_gridsearch.rds 
+
+💾  Fichiers sauvegardés dans /home/benl/scratch/output_V6 
+⏱️  Fin : 2025-07-01 10:40:32 
+Warning messages:
+1: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 37 from 15426207.4642999 to 14468477.4867305
+2: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 20 from 9167861.43883608 to 9013162.35534022
+3: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 16 from 12971606.8975047 to 11983352.8561529
+4: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 15 from 22466360.5311553 to 21132661.0971234
+5: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 8 from 19996420.4032043 to 18315053.3617462
+6: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 15 from 17747287.9966953 to 17574135.6415647
+7: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 19 from 13687602.4461085 to 12496904.7256762
+8: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 62 from 7544673.94135924 to 7156736.28021679

@@ -1,0 +1,21 @@
+🚀 === ÉTAPE 3: FUSION ET GRID SEARCH ===
+Job ID: 56815914
+Node: bc21116
+Début: Fri 27 Jun 2025 05:09:22 AM EDT
+📦 Job fractionnement référence: 56779162
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 24712 Jun 23 10:32 step3_merge_final.R
+✅ Lancement fusion et grid search...
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-06-27 05:09:24 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+Error in eval(ei, envir) : 
+  ❌ Aucun répertoire trouvé pour les fichiers nettoyés.
+   Cherché dans:
+   - ~/scratch/ais_split_56779162 (répertoire standard - PRIORITÉ)
+   - ~/scratch/56779162 (répertoire de l'étape 2)
+   - ~/scratch/56779162 (répertoire direct)
+Calls: source -> withVisible -> eval -> eval
+Execution halted
+❌ Erreur lors de la fusion: code 1

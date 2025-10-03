@@ -1,0 +1,10 @@
+
+Lmod is automatically replacing "intel/2020.1.217" with "gcc/9.3.0".
+
+
+Lmod is automatically replacing "intel/2020.1.217" with "gcc/9.3.0".
+
+Error in set(x, j = name, value = value) : 
+  Supplied 10 items to be assigned to 1 items of column 'window_yrs'. If you wish to 'recycle' the RHS please use rep() to make this intent clear to readers of your code.
+Calls: $<- -> $<-.data.table -> set
+Execution halted

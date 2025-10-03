@@ -1,0 +1,16 @@
+🚀 === ÉTAPE 1: FRACTIONNEMENT PAR NAVIRE ===
+Job ID: 56402462
+Node: bc11934
+Début: Wed 11 Jun 2025 04:25:53 AM EDT
+✅ Lancement script de fractionnement...
+Error in file(filename, "r", encoding = encoding) : 
+  cannot open the connection
+Calls: source -> file
+In addition: Warning message:
+In file(filename, "r", encoding = encoding) :
+  cannot open file 'step1_split_navires.R': No such file or directory
+Execution halted
+✅ Étape 1 terminée: Wed Jun 11 04:25:56 EDT 2025
+📁 Fichiers sauvés dans: ~/scratch/ais_split_56402462/
+📊 RÉSUMÉ FRACTIONNEMENT:
+Erreur: aucun fichier .fst trouvé

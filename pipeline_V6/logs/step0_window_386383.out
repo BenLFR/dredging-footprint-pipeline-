@@ -1,0 +1,9 @@
+🔍 === STEP 0bis : FENÊTRE OPTIMALE (job 386383) ===
+Node:  rc12505
+Début: Thu 24 Jul 2025 07:49:57 AM EDT
+✅  Répertoire courant: /home/benl/R_scripts/pipeline_V6
+✅  Lancement step0_core_window.R ...
+
+📊  STEP-0  |  Core Period Selection via Coverage Matrix |  début : 2025-07-24 07:49:58 
+
+❌  STEP 0bis a échoué (code 1)

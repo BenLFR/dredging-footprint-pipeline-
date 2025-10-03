@@ -1,0 +1,49 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 4 ===
+Job ID: 444466_4
+Node: rc12926
+Début: Fri 25 Jul 2025 12:23:51 PM EDT
+📦 Job fractionnement référence: 442634
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 10754 Jul 25 12:21 step2_process_navire.R
+✅ Lancement traitement navire 4...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-25 12:23:55 
+✅ R configuré avec library: /home/benl/R/4.3 
+✅ Package qs disponible
+✅ Packages chargés - Configuration mono-thread activée
+📋 Task ID: 4 
+📋 Split Job ID: 442634 
+📊 Métadonnées chargées: 10 navires
+🚢 Navire sélectionné: Vasco Da Gama 
+📁 Fichier input: ~/scratch/ais_split_442634/navire_04_Vasco_Da_Gama.rds 
+📖 Chargement données navire...
+✅ Format RDS détecté et chargé
+✅ Données chargées: 1066368 observations
+✅ Filtre vitesse physique : 1066368 → 1064030 lignes (99.78 % conservées)
+✅ Configuration chargée: ~/R_scripts/configuration/outlier_config_V6.yaml 
+🔧 Paramètres IF: contamination = 0.03 | trees = 50 
+🚀 Début traitement Isolation Forest...
+  🌲 Début Isolation Forest...
+INFO  [12:23:57.635] dataset has duplicated rows
+INFO  [12:23:57.694] Building Isolation Forest ...
+INFO  [12:24:03.585] done
+INFO  [12:24:03.586] Computing depth of terminal nodes ...
+INFO  [12:24:05.613] done
+INFO  [12:24:14.364] Completed growing isolation forest
+  ✅ IF terminé: 31913 outliers sur 1064030 points
+🛑 Création de la colonne is_stop...
+✅ Colonne is_stop créée: 731521 arrêts détectés
+🔧 Création de colonnes supplémentaires...
+✅ Colonnes supplémentaires créées (Annee, Course_change, Accel)
+📊 RÉSULTATS NAVIRE: Vasco Da Gama 
+  • Observations totales: 1064030 
+  • Outliers détectés: 31913 ( 3 %)
+  • Arrêts détectés: 731521 ( 68.75 %)
+💾 Sauvegarde: ~/scratch/ais_results_444466/04_Vasco_Da_Gama_clean.rds 
+✅ Navire Vasco Da Gama traité avec succès: 2025-07-25 12:24:48 
+📁 Résultat: ~/scratch/ais_results_444466/04_Vasco_Da_Gama_clean.rds 
+Warning message:
+In readLines(file, warn = readLines.warn) :
+  incomplete final line found on '~/R_scripts/configuration/ship_specs.yaml'
+✅ Étape 2 terminée: Fri 25 Jul 2025 12:24:48 PM EDT
+📁 Résultats sauvés dans: ~/scratch/ais_results_444466/

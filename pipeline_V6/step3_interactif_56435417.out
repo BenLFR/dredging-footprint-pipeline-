@@ -1,0 +1,923 @@
+🚀 === STEP3 INTERACTIF COMPLET - MODE RSTUDIO ===
+Timestamp: Thu 12 Jun 2025 08:13:58 AM EDT
+Node: bc12357.int.ets1.calculquebec.ca
+CPUs: 8
+Mémoire: 32768G
+📦 Chargement modules R...
+
+Lmod is automatically replacing "intel/2020.1.217" with "gcc/9.3.0".
+
+
+Due to MODULEPATH changes, the following have been reloaded:
+  1) mii/1.1.2
+
+The following have been reloaded with a version change:
+  1) StdEnv/2023 => StdEnv/2020          5) imkl/2023.2.0 => imkl/2020.1.217
+  2) gcc/12.3 => gcc/9.3.0               6) libfabric/1.18.0 => libfabric/1.10.1
+  3) gcccore/.12.3 => gcccore/.9.3.0     7) openmpi/4.1.5 => openmpi/4.0.3
+  4) gentoo/2023 => gentoo/2020          8) ucx/1.14.1 => ucx/1.8.0
+
+📁 Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+🚀 Lancement R interactif avec affichage complet...
+'envir' chosen:<environment: R_GlobalEnv>
+encoding = "native.enc" chosen
+--> parsed 95 expressions; now eval(.)ing them:
+
+>>>> eval(expression_nr. 1 )
+		 =================
+
+> cat("\n")
+
+curr.fun: symbol cat
+ .. after ‘expression(cat("\n"))’
+
+>>>> eval(expression_nr. 2 )
+		 =================
+
+> cat("================================================================================\n")
+================================================================================
+curr.fun: symbol cat
+ .. after ‘expression(cat("================================================================================\n"))’
+
+>>>> eval(expression_nr. 3 )
+		 =================
+
+> cat("🏁  STEP-3  |  FUSION & MODÉLISATION INTERACTIVE  |  DÉBUT\n")
+🏁  STEP-3  |  FUSION & MODÉLISATION INTERACTIVE  |  DÉBUT
+curr.fun: symbol cat
+ .. after ‘expression(cat("🏁  STEP-3  |  FUSION & MODÉLISATION INTERACTIVE  |  DÉBUT\n"))’
+
+>>>> eval(expression_nr. 4 )
+		 =================
+
+> cat("================================================================================\n")
+================================================================================
+curr.fun: symbol cat
+ .. after ‘expression(cat("================================================================================\n"))’
+
+>>>> eval(expression_nr. 5 )
+		 =================
+
+> cat("Timestamp:", format(Sys.time()), "\n")
+Timestamp: 2025-06-12 08:14:00 
+curr.fun: symbol cat
+ .. after ‘expression(cat("Timestamp:", format(Sys.time()), "\n"))’
+
+>>>> eval(expression_nr. 6 )
+		 =================
+
+> cat("Working Directory:", getwd(), "\n")
+Working Directory: /home/benl/R_scripts/pipeline_V6 
+curr.fun: symbol cat
+ .. after ‘expression(cat("Working Directory:", getwd(), "\n"))’
+
+>>>> eval(expression_nr. 7 )
+		 =================
+
+> cat("\n📦 === CONFIGURATION R ===\n")
+
+📦 === CONFIGURATION R ===
+curr.fun: symbol cat
+ .. after ‘expression(cat("\n📦 === CONFIGURATION R ===\n"))’
+
+>>>> eval(expression_nr. 8 )
+		 =================
+
+> .libPaths("~/.local/R/4.2.1/")
+curr.fun: symbol .libPaths
+ .. after ‘expression(.libPaths("~/.local/R/4.2.1/"))’
+
+>>>> eval(expression_nr. 9 )
+		 =================
+
+> cat("✅ R configuré avec library:", .libPaths()[1], 
++     "\n")
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+curr.fun: symbol cat
+ .. after ‘expression(cat("✅ R configuré avec library:", .libPaths()[1], ’‘    "\n"))’
+
+>>>> eval(expression_nr. 10 )
+		 =================
+
+> cat("✅ Packages installés:", length(list.files(.libPaths()[1])), 
++     "\n")
+✅ Packages installés: 250 
+curr.fun: symbol cat
+ .. after ‘expression(cat("✅ Packages installés:", length(list.files(.libPaths()[1])), ’‘    "\n"))’
+
+>>>> eval(expression_nr. 11 )
+		 =================
+
+> cores <- 4
+curr.fun: symbol <-
+ .. after ‘expression(cores <- 4)’
+
+>>>> eval(expression_nr. 12 )
+		 =================
+
+> options(mc.cores = cores)
+curr.fun: symbol options
+ .. after ‘expression(options(mc.cores = cores))’
+
+>>>> eval(expression_nr. 13 )
+		 =================
+
+> Sys.setenv(MC_CORES = cores)
+curr.fun: symbol Sys.setenv
+ .. after ‘expression(Sys.setenv(MC_CORES = cores))’
+
+>>>> eval(expression_nr. 14 )
+		 =================
+
+> Sys.setenv(DT_GForce = "FALSE")
+curr.fun: symbol Sys.setenv
+ .. after ‘expression(Sys.setenv(DT_GForce = "FALSE"))’
+
+>>>> eval(expression_nr. 15 )
+		 =================
+
+> Sys.setenv(OMP_NUM_THREADS = cores)
+curr.fun: symbol Sys.setenv
+ .. after ‘expression(Sys.setenv(OMP_NUM_THREADS = cores))’
+
+>>>> eval(expression_nr. 16 )
+		 =================
+
+> cat("✅ Configuration multi-threading:", cores, "cores\n")
+✅ Configuration multi-threading: 4 cores
+curr.fun: symbol cat
+ .. after ‘expression(cat("✅ Configuration multi-threading:", cores, "cores\n"))’
+
+>>>> eval(expression_nr. 17 )
+		 =================
+
+> cat("\n📚 === CHARGEMENT PACKAGES ===\n")
+
+📚 === CHARGEMENT PACKAGES ===
+curr.fun: symbol cat
+ .. after ‘expression(cat("\n📚 === CHARGEMENT PACKAGES ===\n"))’
+
+>>>> eval(expression_nr. 18 )
+		 =================
+
+> suppressPackageStartupMessages({
++     cat("  • Chargement data.table...")
++     library(data.table)
++     cat(" ✅\n")
++     cat("  • Chargement lub ..." ... [TRUNCATED] 
+  • Chargement data.table... ✅
+  • Chargement lubridate... ✅
+  • Chargement zoo... ✅
+  • Chargement dbscan... ✅
+  • Chargement mclust... ✅
+  • Chargement depmixS4... ✅
+  • Chargement pROC... ✅
+  • Chargement parallel... ✅
+  • Chargement yaml... ✅
+curr.fun: symbol suppressPackageStartupMessages
+ .. after ‘expression(suppressPackageStartupMessages({’‘    cat("  • Chargement data.table...")’‘    library(data.table)’‘    cat(" ✅\n")’‘    cat("  • Chargement lubridate...")’‘    library(lubridate)’‘    cat(" ✅\n")’‘    cat("  • Chargement zoo...")’‘    library(zoo)’‘    cat(" ✅\n")’‘    cat("  • Chargement dbscan...")’‘    library(dbscan)’‘    cat(" ✅\n")’‘    cat("  • Chargement mclust...")’‘    library(mclust)’‘    cat(" ✅\n")’‘    cat("  • Chargement depmixS4...")’‘    library(depmixS4)’‘    cat(" ✅\n")’‘    cat("  • Chargement pROC...")’‘    library(pROC)’‘    cat(" ✅\n")’‘    cat("  • Chargement parallel...")’‘    library(parallel)’‘    cat(" ✅\n")’‘    cat("  • Chargement yaml...")’‘    library(yaml)’‘    cat(" ✅\n")’‘}))’
+
+>>>> eval(expression_nr. 19 )
+		 =================
+
+> setDTthreads(cores)
+curr.fun: symbol setDTthreads
+ .. after ‘expression(setDTthreads(cores))’
+
+>>>> eval(expression_nr. 20 )
+		 =================
+
+> cat("✅ data.table configuré avec", cores, "threads\n")
+✅ data.table configuré avec 4 threads
+curr.fun: symbol cat
+ .. after ‘expression(cat("✅ data.table configuré avec", cores, "threads\n"))’
+
+>>>> eval(expression_nr. 21 )
+		 =================
+
+> cat("\n📁 === CHARGEMENT DONNÉES ===\n")
+
+📁 === CHARGEMENT DONNÉES ===
+curr.fun: symbol cat
+ .. after ‘expression(cat("\n📁 === CHARGEMENT DONNÉES ===\n"))’
+
+>>>> eval(expression_nr. 22 )
+		 =================
+
+> test_file <- "~/scratch/test_step2_vasco_da_gama_clean.rds"
+curr.fun: symbol <-
+ .. after ‘expression(test_file <- "~/scratch/test_step2_vasco_da_gama_clean.rds")’
+
+>>>> eval(expression_nr. 23 )
+		 =================
+
+> if (!file.exists(test_file)) {
++     stop("❌ Fichier test step2 introuvable: ", test_file)
++ }
+curr.fun: symbol if
+ .. after ‘expression(if (!file.exists(test_file)) {’‘    stop("❌ Fichier test step2 introuvable: ", test_file)’‘})’
+
+>>>> eval(expression_nr. 24 )
+		 =================
+
+> cat("📖 Lecture du fichier:", test_file, "\n")
+📖 Lecture du fichier: ~/scratch/test_step2_vasco_da_gama_clean.rds 
+curr.fun: symbol cat
+ .. after ‘expression(cat("📖 Lecture du fichier:", test_file, "\n"))’
+
+>>>> eval(expression_nr. 25 )
+		 =================
+
+> system.time({
++     ais <- readRDS(test_file)
++     setDT(ais)
++ })
+curr.fun: symbol system.time
+   user  system elapsed 
+  0.308   0.022   0.522 
+ .. after ‘expression(system.time({’‘    ais <- readRDS(test_file)’‘    setDT(ais)’‘}))’
+
+>>>> eval(expression_nr. 26 )
+		 =================
+
+> cat("✅ Données chargées:", format(nrow(ais), big.mark = " "), 
++     "observations\n")
+✅ Données chargées: 189 314 observations
+curr.fun: symbol cat
+ .. after ‘expression(cat("✅ Données chargées:", format(nrow(ais), big.mark = " "), ’‘    "observations\n"))’
+
+>>>> eval(expression_nr. 27 )
+		 =================
+
+> cat("✅ Colonnes:", ncol(ais), "variables\n")
+✅ Colonnes: 9 variables
+curr.fun: symbol cat
+ .. after ‘expression(cat("✅ Colonnes:", ncol(ais), "variables\n"))’
+
+>>>> eval(expression_nr. 28 )
+		 =================
+
+> cat("📊 Structure des données:\n")
+📊 Structure des données:
+curr.fun: symbol cat
+ .. after ‘expression(cat("📊 Structure des données:\n"))’
+
+>>>> eval(expression_nr. 29 )
+		 =================
+
+> str(ais)
+Classes ‘data.table’ and 'data.frame':	189314 obs. of  9 variables:
+ $ ssvid     : int  253193000 253193000 253193000 253193000 253193000 253193000 253193000 253193000 253193000 253193000 ...
+ $ Timestamp : POSIXct, format: "2013-01-03 15:36:12" "2013-01-05 04:26:00" ...
+ $ Lat       : num  18.1 18.1 18.1 18.1 18.1 ...
+ $ Lon       : num  106 106 107 106 106 ...
+ $ Speed     : num  0.1 1.3 10.7 1.1 1.5 ...
+ $ Course    : num  251 313 198.8 174 65.5 ...
+ $ Seg_id    : chr  "253193000-2013-01-03T15:36:12.000000Z-1" "253193000-2013-01-05T04:26:00.000000Z-1" "253193000-2013-01-08T08:55:09.000000Z-1" "253193000-2013-01-08T08:55:09.000000Z-1" ...
+ $ Navire    : chr  "Vasco Da Gama" "Vasco Da Gama" "Vasco Da Gama" "Vasco Da Gama" ...
+ $ outlier_IF: logi  FALSE FALSE FALSE FALSE FALSE TRUE ...
+ - attr(*, "sorted")= chr "ssvid"
+ - attr(*, ".internal.selfref")=<externalptr> 
+curr.fun: symbol str
+ .. after ‘expression(str(ais))’
+
+>>>> eval(expression_nr. 30 )
+		 =================
+
+> cat("\n")
+
+curr.fun: symbol cat
+ .. after ‘expression(cat("\n"))’
+
+>>>> eval(expression_nr. 31 )
+		 =================
+
+> cat("📊 === STATISTIQUES DESCRIPTIVES INITIALES ===\n")
+📊 === STATISTIQUES DESCRIPTIVES INITIALES ===
+curr.fun: symbol cat
+ .. after ‘expression(cat("📊 === STATISTIQUES DESCRIPTIVES INITIALES ===\n"))’
+
+>>>> eval(expression_nr. 32 )
+		 =================
+
+> cat("• Navire(s):", paste(unique(ais$Navire), collapse = ", "), 
++     "\n")
+• Navire(s): Vasco Da Gama 
+curr.fun: symbol cat
+ .. after ‘expression(cat("• Navire(s):", paste(unique(ais$Navire), collapse = ", "), ’‘    "\n"))’
+
+>>>> eval(expression_nr. 33 )
+		 =================
+
+> cat("• Plage de vitesses:", round(min(ais$Speed, 
++     na.rm = TRUE), 2), "-", round(max(ais$Speed, na.rm = TRUE), 
++     2), "nœuds\n")
+• Plage de vitesses: 0 - 64 nœuds
+curr.fun: symbol cat
+ .. after ‘expression(cat("• Plage de vitesses:", round(min(ais$Speed, ’‘    na.rm = TRUE), 2), "-", round(max(ais$Speed, na.rm = TRUE), ’‘    2), "nœuds\n"))’
+
+>>>> eval(expression_nr. 34 )
+		 =================
+
+> cat("• Vitesse moyenne:", round(mean(ais$Speed, 
++     na.rm = TRUE), 2), "nœuds\n")
+• Vitesse moyenne: 1.67 nœuds
+curr.fun: symbol cat
+ .. after ‘expression(cat("• Vitesse moyenne:", round(mean(ais$Speed, ’‘    na.rm = TRUE), 2), "nœuds\n"))’
+
+>>>> eval(expression_nr. 35 )
+		 =================
+
+> cat("• Vitesse médiane:", round(median(ais$Speed, 
++     na.rm = TRUE), 2), "nœuds\n")
+• Vitesse médiane: 0.1 nœuds
+curr.fun: symbol cat
+ .. after ‘expression(cat("• Vitesse médiane:", round(median(ais$Speed, ’‘    na.rm = TRUE), 2), "nœuds\n"))’
+
+>>>> eval(expression_nr. 36 )
+		 =================
+
+> cat("• Écart-type vitesse:", round(sd(ais$Speed, 
++     na.rm = TRUE), 2), "nœuds\n")
+• Écart-type vitesse: 3.58 nœuds
+curr.fun: symbol cat
+ .. after ‘expression(cat("• Écart-type vitesse:", round(sd(ais$Speed, ’‘    na.rm = TRUE), 2), "nœuds\n"))’
+
+>>>> eval(expression_nr. 37 )
+		 =================
+
+> cat("\n⚙️ === CONFIGURATION PARAMÈTRES ===\n")
+
+⚙️ === CONFIGURATION PARAMÈTRES ===
+curr.fun: symbol cat
+ .. after ‘expression(cat("\n⚙️ === CONFIGURATION PARAMÈTRES ===\n"))’
+
+>>>> eval(expression_nr. 38 )
+		 =================
+
+> cfg <- list(spike_factor = 3, min_spike_duration = 2, 
++     min_context_points = 10, percentile_lower = 0.05, percentile_upper = 0.95, 
++     max_a .... [TRUNCATED] 
+curr.fun: symbol <-
+ .. after ‘expression(cfg <- list(spike_factor = 3, min_spike_duration = 2, ’‘    min_context_points = 10, percentile_lower = 0.05, percentile_upper = 0.95, ’‘    max_accel_ms2 = 2, max_turn_at_speed = 45, max_dredging_speed = 4))’
+
+>>>> eval(expression_nr. 39 )
+		 =================
+
+> cat("✅ Paramètres configurés:\n")
+✅ Paramètres configurés:
+curr.fun: symbol cat
+ .. after ‘expression(cat("✅ Paramètres configurés:\n"))’
+
+>>>> eval(expression_nr. 40 )
+		 =================
+
+> for (param in names(cfg)) {
++     cat("  •", param, ":", cfg[[param]], "\n")
++ }
+  • spike_factor : 3 
+  • min_spike_duration : 2 
+  • min_context_points : 10 
+  • percentile_lower : 0.05 
+  • percentile_upper : 0.95 
+  • max_accel_ms2 : 2 
+  • max_turn_at_speed : 45 
+  • max_dredging_speed : 4 
+curr.fun: symbol for
+ .. after ‘expression(for (param in names(cfg)) {’‘    cat("  •", param, ":", cfg[[param]], "\n")’‘})’
+
+>>>> eval(expression_nr. 41 )
+		 =================
+
+> cat("\n🔧 === DÉFINITION FONCTIONS UTILITAIRES ===\n")
+
+🔧 === DÉFINITION FONCTIONS UTILITAIRES ===
+curr.fun: symbol cat
+ .. after ‘expression(cat("\n🔧 === DÉFINITION FONCTIONS UTILITAIRES ===\n"))’
+
+>>>> eval(expression_nr. 42 )
+		 =================
+
+> cat("• Définition roll_MAD5...")
+• Définition roll_MAD5...curr.fun: symbol cat
+ .. after ‘expression(cat("• Définition roll_MAD5..."))’
+
+>>>> eval(expression_nr. 43 )
+		 =================
+
+> roll_MAD5 <- function(x) {
++     med <- zoo::rollapplyr(x, 5, median, fill = NA, align = "center")
++     q25 <- zoo::rollapplyr(x, 5, quantile, prob .... [TRUNCATED] 
+curr.fun: symbol <-
+ .. after ‘expression(roll_MAD5 <- function(x) {’‘    med <- zoo::rollapplyr(x, 5, median, fill = NA, align = "center")’‘    q25 <- zoo::rollapplyr(x, 5, quantile, probs = 0.25, fill = NA, ’‘        align = "center")’‘    q75 <- zoo::rollapplyr(x, 5, quantile, probs = 0.75, fill = NA, ’‘        align = "center")’‘    mad <- 1.4826 * (q75 - q25)’‘    list(med = med, mad = mad)’‘})’
+
+>>>> eval(expression_nr. 44 )
+		 =================
+
+> cat(" ✅\n")
+ ✅
+curr.fun: symbol cat
+ .. after ‘expression(cat(" ✅\n"))’
+
+>>>> eval(expression_nr. 45 )
+		 =================
+
+> cat("• Test roll_MAD5 sur échantillon...")
+• Test roll_MAD5 sur échantillon...curr.fun: symbol cat
+ .. after ‘expression(cat("• Test roll_MAD5 sur échantillon..."))’
+
+>>>> eval(expression_nr. 46 )
+		 =================
+
+> test_speeds <- ais$Speed[1:100]
+curr.fun: symbol <-
+ .. after ‘expression(test_speeds <- ais$Speed[1:100])’
+
+>>>> eval(expression_nr. 47 )
+		 =================
+
+> test_result <- roll_MAD5(test_speeds)
+curr.fun: symbol <-
+ .. after ‘expression(test_result <- roll_MAD5(test_speeds))’
+
+>>>> eval(expression_nr. 48 )
+		 =================
+
+> cat(" ✅ (", sum(!is.na(test_result$med)), "valeurs non-NA)\n")
+ ✅ ( 96 valeurs non-NA)
+curr.fun: symbol cat
+ .. after ‘expression(cat(" ✅ (", sum(!is.na(test_result$med)), "valeurs non-NA)\n"))’
+
+>>>> eval(expression_nr. 49 )
+		 =================
+
+> cat("\n⚙️ === VALIDATION PHYSIQUE ===\n")
+
+⚙️ === VALIDATION PHYSIQUE ===
+curr.fun: symbol cat
+ .. after ‘expression(cat("\n⚙️ === VALIDATION PHYSIQUE ===\n"))’
+
+>>>> eval(expression_nr. 50 )
+		 =================
+
+> cat("📊 Observations avant validation:", format(nrow(ais), 
++     big.mark = " "), "\n")
+📊 Observations avant validation: 189 314 
+curr.fun: symbol cat
+ .. after ‘expression(cat("📊 Observations avant validation:", format(nrow(ais), ’‘    big.mark = " "), "\n"))’
+
+>>>> eval(expression_nr. 51 )
+		 =================
+
+> if (!"Accel" %in% names(ais)) {
++     cat("• Calcul de l'accélération...")
++     if ("Seg_id" %in% names(ais)) {
++         ais[, `:=`(Accel, c(NA, d .... [TRUNCATED] 
+• Calcul de l'accélération... ✅
+curr.fun: symbol if
+ .. after ‘expression(if (!"Accel" %in% names(ais)) {’‘    cat("• Calcul de l'accélération...")’‘    if ("Seg_id" %in% names(ais)) {’‘        ais[, `:=`(Accel, c(NA, diff(Speed))), by = Seg_id]’‘    }’‘    else {’‘        ais[, `:=`(Accel, c(NA, diff(Speed)))]’‘    }’‘    cat(" ✅\n")’‘})’
+
+>>>> eval(expression_nr. 52 )
+		 =================
+
+> cat("📊 Statistiques accélération:\n")
+📊 Statistiques accélération:
+curr.fun: symbol cat
+ .. after ‘expression(cat("📊 Statistiques accélération:\n"))’
+
+>>>> eval(expression_nr. 53 )
+		 =================
+
+> cat("  • Min:", round(min(ais$Accel, na.rm = TRUE), 
++     3), "nœuds/point\n")
+  • Min: -64 nœuds/point
+curr.fun: symbol cat
+ .. after ‘expression(cat("  • Min:", round(min(ais$Accel, na.rm = TRUE), ’‘    3), "nœuds/point\n"))’
+
+>>>> eval(expression_nr. 54 )
+		 =================
+
+> cat("  • Max:", round(max(ais$Accel, na.rm = TRUE), 
++     3), "nœuds/point\n")
+  • Max: 64 nœuds/point
+curr.fun: symbol cat
+ .. after ‘expression(cat("  • Max:", round(max(ais$Accel, na.rm = TRUE), ’‘    3), "nœuds/point\n"))’
+
+>>>> eval(expression_nr. 55 )
+		 =================
+
+> cat("  • Moyenne:", round(mean(ais$Accel, na.rm = TRUE), 
++     3), "nœuds/point\n")
+  • Moyenne: 0 nœuds/point
+curr.fun: symbol cat
+ .. after ‘expression(cat("  • Moyenne:", round(mean(ais$Accel, na.rm = TRUE), ’‘    3), "nœuds/point\n"))’
+
+>>>> eval(expression_nr. 56 )
+		 =================
+
+> cat("  • Écart-type:", round(sd(ais$Accel, na.rm = TRUE), 
++     3), "nœuds/point\n")
+  • Écart-type: 1.741 nœuds/point
+curr.fun: symbol cat
+ .. after ‘expression(cat("  • Écart-type:", round(sd(ais$Accel, na.rm = TRUE), ’‘    3), "nœuds/point\n"))’
+
+>>>> eval(expression_nr. 57 )
+		 =================
+
+> max_acc_kns <- cfg$max_accel_ms2 * 1.943844
+curr.fun: symbol <-
+ .. after ‘expression(max_acc_kns <- cfg$max_accel_ms2 * 1.943844)’
+
+>>>> eval(expression_nr. 58 )
+		 =================
+
+> cat("• Seuil max accélération:", round(max_acc_kns, 
++     2), "nœuds/point\n")
+• Seuil max accélération: 3.89 nœuds/point
+curr.fun: symbol cat
+ .. after ‘expression(cat("• Seuil max accélération:", round(max_acc_kns, ’‘    2), "nœuds/point\n"))’
+
+>>>> eval(expression_nr. 59 )
+		 =================
+
+> n_before <- nrow(ais)
+curr.fun: symbol <-
+ .. after ‘expression(n_before <- nrow(ais))’
+
+>>>> eval(expression_nr. 60 )
+		 =================
+
+> ais <- ais[abs(Accel) <= max_acc_kns | is.na(Accel)]
+curr.fun: symbol <-
+ .. after ‘expression(ais <- ais[abs(Accel) <= max_acc_kns | is.na(Accel)])’
+
+>>>> eval(expression_nr. 61 )
+		 =================
+
+> n_after <- nrow(ais)
+curr.fun: symbol <-
+ .. after ‘expression(n_after <- nrow(ais))’
+
+>>>> eval(expression_nr. 62 )
+		 =================
+
+> cat("✅ Filtrage accélération:", format(n_before, 
++     big.mark = " "), "→", format(n_after, big.mark = " "), 
++     "(", round((n_before - n_after .... [TRUNCATED] 
+✅ Filtrage accélération: 189 314 → 182 593 ( 3.6 % supprimés)
+curr.fun: symbol cat
+ .. after ‘expression(cat("✅ Filtrage accélération:", format(n_before, ’‘    big.mark = " "), "→", format(n_after, big.mark = " "), ’‘    "(", round((n_before - n_after)/n_before * 100, 1), "% supprimés)\n"))’
+
+>>>> eval(expression_nr. 63 )
+		 =================
+
+> cat("\n📐 === SEUILS ADAPTATIFS ===\n")
+
+📐 === SEUILS ADAPTATIFS ===
+curr.fun: symbol cat
+ .. after ‘expression(cat("\n📐 === SEUILS ADAPTATIFS ===\n"))’
+
+>>>> eval(expression_nr. 64 )
+		 =================
+
+> cat("• Calcul du 5ème percentile des vitesses positives...\n")
+• Calcul du 5ème percentile des vitesses positives...
+curr.fun: symbol cat
+ .. after ‘expression(cat("• Calcul du 5ème percentile des vitesses positives...\n"))’
+
+>>>> eval(expression_nr. 65 )
+		 =================
+
+> if ("Navire" %in% names(ais)) {
++     q05 <- ais[Speed > 0, .(q05 = quantile(Speed, 0.05), n_obs = .N, 
++         vitesse_min = min(Speed), vitesse_ .... [TRUNCATED] 
+📊 Statistiques par navire:
+          Navire   q05  n_obs vitesse_min vitesse_max
+          <char> <num>  <int>       <num>       <num>
+1: Vasco Da Gama   0.1 119842         0.1        17.8
+📊 Seuils adaptatifs calculés:
+          Navire   q05 seuil
+          <char> <num> <num>
+1: Vasco Da Gama   0.1  0.15
+curr.fun: symbol if
+ .. after ‘expression(if ("Navire" %in% names(ais)) {’‘    q05 <- ais[Speed > 0, .(q05 = quantile(Speed, 0.05), n_obs = .N, ’‘        vitesse_min = min(Speed), vitesse_max = max(Speed)), ’‘        by = Navire]’‘    cat("📊 Statistiques par navire:\n")’‘    print(q05)’‘    q05[, `:=`(seuil, pmax(0.15, pmin(0.8, q05)))]’‘    cat("📊 Seuils adaptatifs calculés:\n")’‘    print(q05[, .(Navire, q05, seuil)])’‘    ais <- merge(ais, q05[, .(Navire, seuil)], by = "Navire")’‘} else {’‘    seuil_global <- quantile(ais$Speed[ais$Speed > 0], 0.05)’‘    seuil_global <- pmax(0.15, pmin(0.8, seuil_global))’‘    ais[, `:=`(seuil, seuil_global)]’‘    cat("✅ Seuil global calculé:", round(seuil_global, 3), ’‘        "nœuds\n")’‘})’
+
+>>>> eval(expression_nr. 66 )
+		 =================
+
+> ais[, `:=`(is_stop, Speed <= seuil)]
+curr.fun: symbol [
+ .. after ‘expression(ais[, `:=`(is_stop, Speed <= seuil)])’
+
+>>>> eval(expression_nr. 67 )
+		 =================
+
+> n_stops <- sum(ais$is_stop, na.rm = TRUE)
+curr.fun: symbol <-
+ .. after ‘expression(n_stops <- sum(ais$is_stop, na.rm = TRUE))’
+
+>>>> eval(expression_nr. 68 )
+		 =================
+
+> n_moving <- sum(!ais$is_stop, na.rm = TRUE)
+curr.fun: symbol <-
+ .. after ‘expression(n_moving <- sum(!ais$is_stop, na.rm = TRUE))’
+
+>>>> eval(expression_nr. 69 )
+		 =================
+
+> cat("✅ Classification vitesse:\n")
+✅ Classification vitesse:
+curr.fun: symbol cat
+ .. after ‘expression(cat("✅ Classification vitesse:\n"))’
+
+>>>> eval(expression_nr. 70 )
+		 =================
+
+> cat("  • Arrêts (≤ seuil):", format(n_stops, 
++     big.mark = " "), "(", round(n_stops/nrow(ais) * 100, 1), 
++     "%)\n")
+  • Arrêts (≤ seuil): 106 584 ( 58.4 %)
+curr.fun: symbol cat
+ .. after ‘expression(cat("  • Arrêts (≤ seuil):", format(n_stops, ’‘    big.mark = " "), "(", round(n_stops/nrow(ais) * 100, 1), ’‘    "%)\n"))’
+
+>>>> eval(expression_nr. 71 )
+		 =================
+
+> cat("  • Mouvement (> seuil):", format(n_moving, 
++     big.mark = " "), "(", round(n_moving/nrow(ais) * 100, 1), 
++     "%)\n")
+  • Mouvement (> seuil): 76 009 ( 41.6 %)
+curr.fun: symbol cat
+ .. after ‘expression(cat("  • Mouvement (> seuil):", format(n_moving, ’‘    big.mark = " "), "(", round(n_moving/nrow(ais) * 100, 1), ’‘    "%)\n"))’
+
+>>>> eval(expression_nr. 72 )
+		 =================
+
+> cat("\n🎯 === MODÉLISATION GMM ===\n")
+
+🎯 === MODÉLISATION GMM ===
+curr.fun: symbol cat
+ .. after ‘expression(cat("\n🎯 === MODÉLISATION GMM ===\n"))’
+
+>>>> eval(expression_nr. 73 )
+		 =================
+
+> move_data <- ais[is_stop == FALSE & Speed <= 20, Speed]
+curr.fun: symbol <-
+ .. after ‘expression(move_data <- ais[is_stop == FALSE & Speed <= 20, Speed])’
+
+>>>> eval(expression_nr. 74 )
+		 =================
+
+> cat("📊 Données pour GMM:\n")
+📊 Données pour GMM:
+curr.fun: symbol cat
+ .. after ‘expression(cat("📊 Données pour GMM:\n"))’
+
+>>>> eval(expression_nr. 75 )
+		 =================
+
+> cat("  • Observations mouvement (≤20 nœuds):", 
++     format(length(move_data), big.mark = " "), "\n")
+  • Observations mouvement (≤20 nœuds): 76 009 
+curr.fun: symbol cat
+ .. after ‘expression(cat("  • Observations mouvement (≤20 nœuds):", ’‘    format(length(move_data), big.mark = " "), "\n"))’
+
+>>>> eval(expression_nr. 76 )
+		 =================
+
+> cat("  • Vitesse min:", round(min(move_data), 2), 
++     "nœuds\n")
+  • Vitesse min: 0.2 nœuds
+curr.fun: symbol cat
+ .. after ‘expression(cat("  • Vitesse min:", round(min(move_data), 2), ’‘    "nœuds\n"))’
+
+>>>> eval(expression_nr. 77 )
+		 =================
+
+> cat("  • Vitesse max:", round(max(move_data), 2), 
++     "nœuds\n")
+  • Vitesse max: 17.8 nœuds
+curr.fun: symbol cat
+ .. after ‘expression(cat("  • Vitesse max:", round(max(move_data), 2), ’‘    "nœuds\n"))’
+
+>>>> eval(expression_nr. 78 )
+		 =================
+
+> cat("  • Vitesse moyenne:", round(mean(move_data), 
++     2), "nœuds\n")
+  • Vitesse moyenne: 3.51 nœuds
+curr.fun: symbol cat
+ .. after ‘expression(cat("  • Vitesse moyenne:", round(mean(move_data), ’‘    2), "nœuds\n"))’
+
+>>>> eval(expression_nr. 79 )
+		 =================
+
+> if (length(move_data) >= 50) {
++     cat("• Lancement GMM avec K=1 à 5 composantes...\n")
++     system.time({
++         gmm <- Mclust(move_data, G = .... [TRUNCATED] 
+• Lancement GMM avec K=1 à 5 composantes...
+✅ GMM terminé !
+📊 RÉSULTATS GMM:
+  • Nombre optimal de composantes (K): 4 
+  • BIC optimal: -282033.8 
+  • Log-vraisemblance: -140955.1 
+
+📊 === DÉTAILS DES COMPOSANTES GMM ===
+🔹 COMPOSANTE 1 :
+  • Poids (proportion): 0.108 ( 10.8 %)
+  • Moyenne: 0.229 nœuds
+  • Écart-type: 0.046 nœuds
+  • Variance: 0.002 
+  • Intervalle 95% (μ±1.96σ): [ 0.14  -  0.32 ] nœuds
+  • Observations assignées: 9 813 ( 12.9 %)
+
+🔹 COMPOSANTE 2 :
+  • Poids (proportion): 0.495 ( 49.5 %)
+  • Moyenne: 1.031 nœuds
+  • Écart-type: 0.437 nœuds
+  • Variance: 0.191 
+  • Intervalle 95% (μ±1.96σ): [ 0.17  -  1.89 ] nœuds
+  • Observations assignées: 39 346 ( 51.8 %)
+
+🔹 COMPOSANTE 3 :
+  • Poids (proportion): 0.16 ( 16 %)
+  • Moyenne: 2.137 nœuds
+  • Écart-type: 0.877 nœuds
+  • Variance: 0.77 
+  • Intervalle 95% (μ±1.96σ): [ 0.42  -  3.86 ] nœuds
+  • Observations assignées: 8 966 ( 11.8 %)
+
+🔹 COMPOSANTE 4 :
+  • Poids (proportion): 0.237 ( 23.7 %)
+  • Moyenne: 11.14 nœuds
+  • Écart-type: 2.901 nœuds
+  • Variance: 8.414 
+  • Intervalle 95% (μ±1.96σ): [ 5.45  -  16.82 ] nœuds
+  • Observations assignées: 17 884 ( 23.5 %)
+
+• Calcul des probabilités d'appartenance...
+✅ Probabilités calculées pour 76 009 observations
+• Application au dataset complet...
+✅ Attribution des composantes terminée
+
+📊 === DISTRIBUTION FINALE DES COMPOSANTES ===
+   Composante Observations Pourcentage
+        <int>        <int>       <num>
+1:          1       106584        58.4
+2:          3        39346        21.5
+3:          5        17884         9.8
+4:          4         8966         4.9
+5:          2         9813         5.4
+curr.fun: symbol if
+ .. after ‘expression(if (length(move_data) >= 50) {’‘    cat("• Lancement GMM avec K=1 à 5 composantes...\n")’‘    system.time({’‘        gmm <- Mclust(move_data, G = 1:5, verbose = FALSE)’‘    })’‘    cat("✅ GMM terminé !\n")’‘    cat("📊 RÉSULTATS GMM:\n")’‘    cat("  • Nombre optimal de composantes (K):", gmm$G, "\n")’‘    cat("  • BIC optimal:", round(gmm$bic, 2), "\n")’‘    cat("  • Log-vraisemblance:", round(gmm$loglik, 2), "\n")’‘    cat("\n📊 === DÉTAILS DES COMPOSANTES GMM ===\n")’‘    for (k in 1:gmm$G) {’‘        cat("🔹 COMPOSANTE", k, ":\n")’‘        cat("  • Poids (proportion):", round(gmm$parameters$pro[k], ’‘            3), "(", round(gmm$parameters$pro[k] * 100, 1), "%)\n")’‘        cat("  • Moyenne:", round(gmm$parameters$mean[k], 3), ’‘            "nœuds\n")’‘        cat("  • Écart-type:", round(sqrt(gmm$parameters$variance$sigmasq[k]), ’‘            3), "nœuds\n")’‘        cat("  • Variance:", round(gmm$parameters$variance$sigmasq[k], ’‘            3), "\n")’‘        mean_k <- gmm$parameters$mean[k]’‘        sd_k <- sqrt(gmm$parameters$variance$sigmasq[k])’‘        cat("  • Intervalle 95% (μ±1.96σ): [", round(mean_k - ’‘            1.96 * sd_k, 2), " - ", round(mean_k + 1.96 * sd_k, ’‘            2), "] nœuds\n")’‘        assignments <- apply(predict(gmm, newdata = move_data)$z, ’‘            1, which.max)’‘        n_assigned <- sum(assignments == k)’‘        cat("  • Observations assignées:", format(n_assigned, ’‘            big.mark = " "), "(", round(n_assigned/length(move_data) * ’‘            100, 1), "%)\n")’‘        cat("\n")’‘    }’‘    cat("• Calcul des probabilités d'appartenance...\n")’‘    Z <- predict(gmm, newdata = move_data)$z’‘    cat("✅ Probabilités calculées pour", format(nrow(Z), ’‘        big.mark = " "), "observations\n")’‘    cat("• Application au dataset complet...\n")’‘    ais[, `:=`(paste0("p", 1:5), 0)]’‘    ais[is_stop == TRUE, `:=`(p1, 1)]’‘    move_indices <- which(ais$is_stop == FALSE & ais$Speed <= ’‘        20)’‘    for (j in 1:ncol(Z)) {’‘        ais[move_indices, `:=`(paste0("p", j + 1), Z[, j])]’‘    }’‘    ais[, `:=`(comp, apply(.SD, 1, which.max)), .SDcols = paste0("p", ’‘        1:5)]’‘    cat("✅ Attribution des composantes terminée\n")’‘    cat("\n📊 === DISTRIBUTION FINALE DES COMPOSANTES ===\n")’‘    comp_stats <- ais[, .N, by = comp]’‘    comp_stats[, `:=`(prop, round(N/sum(N) * 100, 1))]’‘    setnames(comp_stats, c("Composante", "Observations", "Pourcentage"))’‘    print(comp_stats)’‘} else {’‘    cat("❌ Pas assez de données pour GMM (minimum 50 observations)\n")’‘})’
+
+>>>> eval(expression_nr. 80 )
+		 =================
+
+> cat("\n🗺️ === TEST DBSCAN ===\n")
+
+🗺️ === TEST DBSCAN ===
+curr.fun: symbol cat
+ .. after ‘expression(cat("\n🗺️ === TEST DBSCAN ===\n"))’
+
+>>>> eval(expression_nr. 81 )
+		 =================
+
+> stop_coords <- ais[is_stop == TRUE & !is.na(Lon) & 
++     !is.na(Lat), .(Lon, Lat)]
+curr.fun: symbol <-
+ .. after ‘expression(stop_coords <- ais[is_stop == TRUE & !is.na(Lon) & ’‘    !is.na(Lat), .(Lon, Lat)])’
+
+>>>> eval(expression_nr. 82 )
+		 =================
+
+> cat("📊 Coordonnées d'arrêt disponibles:", format(nrow(stop_coords), 
++     big.mark = " "), "\n")
+📊 Coordonnées d'arrêt disponibles: 106 584 
+curr.fun: symbol cat
+ .. after ‘expression(cat("📊 Coordonnées d'arrêt disponibles:", format(nrow(stop_coords), ’‘    big.mark = " "), "\n"))’
+
+>>>> eval(expression_nr. 83 )
+		 =================
+
+> if (nrow(stop_coords) >= 4) {
++     cat("• Calcul paramètre eps optimal...\n")
++     eps <- 0.01 * median(dist(stop_coords[sample(min(100, nrow(stop .... [TRUNCATED] 
+• Calcul paramètre eps optimal...
+  • eps calculé: 0 
+• Lancement DBSCAN...
+✅ DBSCAN terminé :
+  • Clusters trouvés: 4107 
+  • Points de bruit: 69 868 
+  • Points dans clusters: 36 716 
+  • Taille clusters - Min: 4 | Max: 1895 | Médiane: 5 
+curr.fun: symbol if
+ .. after ‘expression(if (nrow(stop_coords) >= 4) {’‘    cat("• Calcul paramètre eps optimal...\n")’‘    eps <- 0.01 * median(dist(stop_coords[sample(min(100, nrow(stop_coords)))]))’‘    cat("  • eps calculé:", round(eps, 6), "\n")’‘    cat("• Lancement DBSCAN...\n")’‘    system.time({’‘        cl <- dbscan(stop_coords, eps = eps, minPts = 4)’‘    })’‘    n_clusters <- length(unique(cl$cluster[cl$cluster > 0]))’‘    n_noise <- sum(cl$cluster == 0)’‘    cat("✅ DBSCAN terminé :\n")’‘    cat("  • Clusters trouvés:", n_clusters, "\n")’‘    cat("  • Points de bruit:", format(n_noise, big.mark = " "), ’‘        "\n")’‘    cat("  • Points dans clusters:", format(sum(cl$cluster > ’‘        0), big.mark = " "), "\n")’‘    if (n_clusters > 0) {’‘        cluster_sizes <- table(cl$cluster[cl$cluster > 0])’‘        cat("  • Taille clusters - Min:", min(cluster_sizes), ’‘            "| Max:", max(cluster_sizes), "| Médiane:", median(cluster_sizes), ’‘            "\n")’‘    }’‘} else {’‘    cat("❌ Pas assez de coordonnées d'arrêt pour DBSCAN\n")’‘})’
+
+>>>> eval(expression_nr. 84 )
+		 =================
+
+> cat("\n💾 === SAUVEGARDE ===\n")
+
+💾 === SAUVEGARDE ===
+curr.fun: symbol cat
+ .. after ‘expression(cat("\n💾 === SAUVEGARDE ===\n"))’
+
+>>>> eval(expression_nr. 85 )
+		 =================
+
+> output_file <- "~/scratch/step3_interactif_result.rds"
+curr.fun: symbol <-
+ .. after ‘expression(output_file <- "~/scratch/step3_interactif_result.rds")’
+
+>>>> eval(expression_nr. 86 )
+		 =================
+
+> cat("• Sauvegarde vers:", output_file, "\n")
+• Sauvegarde vers: ~/scratch/step3_interactif_result.rds 
+curr.fun: symbol cat
+ .. after ‘expression(cat("• Sauvegarde vers:", output_file, "\n"))’
+
+>>>> eval(expression_nr. 87 )
+		 =================
+
+> system.time({
++     saveRDS(ais, output_file, compress = "xz")
++ })
+curr.fun: symbol system.time
+   user  system elapsed 
+  5.791   0.033   5.874 
+ .. after ‘expression(system.time({’‘    saveRDS(ais, output_file, compress = "xz")’‘}))’
+
+>>>> eval(expression_nr. 88 )
+		 =================
+
+> if (file.exists(output_file)) {
++     file_size <- file.info(output_file)$size/1024^2
++     cat("✅ Fichier sauvé:", round(file_size, 1), "MB\n")
++ }
+✅ Fichier sauvé: 1.7 MB
+curr.fun: symbol if
+ .. after ‘expression(if (file.exists(output_file)) {’‘    file_size <- file.info(output_file)$size/1024^2’‘    cat("✅ Fichier sauvé:", round(file_size, 1), "MB\n")’‘})’
+
+>>>> eval(expression_nr. 89 )
+		 =================
+
+> cat("\n")
+
+curr.fun: symbol cat
+ .. after ‘expression(cat("\n"))’
+
+>>>> eval(expression_nr. 90 )
+		 =================
+
+> cat("================================================================================\n")
+================================================================================
+curr.fun: symbol cat
+ .. after ‘expression(cat("================================================================================\n"))’
+
+>>>> eval(expression_nr. 91 )
+		 =================
+
+> cat("🏁  STEP-3 INTERACTIF TERMINÉ AVEC SUCCÈS\n")
+🏁  STEP-3 INTERACTIF TERMINÉ AVEC SUCCÈS
+curr.fun: symbol cat
+ .. after ‘expression(cat("🏁  STEP-3 INTERACTIF TERMINÉ AVEC SUCCÈS\n"))’
+
+>>>> eval(expression_nr. 92 )
+		 =================
+
+> cat("================================================================================\n")
+================================================================================
+curr.fun: symbol cat
+ .. after ‘expression(cat("================================================================================\n"))’
+
+>>>> eval(expression_nr. 93 )
+		 =================
+
+> cat("Timestamp fin:", format(Sys.time()), "\n")
+Timestamp fin: 2025-06-12 08:14:20 
+curr.fun: symbol cat
+ .. after ‘expression(cat("Timestamp fin:", format(Sys.time()), "\n"))’
+
+>>>> eval(expression_nr. 94 )
+		 =================
+
+> cat("✅ Toutes les étapes validées !\n")
+✅ Toutes les étapes validées !
+curr.fun: symbol cat
+ .. after ‘expression(cat("✅ Toutes les étapes validées !\n"))’
+
+>>>> eval(expression_nr. 95 )
+		 =================
+
+> cat("📁 Résultat disponible dans:", output_file, 
++     "\n")
+📁 Résultat disponible dans: ~/scratch/step3_interactif_result.rds 
+curr.fun: symbol cat
+ .. after ‘expression(cat("📁 Résultat disponible dans:", output_file, ’‘    "\n"))’
+
+✅ STEP3 INTERACTIF TERMINÉ: Thu Jun 12 08:14:20 EDT 2025

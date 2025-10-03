@@ -1,0 +1,113 @@
+🚀 === ÉTAPE 3 OPTIMIZED: FUSION ET GRID SEARCH ===
+Job ID: 56950722
+Node: bc12137
+Début: Mon 30 Jun 2025 11:09:21 AM EDT
+💾 Mémoire allouée: 128 GB
+🖥️  CPU: 16 cores
+📦 Job fractionnement référence: 56779162
+📁 Dossier de résultats: auto-détection par le script R
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 31024 Jun 30 11:01 step3_merge_final.R
+🧹 Nettoyage mémoire système...
+⚠️  Impossible de nettoyer le cache (normal sur certains systèmes)
+✅ Lancement fusion et grid search optimisé...
+🚀 === ÉTAPE 3: FUSION ET GRID SEARCH (AVEC CHECK-POINTING) ===
+📦 Job fractionnement: 56779162 
+📁 Dossier résultats:  
+🖥️  Cores: 16 
+⏱️  Début: 2025-06-30 11:09:26 
+
+🗑️  Suppression du checkpoint GMM fautif pour forcer le recalcul
+🔍 Auto-détection du dossier de résultats...
+✅ Dossier trouvé: /home/benl/scratch/ais_results_56779162 
+✅ Fichiers d'entrée vérifiés: 11 fichiers *_clean.rds trouvés
+
+
+🏁  STEP-3  |  Fusion & Modélisation  |  début : 2025-06-30 11:09:26 
+
+✅ R configuré avec library: /home/benl/.local/R/4.2.1 
+✅ Fichiers *_clean.rds trouvés: 11 
+   • 01_Charles_Darwin_clean.rds 
+   • 02_Ham_318_clean.rds 
+   • 03_Leiv_Eiriksson_clean.rds 
+   ... et 8 autres
+💾  Source : /home/benl/scratch/ais_results_56779162 
+💾  Sortie : ~/scratch/output_V6 
+
+✅  Packages chargés | 16 threads data.table
+✅  YAML chargé
+🔄  Reload checkpoint: stage3A_fusion.rds 
+🔧  Vérification des types de colonnes...
+ Types des colonnes critiques:
+   Navire    : character
+   ssvid     : integer
+   Seg_id    : character
+   Annee     : numeric
+🔍 Vérifications supplémentaires critiques...
+✅ Colonne 'is_stop' présente
+✅ Colonnes géographiques présentes
+✅ Colonnes géographiques converties en numeric
+✅ Aucun doublon détecté
+📊 Utilisation mémoire: 0.94 GB
+✅ Types de colonnes vérifiés et corrigés
+
+⏱️  Détection pics temporels isolés…
+📐  Filtrage contextuel…
+🔧  Harmonisation des types pour la jointure des percentiles...
+🔧  Vérification des types avant jointure:
+   Table principale - Navire: character 
+   Table percentiles - Navire: character 
+🔄  Reload checkpoint: stage3B_dbscan.rds 
+🔧  Cadence AIS & seuils adaptatifs par navire
+                      Navire  p50_dt seuil_adaptatif n_min prop_long
+                      <char>   <num>           <num> <num>     <num>
+ 1:              Congo River  97.000         291.000     3 0.1492676
+ 2:          Cristobal Colon 108.000         324.000     3 0.2095158
+ 3:                  Ham 318 130.690         392.070     3 0.2076991
+ 4:           Charles Darwin 136.000         408.000     3 0.1950150
+ 5:           Leiv Eiriksson 140.556         421.668     3 0.1719962
+ 6:                  Fairway 150.000         450.000     3 0.2229586
+ 7: Queen Of The Netherlands 176.000         528.000     3 0.2418194
+ 8:               Vox Maxima 179.000         537.000     3 0.2829589
+ 9:             Inai Kenanga 180.000         540.000     3 0.2631950
+10:               Goryo 6 Ho 188.000         564.000     3 0.2574560
+11:            Vasco Da Gama 361.000        1200.000     3 0.6178954
+⚙️  Compute & save checkpoint: stage3C_gmm.rds 
+🔧  GMM « stop + 4 » - début
+converged at iteration 50 with logLik: 1800339 
+converged at iteration 125 with logLik: 1408168 
+✅ GMM terminé - Checkpoint sauvegardé
+✅ Checkpoint sauvegardé: stage3C_gmm.rds 
+⚙️  Compute & save checkpoint: stage3D_gridsearch.rds 
+🔍  Grid-search (poids score dragage) - début
+🏆  Best w1=0.70 w2=0.20 w3=0.10 | AUC=0.9685
+✅ Grid-search terminé - Checkpoint sauvegardé
+✅ Checkpoint sauvegardé: stage3D_gridsearch.rds 
+
+💾  Fichiers sauvegardés dans ~/scratch/output_V6 
+⏱️  Fin : 2025-06-30 13:17:07 
+Warning messages:
+1: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 25 from 9212702.38408179 to 8905994.44507732
+2: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 15 from 12503917.7217237 to 12117685.9601631
+3: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 13 from 15772953.5226655 to 15473626.4591563
+4: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 19 from 17584658.0113688 to 15988065.31109
+5: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 9 from 19623796.0007961 to 19005946.4591942
+6: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 17 from 17419945.3013082 to 17156274.1863279
+7: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 20 from 12955292.2238132 to 12512468.4819085
+8: In em.depmix(object = object, maxit = emcontrol$maxit, tol = emcontrol$tol,  :
+  Log likelihood decreased on iteration 15 from 7480622.91910773 to 7178818.31918128
+✅ Fusion et grid search terminés avec succès: Mon Jun 30 13:17:09 EDT 2025
+📊 === RÉSUMÉ FINAL ===
+Fichiers générés dans /home/benl/scratch/output_V6/:
+-rw-r-----. 1 benl benl 88M Jun 30 13:16 /home/benl/scratch/output_V6/AIS_data_core_preprocessed_V6_20250630_130426.rds
+-rw-r-----. 1 benl benl 88M Jun 30 13:17 /home/benl/scratch/output_V6/AIS_data_core_preprocessed_V6_20250630_131048.rds
+-rw-r-----. 1 benl benl 208 Jun 30 13:16 /home/benl/scratch/output_V6/dragage_gridsearch_results_V6_20250630_130426.rds
+-rw-r-----. 1 benl benl 208 Jun 30 13:17 /home/benl/scratch/output_V6/dragage_gridsearch_results_V6_20250630_131048.rds
+🎉 ÉTAPE 3 OPTIMIZED TERMINÉE !

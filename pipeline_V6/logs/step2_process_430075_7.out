@@ -1,0 +1,24 @@
+🚀 === ÉTAPE 2: TRAITEMENT NAVIRE 7 ===
+Job ID: 430075_7
+Node: rc12514
+Début: Fri Jul 25 06:19:04 EDT 2025
+📦 Job fractionnement référence: 
+✅ Répertoire de travail: /home/benl/R_scripts/pipeline_V6
+✅ Vérification fichier R: -rw-r-----. 1 benl benl 11362 Jul 25 06:15 step2_process_navire.R
+✅ Lancement traitement navire 7...
+🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===
+Début: 2025-07-25 06:19:05 
+✅ R configuré avec library: /home/benl/R/library 
+✅ Packages chargés - Configuration mono-thread activée
+📌 Script hash reçu: non défini 
+📋 Task ID: 7 
+📋 Split Job ID:  
+Error in eval(ei, envir) : 
+  ❌ Métadonnées introuvables: ~/scratch/ais_split_/navires_metadata.csv
+Calls: source -> withVisible -> eval -> eval
+In addition: Warning messages:
+1: package ‘lubridate’ was built under R version 4.5.0 
+2: package ‘zoo’ was built under R version 4.5.0 
+Execution halted
+✅ Étape 2 terminée: Fri Jul 25 06:19:05 EDT 2025
+📁 Résultats sauvés dans: ~/scratch/ais_results_430075/
