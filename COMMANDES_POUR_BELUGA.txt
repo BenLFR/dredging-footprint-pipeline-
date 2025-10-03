@@ -1,0 +1,33 @@
+# ==============================================================================
+# COMMANDES À EXÉCUTER SUR BELUGA - COPIER/COLLER DIRECTEMENT
+# ==============================================================================
+
+# 1. Aller dans le répertoire Beluga
+cd ~/Beluga
+
+# 2. Télécharger les fichiers corrigés depuis ton PC
+# (Tu devras d'abord les copier avec scp ou les recreer)
+
+# 3. Rendre le script exécutable et le lancer
+chmod +x tests/test_packages_beluga.sh
+bash tests/test_packages_beluga.sh
+
+# OU si le script automatique ne fonctionne pas, commandes manuelles :
+
+# 3a. Trouver le module R disponible
+module avail r/
+
+# 3b. Charger le module R (remplace par la version trouvée)
+module load r/4.3.1  # ou la version disponible
+
+# 3c. Installer les packages manquants
+Rscript installation/install_packages_beluga_fixed.R
+
+# 3d. Lancer le job final
+sbatch submission/submit_beluga_NO_SF.sh
+
+# 4. Vérifier que le job tourne
+squeue -u $USER
+
+# 5. Suivre les logs en temps réel (optionnel)
+# tail -f ais_training_no_sf_*.out 

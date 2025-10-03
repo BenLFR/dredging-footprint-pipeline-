@@ -1,0 +1,18 @@
+# Configuration SSH pour Beluga
+# Ajoutez ceci à votre fichier ~/.ssh/config (ou créez-le)
+
+Host beluga
+    HostName beluga.alliancecan.ca
+    User benl
+    ControlMaster auto
+    ControlPath ~/.ssh/control-%r@%h:%p
+    ControlPersist 10m
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+
+# Utilisation :
+# Au lieu de : ssh benl@beluga.alliancecan.ca
+# Utilisez : ssh beluga
+# 
+# Au lieu de : scp fichier.txt benl@beluga.alliancecan.ca:~/
+# Utilisez : scp fichier.txt beluga:~/ 

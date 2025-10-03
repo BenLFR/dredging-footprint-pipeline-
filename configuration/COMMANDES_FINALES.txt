@@ -1,0 +1,36 @@
+# ========================================
+# COMMANDES À EXÉCUTER SUR BELUGA
+# ========================================
+
+# 1. Connexion à Beluga (faites votre 2FA)
+ssh benl@beluga.alliancecan.ca
+
+# 2. Une fois connecté, copiez-collez ces 4 commandes :
+
+cd ~/R_scripts/
+chmod +x submit_beluga_FINAL.sh
+sbatch submit_beluga_FINAL.sh
+squeue -u benl
+
+# ========================================
+# C'EST TOUT ! 
+# ========================================
+
+# Votre job va démarrer automatiquement
+# Vous recevrez des emails à : benl@beluga.alliancecan.ca
+# - Email de début de job
+# - Email de fin de job (succès ou échec)
+
+# Pour surveiller en temps réel :
+tail -f ais_training_no_sf_*.out
+
+# Pour voir les erreurs (si besoin) :
+tail -f ais_training_no_sf_*.err
+
+# ========================================
+# RÉSULTATS ATTENDUS DANS 2-4 HEURES
+# ========================================
+# Fichiers dans ~/scratch/output/ :
+# - AIS_data_core_preprocessed.csv
+# - AIS_data_core_preprocessed.rds  
+# - weights_dragage_score_opt.rds 

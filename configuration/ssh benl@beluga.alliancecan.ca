@@ -1,0 +1,10 @@
+ssh benl@beluga.alliancecan.ca
+nano -w ~/Entrainement_modele_V5_trie_annees_cluster.R
+
+salloc --time=02:00:00 --cpus-per-task=16 --mem=160G
+module load r/4.4.0 proj/9.4.1 geos/3.12.0 gdal/3.9.1 udunits/2.2.28
+export R_LIBS_USER=~/R/4.4.0-library
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK   # =16
+
+Rscript ~/Entrainement_modele_V5_trie_annees_cluster.R
+exit
