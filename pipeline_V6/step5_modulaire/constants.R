@@ -1,42 +1,43 @@
 # ────────────────────────────────────────────────────────────────────────────────
 # CONSTANTES PARTAGÉES - Pipeline Step-5 Modulaire
-# Paramètres globaux utilisés par tous les scripts du pipeline
+# Grille mondiale 1 km Equal-Earth EPSG:6933
 # ────────────────────────────────────────────────────────────────────────────────
 
-# Paramètres de tuilage
-CELL_KM <- 1000   # Taille de tuile en km (réduit de 5000 à 1000 pour éviter OOM)
-CRS_EQUIVALENT <- 6933   # CRS équivalent (mètres)
+# Emprise mondiale en mètres (EPSG:6933) – conforme Atwood et Step 3
+WORLD_XMIN <- -17367530.45
+WORLD_XMAX <-  17367530.45
+WORLD_YMIN <- -7342699.72
+WORLD_YMAX <-  7342699.72
 
-# Emprise mondiale en mètres (EPSG:6933) - COHÉRENT entre tous les scripts
-WORLD_XMIN <- -18000000
-WORLD_YMIN <- -9000000
-WORLD_XMAX <- 18000000
-WORLD_YMAX <- 9000000
+# Paramètres de grille 1 km
+CELL_SIZE_M    <- 1000
+CELL_AREA_M2   <- CELL_SIZE_M * CELL_SIZE_M
+GRID_COLS      <- as.integer((WORLD_XMAX - WORLD_XMIN) / CELL_SIZE_M)   # 34735
+GRID_ROWS      <- as.integer((WORLD_YMAX - WORLD_YMIN) / CELL_SIZE_M)   # 14685
+NCOLS          <- GRID_COLS
+NROWS          <- GRID_ROWS
 
-# Paramètres de grille
-CELL_SIZE_M <- 1000  # Taille de cellule en mètres (1 km)
-CELL_AREA_M2 <- 1e6  # Surface de cellule en m²
-
-# Paramètres de calcul global_grid_id
-GRID_COLS <- 36000  # Nombre de colonnes de la grille mondiale
-GRID_ROWS <- 18000  # Nombre de lignes de la grille mondiale
-
-# ──────────────
-# SYSTÈME DE TEST DE BUFFERS
-# ──────────────
-# Liste des buffers à tester (en mètres)
+# Buffers pour tuiles (test multi-runs SLURM)
 BUFFER_TEST_VALUES <- c(2000, 10000, 20000, 50000, 100000)
-
-# Utilisation : pour tester différents buffers, définir une variable d'environnement "BUFFER_IDX"
-# Ex: dans le shell ou job SLURM → export BUFFER_IDX=3   (pour 20000 m)
-BUFFER_IDX <- as.integer(Sys.getenv("BUFFER_IDX", "1"))
-if(is.na(BUFFER_IDX) || BUFFER_IDX < 1 || BUFFER_IDX > length(BUFFER_TEST_VALUES)) {
-  BUFFER_IDX <- 1  # défaut: 1er buffer de la liste
-}
-
+BUFFER_IDX <- as.integer(Sys.getenv("BUFFER_IDX", "4"))
+if(is.na(BUFFER_IDX) || BUFFER_IDX < 1 || BUFFER_IDX > length(BUFFER_TEST_VALUES)) BUFFER_IDX <- 1
+TILE_BUFFER_M <- BUFFER_TEST_VALUES[BUFFER_IDX]
+cat(sprintf("INFO: TILE_BUFFER_M = %d m (BUFFER_IDX = %d)\n", TILE_BUFFER_M, BUFFER_IDX))
 TILE_BUFFER_M <- BUFFER_TEST_VALUES[BUFFER_IDX]
 
-cat(sprintf("🌍 [INFO] TILE_BUFFER_M défini à %d m (BUFFER_IDX = %d)\n", TILE_BUFFER_M, BUFFER_IDX))
+# Version arrow minimale (modifie selon ta stack logicielle)
+PARQUET_VERSION_MIN <- "14.0.0"
 
-# Paramètres de sauvegarde
-PARQUET_VERSION_MIN <- "14.0.0"  # Version minimale d'arrow pour Parquet 
+# Paramètres pour la génération des tuiles
+CELL_KM <- 1000  # Taille des tuiles en km
+CRS_EQUIVALENT <- "EPSG:6933"  # CRS Equal-Earth
+
+# Paramètres pour le calcul de la lithologie effective
+SURF_HORIZON <- 0.05          # 5 cm (horizon de surface)
+FACTOR_DEEP  <- 0.3           # Facteur de pondération couche profonde
+
+# === Grille cellule (EPSG:6933, alignée monde) ===
+GRID_X0 <- WORLD_XMIN
+GRID_Y0 <- WORLD_YMIN
+GRID_DX <- CELL_SIZE_M
+GRID_DY <- CELL_SIZE_M
