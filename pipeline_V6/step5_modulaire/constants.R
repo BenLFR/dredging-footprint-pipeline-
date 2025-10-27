@@ -23,7 +23,6 @@ BUFFER_IDX <- as.integer(Sys.getenv("BUFFER_IDX", "4"))
 if(is.na(BUFFER_IDX) || BUFFER_IDX < 1 || BUFFER_IDX > length(BUFFER_TEST_VALUES)) BUFFER_IDX <- 1
 TILE_BUFFER_M <- BUFFER_TEST_VALUES[BUFFER_IDX]
 cat(sprintf("INFO: TILE_BUFFER_M = %d m (BUFFER_IDX = %d)\n", TILE_BUFFER_M, BUFFER_IDX))
-TILE_BUFFER_M <- BUFFER_TEST_VALUES[BUFFER_IDX]
 
 # Version arrow minimale (modifie selon ta stack logicielle)
 PARQUET_VERSION_MIN <- "14.0.0"
