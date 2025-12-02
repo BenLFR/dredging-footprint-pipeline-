@@ -39,6 +39,7 @@ suppressPackageStartupMessages({
   library(zoo)        # rollmean
   library(sf)         # filtres géospatiaux
 })
+sf::sf_use_s2(TRUE)  # garantir les buffers/mesures en mètres sur WGS84
 
 # Configuration data.table conservative
 setDTthreads(1)  # Mono-thread obligatoire
@@ -55,6 +56,8 @@ land_mask_path   <- Sys.getenv("LAND_MASK_FILE", unset = "~/R_scripts/configurat
 land_buffer_m    <- as.numeric(Sys.getenv("LAND_MASK_BUFFER_M", unset = "200"))
 near_coast_km    <- as.numeric(Sys.getenv("LAND_NEAR_COAST_KM", unset = "10"))
 default_speed_kn <- as.numeric(Sys.getenv("MAX_JUMP_SPEED_KN", unset = "30"))
+spike_dist_min_nm   <- as.numeric(Sys.getenv("SPIKE_DIST_MIN_NM", unset = "1"))
+spike_bridge_max_nm <- as.numeric(Sys.getenv("SPIKE_BRIDGE_MAX_NM", unset = "0.3"))
 
 # ---- FONCTIONS OUTILS ----
 haversine_nm <- function(lat1, lon1, lat2, lon2) {
@@ -88,12 +91,15 @@ load_land_polygons <- function(path, buffer_m = 0) {
 
   land <- sf::st_make_valid(land)
   if (!is.na(buffer_m) && buffer_m != 0) {
+    land <- sf::st_transform(land, 3857)
     land <- sf::st_buffer(land, dist = buffer_m)
+    land <- sf::st_transform(land, 4326)
   }
   land
 }
 
-flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_speed_kn) {
+flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_speed_kn,
+                                      spike_dist_min_nm = 1, spike_bridge_max_nm = 0.3) {
   dt[, `:=`(
     gc_nm = haversine_nm(Lat, Lon, shift(Lat), shift(Lon)),
     dt_sec = as.numeric(delta_t),
@@ -106,11 +112,19 @@ flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_
   # 1) Points sur terre (si masque disponible)
   if (!is.null(land_polygons)) {
     pts_sf <- sf::st_as_sf(dt, coords = c("Lon", "Lat"), crs = 4326, remove = FALSE)
-    on_land <- lengths(sf::st_intersects(pts_sf, land_polygons)) > 0
+    bbox <- sf::st_bbox(pts_sf)
+    bbox_expanded <- bbox + c(-near_coast_km / 111, near_coast_km / 111,
+                              -near_coast_km / 111, near_coast_km / 111)
+    land_local <- sf::st_crop(land_polygons, bbox_expanded)
+    if (is.null(land_local) || nrow(land_local) == 0) {
+      land_local <- land_polygons
+    }
+
+    on_land <- lengths(sf::st_intersects(pts_sf, land_local)) > 0
     dt[on_land, geo_flag := TRUE]
 
     # 2) Segments traversant la terre (limité aux zones côtières pour performance)
-    near_land <- lengths(sf::st_is_within_distance(pts_sf, land_polygons, dist = near_coast_km * 1000)) > 0
+    near_land <- lengths(sf::st_is_within_distance(pts_sf, land_local, dist = near_coast_km * 1000)) > 0
     segment_idx <- which(near_land | shift(near_land, type = "lead", fill = FALSE))
     segment_idx <- segment_idx[segment_idx < nrow(dt)]
     if (length(segment_idx)) {
@@ -122,7 +136,7 @@ flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_
         ),
         crs = 4326
       )
-      crosses_land <- lengths(sf::st_intersects(seg_lines, land_polygons)) > 0
+      crosses_land <- lengths(sf::st_intersects(seg_lines, land_local)) > 0
       if (any(crosses_land)) {
         bad_idx <- segment_idx[crosses_land] + 1L
         dt[bad_idx, geo_flag := TRUE]
@@ -141,7 +155,9 @@ flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_
     dist_prev_next = haversine_nm(shift(Lat), shift(Lon), shift(Lat, type = "lead"), shift(Lon, type = "lead"))
   )]
 
-  spike_idx <- which(dt$dist_prev > 1 & dt$dist_next > 1 & dt$dist_prev_next < 0.3)
+  spike_idx <- which(dt$dist_prev > spike_dist_min_nm &
+                       dt$dist_next > spike_dist_min_nm &
+                       dt$dist_prev_next < spike_bridge_max_nm)
   if (length(spike_idx)) dt[spike_idx, geo_flag := TRUE]
 
   dt[, c("gc_nm", "dt_sec", "avg_speed_kn", "max_plausible_kn", "dist_prev", "dist_next", "dist_prev_next") := NULL]
@@ -273,7 +289,9 @@ land_polygons <- load_land_polygons(land_mask_path, buffer_m = land_buffer_m)
 
 cat("🌍 Application filtres géospatiaux (terre, segments, sauts)...\n")
 n_before_geo <- nrow(dt_nav)
-dt_nav <- flag_geospatial_anomalies(dt_nav, land_polygons, near_coast_km, default_speed_kn)
+dt_nav <- flag_geospatial_anomalies(dt_nav, land_polygons, near_coast_km, default_speed_kn,
+                                    spike_dist_min_nm = spike_dist_min_nm,
+                                    spike_bridge_max_nm = spike_bridge_max_nm)
 n_geo_flagged <- sum(dt_nav$geo_flag, na.rm = TRUE)
 dt_nav <- dt_nav[geo_flag == FALSE | is.na(geo_flag)]
 dt_nav[, geo_flag := NULL]
@@ -282,6 +300,11 @@ cat(sprintf("✅ Filtres géospatiaux : %d lignes supprimées (%.2f %%)\n",
             n_before_geo - n_after_geo,
             if (n_before_geo > 0) 100 * (n_before_geo - n_after_geo) / n_before_geo else 0))
 cat("   • Anomalies géospatiales détectées:", n_geo_flagged, "\n")
+if (!is.null(land_polygons) && (n_before_geo - n_after_geo) != n_geo_flagged) {
+  warning("Incohérence filtres géospatiaux: supprimés = ",
+          n_before_geo - n_after_geo,
+          " vs flags = ", n_geo_flagged)
+}
 
 # (1) Calcul des dérivées juste avant l'Isolation Forest (après filtrage géospatial)
 setorder(dt_nav, Timestamp)
