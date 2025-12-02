@@ -37,6 +37,7 @@ suppressPackageStartupMessages({
   library(solitude)   # Isolation Forest
   library(mclust)     # GMM
   library(zoo)        # rollmean
+  library(sf)         # filtres géospatiaux
 })
 
 # Configuration data.table conservative
@@ -44,6 +45,108 @@ setDTthreads(1)  # Mono-thread obligatoire
 options(datatable.optimize = 1)
 
 cat("✅ Packages chargés - Configuration mono-thread activée\n")
+
+# ---- PARAMÈTRES GÉOSPATIAUX ----
+# Le masque terrestre est optionnel ; s'il est absent, les filtres géospatiaux
+# basés sur les polygones sont ignorés. Vous pouvez fournir un fichier RDS ou
+# GPkg via la variable d'env LAND_MASK_FILE. Un léger buffer (mètres) permet
+# d'éviter les faux positifs en bord de quai.
+land_mask_path   <- Sys.getenv("LAND_MASK_FILE", unset = "~/R_scripts/configuration/land_polygons.rds")
+land_buffer_m    <- as.numeric(Sys.getenv("LAND_MASK_BUFFER_M", unset = "200"))
+near_coast_km    <- as.numeric(Sys.getenv("LAND_NEAR_COAST_KM", unset = "10"))
+default_speed_kn <- as.numeric(Sys.getenv("MAX_JUMP_SPEED_KN", unset = "30"))
+
+# ---- FONCTIONS OUTILS ----
+haversine_nm <- function(lat1, lon1, lat2, lon2) {
+  r <- 6371000
+  to_rad <- pi / 180
+  dlat <- (lat2 - lat1) * to_rad
+  dlon <- (lon2 - lon1) * to_rad
+  a <- sin(dlat / 2)^2 + cos(lat1 * to_rad) * cos(lat2 * to_rad) * sin(dlon / 2)^2
+  c <- 2 * atan2(sqrt(a), sqrt(1 - a))
+  (r * c) / 1852  # en milles nautiques
+}
+
+load_land_polygons <- function(path, buffer_m = 0) {
+  if (!file.exists(path)) {
+    cat("⚠️ Masque terrestre introuvable (", path, ") - filtres terre désactivés\n")
+    return(NULL)
+  }
+
+  land <- if (grepl("\\.gpkg$", path, ignore.case = TRUE)) {
+    sf::st_read(path, quiet = TRUE)
+  } else {
+    readRDS(path)
+  }
+  if (!inherits(land, "sf")) {
+    stop("❌ Le masque terrestre doit être un objet sf")
+  }
+
+  if (isFALSE(sf::st_is_longlat(land))) {
+    land <- sf::st_transform(land, 4326)
+  }
+
+  land <- sf::st_make_valid(land)
+  if (!is.na(buffer_m) && buffer_m != 0) {
+    land <- sf::st_buffer(land, dist = buffer_m)
+  }
+  land
+}
+
+flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_speed_kn) {
+  dt[, `:=`(
+    gc_nm = haversine_nm(Lat, Lon, shift(Lat), shift(Lon)),
+    dt_sec = as.numeric(delta_t),
+    avg_speed_kn = ifelse(!is.na(dt_sec) & dt_sec > 0, gc_nm / dt_sec * 3600, NA_real_),
+    max_plausible_kn = fifelse(!is.na(Service_speed), Service_speed * 1.5, default_speed_kn)
+  )]
+
+  dt[, geo_flag := FALSE]
+
+  # 1) Points sur terre (si masque disponible)
+  if (!is.null(land_polygons)) {
+    pts_sf <- sf::st_as_sf(dt, coords = c("Lon", "Lat"), crs = 4326, remove = FALSE)
+    on_land <- lengths(sf::st_intersects(pts_sf, land_polygons)) > 0
+    dt[on_land, geo_flag := TRUE]
+
+    # 2) Segments traversant la terre (limité aux zones côtières pour performance)
+    near_land <- lengths(sf::st_is_within_distance(pts_sf, land_polygons, dist = near_coast_km * 1000)) > 0
+    segment_idx <- which(near_land | shift(near_land, type = "lead", fill = FALSE))
+    segment_idx <- segment_idx[segment_idx < nrow(dt)]
+    if (length(segment_idx)) {
+      seg_lines <- sf::st_sfc(
+        mapply(
+          function(i) sf::st_linestring(matrix(c(dt$Lon[i], dt$Lon[i + 1], dt$Lat[i], dt$Lat[i + 1]), ncol = 2)),
+          segment_idx,
+          SIMPLIFY = FALSE
+        ),
+        crs = 4326
+      )
+      crosses_land <- lengths(sf::st_intersects(seg_lines, land_polygons)) > 0
+      if (any(crosses_land)) {
+        bad_idx <- segment_idx[crosses_land] + 1L
+        dt[bad_idx, geo_flag := TRUE]
+      }
+    }
+  }
+
+  # 3) Sauts distance/temps (vitesse moyenne déraisonnable)
+  dt[avg_speed_kn > max_plausible_kn, geo_flag := TRUE]
+  dt[gc_nm > 100 & dt_sec <= 3600, geo_flag := TRUE]  # saut long en moins d'1h
+
+  # 4) Courtes séquences hors trajectoire (spikes isolés)
+  dt[, `:=`(
+    dist_prev = haversine_nm(shift(Lat), shift(Lon), Lat, Lon),
+    dist_next = haversine_nm(Lat, Lon, shift(Lat, type = "lead"), shift(Lon, type = "lead")),
+    dist_prev_next = haversine_nm(shift(Lat), shift(Lon), shift(Lat, type = "lead"), shift(Lon, type = "lead"))
+  )]
+
+  spike_idx <- which(dt$dist_prev > 1 & dt$dist_next > 1 & dt$dist_prev_next < 0.3)
+  if (length(spike_idx)) dt[spike_idx, geo_flag := TRUE]
+
+  dt[, c("gc_nm", "dt_sec", "avg_speed_kn", "max_plausible_kn", "dist_prev", "dist_next", "dist_prev_next") := NULL]
+  dt
+}
 
 # ---- PARAMÈTRES ENVIRONNEMENT ----
 task_id <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
@@ -162,7 +265,25 @@ if ("Service_speed" %chin% names(dt_nav)) {
   # dt_nav[, Service_speed := NULL]  # CONSERVÉ pour l'étape 3
 }
 
-# (1) Calcul des dérivées juste avant l'Isolation Forest
+# Préparation initiale pour les filtres géospatiaux (delta_t avant filtrage)
+setorder(dt_nav, Timestamp)
+dt_nav[, delta_t := c(NA_real_, diff(as.numeric(Timestamp)))]
+
+land_polygons <- load_land_polygons(land_mask_path, buffer_m = land_buffer_m)
+
+cat("🌍 Application filtres géospatiaux (terre, segments, sauts)...\n")
+n_before_geo <- nrow(dt_nav)
+dt_nav <- flag_geospatial_anomalies(dt_nav, land_polygons, near_coast_km, default_speed_kn)
+n_geo_flagged <- sum(dt_nav$geo_flag, na.rm = TRUE)
+dt_nav <- dt_nav[geo_flag == FALSE | is.na(geo_flag)]
+dt_nav[, geo_flag := NULL]
+n_after_geo <- nrow(dt_nav)
+cat(sprintf("✅ Filtres géospatiaux : %d lignes supprimées (%.2f %%)\n",
+            n_before_geo - n_after_geo,
+            if (n_before_geo > 0) 100 * (n_before_geo - n_after_geo) / n_before_geo else 0))
+cat("   • Anomalies géospatiales détectées:", n_geo_flagged, "\n")
+
+# (1) Calcul des dérivées juste avant l'Isolation Forest (après filtrage géospatial)
 setorder(dt_nav, Timestamp)
 dt_nav[, delta_t       := c(NA_real_, diff(as.numeric(Timestamp)))]
 dt_nav[, Course_change := c(NA_real_, abs(diff(Course)))]
@@ -198,9 +319,9 @@ cat("🔧 Paramètres IF: contamination =", outlier_config$contamination_rate,
 # ---- FONCTIONS ISOLATION FOREST OPTIMISÉES ----
 detect_outliers_IF_optimized <- function(dt, config) {
   cat("  🌲 Début Isolation Forest...\n")
-  
+
   # Préparation features (basique pour un navire)
- features <- c("Lat", "Lon") 
+  features <- c("Lat", "Lon")
   if ("delta_t" %in% names(dt)) features <- c(features, "delta_t")
   if ("Speed" %in% names(dt)) features <- c(features, "Speed")
   
