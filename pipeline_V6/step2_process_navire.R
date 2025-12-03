@@ -53,7 +53,7 @@ cat("✅ Packages chargés - Configuration mono-thread activée\n")
 # GPkg via la variable d'env LAND_MASK_FILE. Un léger buffer (mètres) permet
 # d'éviter les faux positifs en bord de quai.
 land_mask_path   <- Sys.getenv("LAND_MASK_FILE", unset = "~/R_scripts/configuration/land_polygons.rds")
-land_buffer_m    <- as.numeric(Sys.getenv("LAND_MASK_BUFFER_M", unset = "200"))
+land_buffer_m    <- as.numeric(Sys.getenv("LAND_MASK_BUFFER_M", unset = "0"))
 near_coast_km    <- as.numeric(Sys.getenv("LAND_NEAR_COAST_KM", unset = "10"))
 default_speed_kn <- as.numeric(Sys.getenv("MAX_JUMP_SPEED_KN", unset = "30"))
 spike_dist_min_nm   <- as.numeric(Sys.getenv("SPIKE_DIST_MIN_NM", unset = "1"))
