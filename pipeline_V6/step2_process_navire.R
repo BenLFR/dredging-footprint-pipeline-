@@ -126,7 +126,11 @@ flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_
       land_local <- land_polygons
     }
 
+    cat(sprintf("    → Vérification terre pour %d points...\n", nrow(pts_sf)))
+    start_time <- Sys.time()
     on_land <- lengths(sf::st_intersects(pts_sf, land_local)) > 0
+    cat(sprintf("    → Intersection terre: %.1f sec, %d points sur terre\n",
+                as.numeric(Sys.time() - start_time), sum(on_land)))
     dt[on_land, geo_flag := TRUE]
 
     # 2) Segments traversant la terre (limité aux zones côtières pour performance)
@@ -309,7 +313,8 @@ total_removed <- 0
 
 repeat {
   iteration <- iteration + 1
-  cat(sprintf("  Itération %d...\n", iteration))
+  iter_start <- Sys.time()
+  cat(sprintf("  Itération %d (début: %s)...\n", iteration, format(iter_start, "%H:%M:%S")))
 
   # Appliquer le filtrage géospatial
   dt_nav <- flag_geospatial_anomalies(dt_nav, land_polygons, near_coast_km, default_speed_kn,
@@ -341,7 +346,15 @@ repeat {
   dt_nav[, geo_flag := NULL]
   total_removed <- total_removed + n_flagged
 
-  cat(sprintf("  → %d points supprimés (total cumulé: %d)\n", n_flagged, total_removed))
+  iter_elapsed <- as.numeric(Sys.time() - iter_start)
+  cat(sprintf("  → %d points supprimés (total cumulé: %d) [durée: %.1f min]\n",
+              n_flagged, total_removed, iter_elapsed / 60))
+
+  # Safety: si une itération prend plus de 45 minutes, on arrête
+  if (iter_elapsed > 2700) {
+    cat("  ⚠️ Itération trop longue (>45min), arrêt du filtrage\n")
+    break
+  }
 
   # Recalculer delta_t pour la prochaine itération (nécessaire après suppression de points)
   setorder(dt_nav, Timestamp)
