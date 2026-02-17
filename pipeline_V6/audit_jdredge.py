@@ -132,9 +132,14 @@ def main():
                  "redistribution_R_km", "redistribution_lambda_km",
                  "redistribution_k_max", "redistribution_alpha",
                  "redistribution_oceanfrac_floor",
-                 # Redistribution quality counters
-                 "n_relax_component", "n_relax_shelf", "n_fallback_nearest",
+                 # Redistribution quality counters (6-stage cascade)
+                 "n_relax_component", "n_relax_ocean_component",
+                 "n_relax_shelf", "n_expand_radius",
+                 "n_connectivity_fallback", "n_absolute_fallback",
+                 "n_fallback_nearest", "n_cross_basin",
+                 "n_cross_shelf_component", "cross_scomp_flux_pct",
                  "mean_redist_km",
+                 "conservation_error_mass_pct",
                  # Legacy (may be present in older files)
                  "coastal_flux_redistributed_pct"]
     for k in meta_keys:
