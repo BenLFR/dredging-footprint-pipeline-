@@ -1,0 +1,180 @@
+name: Pipeline CI
+
+on:
+  push:
+    branches: [main, 'feature/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Job 1: Lint all R scripts in pipeline_V6/ and scripts_principaux/ ────────
+  lint-r:
+    name: R lint check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.3'
+
+      - name: Cache R packages
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-lint-${{ hashFiles('**/DESCRIPTION') }}-${{ runner.os }}
+          restore-keys: r-lint-
+
+      - name: Install lintr
+        run: Rscript -e "install.packages('lintr', repos='https://cloud.r-project.org')"
+
+      - name: Lint pipeline_V6 and scripts_principaux
+        run: |
+          Rscript -e "
+            dirs <- c('pipeline_V6/pipeline_V6', 'scripts_principaux', 'tests')
+            dirs <- dirs[dir.exists(dirs)]
+            if (length(dirs) == 0) {
+              message('No R directories found — skipping lint')
+              quit(status = 0)
+            }
+            results <- do.call(c, lapply(dirs, lintr::lint_dir,
+                                         linters = lintr::linters_with_defaults(
+                                           line_length_linter = lintr::line_length_linter(120),
+                                           object_name_linter = NULL
+                                         )))
+            if (length(results) > 0) {
+              print(results)
+              stop(sprintf('%d lint issue(s) found', length(results)))
+            } else {
+              message('No lint issues found.')
+            }
+          "
+
+  # ── Job 2: Run failure-mode tests on synthetic data ──────────────────────────
+  test-failure-modes:
+    name: Failure-mode tests
+    runs-on: ubuntu-latest
+    needs: lint-r
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.3'
+
+      - name: Cache R packages
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-test-${{ runner.os }}
+          restore-keys: r-test-
+
+      - name: Install test dependencies
+        run: |
+          Rscript -e "
+            pkgs <- c('data.table', 'yaml')
+            install.packages(pkgs[!pkgs %in% installed.packages()[,'Package']],
+                             repos = 'https://cloud.r-project.org')
+          "
+
+      - name: Run failure mode tests
+        run: |
+          mkdir -p output_V6
+          Rscript tests/test_failure_modes.R
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-mode-results
+          path: output_V6/test_failure_modes_results.txt
+          if-no-files-found: ignore
+
+  # ── Job 3: Compute step3 AUC metrics (push to main only) ─────────────────────
+  step3-auc-metrics:
+    name: Step3 AUC metrics
+    runs-on: ubuntu-latest
+    # Only run on push (not PR) to avoid accessing potentially absent data
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.3'
+
+      - name: Cache R packages
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-auc-${{ runner.os }}
+          restore-keys: r-auc-
+
+      - name: Install dependencies
+        run: |
+          Rscript -e "
+            pkgs <- c('data.table')
+            install.packages(pkgs[!pkgs %in% installed.packages()[,'Package']],
+                             repos = 'https://cloud.r-project.org')
+          "
+
+      - name: Compute step3 AUC metrics
+        run: |
+          mkdir -p output_V6
+          Rscript scripts_principaux/extract_step3_auc_metrics.R \
+            || echo "No gridsearch RDS found in CI environment (expected — large data files are not committed)"
+
+      - name: Upload AUC metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: step3-auc-metrics
+          path: output_V6/step3_auc_metrics.csv
+          if-no-files-found: ignore
+
+  # ── Job 4: Post AUC results as PR comment (PRs only) ─────────────────────────
+  pr-comment-auc:
+    name: Post AUC as PR comment
+    runs-on: ubuntu-latest
+    needs: step3-auc-metrics
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download AUC artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: step3-auc-metrics
+          path: output_V6
+        continue-on-error: true
+
+      - name: Post AUC comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '## Step 3 LOYO AUC Metrics\n\n';
+            try {
+              const csv = fs.readFileSync('output_V6/step3_auc_metrics.csv', 'utf8');
+              body += '```csv\n' + csv + '\n```\n';
+            } catch(e) {
+              body += '_No gridsearch RDS found — large data files are not committed to the repo._\n';
+              body += 'Run `Rscript scripts_principaux/extract_step3_auc_metrics.R` locally after step3 completes.\n';
+            }
+            body += '\n_Generated by pipeline_ci.yml_';
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

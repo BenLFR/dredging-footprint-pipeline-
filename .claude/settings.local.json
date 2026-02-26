@@ -1,0 +1,45 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(ls:*)",
+      "Bash(pandoc:*)",
+      "Bash(dir:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "Bash(bash deploy/upload_step7_to_grit.sh --no-ocim)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(ssh:*)",
+      "Bash(python3:*)",
+      "Bash(PYTHONIOENCODING=utf-8 python:*)",
+      "Bash(pip show:*)",
+      "Bash(scp:*)",
+      "Bash(ncdump:*)",
+      "Bash(nlm setup add:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:skillsmp.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl:*)",
+      "Bash(git push:*)",
+      "Bash(bash deploy/upload_postproc_to_grit.sh)",
+      "Bash(where:*)",
+      "Bash(C:/Python313/python.exe:*)",
+      "Bash(C:/Users/loeff/AppData/Local/Programs/Python/Python312/python.exe -c \"import matplotlib, numpy, PIL, skimage, pptx; print\\(''Python312 OK''\\)\")",
+      "Bash(C:/Python314/python.exe -m pip install:*)",
+      "Bash(PYTHONUTF8=1 python:*)",
+      "Bash(tail:*)",
+      "WebFetch(domain:api.github.com)",
+      "mcp__github__get_file_contents"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "sequential-thinking",
+    "context7",
+    "r-mcptools",
+    "ssh-manager",
+    "github"
+  ]
+}

@@ -1,0 +1,86 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  AIS-Based Global Dredging Footprint Pipeline:
+  Detection, Quantification, and Carbon Impact Estimation
+message: >-
+  If you use this software or data, please cite it using
+  the metadata from this file.
+type: software
+authors:
+  - given-names: Benjamin
+    family-names: LOEFFLER
+    email: benjamin.loeffler@student.uliege.be   # TODO: confirm institutional email
+    affiliation: University of Liège             # TODO: confirm full affiliation name
+    orcid: 'https://orcid.org/0000-0000-0000-0000'  # TODO: add real ORCID after registration
+  - given-names: '[Advisor First Name]'
+    family-names: '[Advisor Last Name]'
+    email: '[advisor.email@institution.edu]'
+    affiliation: '[Institution]'
+    orcid: 'https://orcid.org/0000-0000-0000-0000'  # TODO: add advisor ORCID
+repository-code: 'https://github.com/BenLFR/Master-thesis-code-'
+url: 'https://github.com/BenLFR/Master-thesis-code-'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.PLACEHOLDER  # Replace after Zenodo deposit (see documentation/ZENODO_INTEGRATION_GUIDE.md)
+abstract: >-
+  A complete 7-step computational pipeline for detecting and
+  quantifying dredging vessel activities using Automatic
+  Identification System (AIS) tracking data, and estimating
+  the resulting carbon perturbation via an Ocean Circulation
+  Inverse Model (OCIM). The pipeline combines Isolation Forest
+  outlier detection, Gaussian Mixture Model and DBSCAN clustering
+  for vessel behaviour classification, global grid computation of
+  swept-volume ratios and dredging intensity (f_i), seabed
+  lithology integration from dbSEABED, carbon release index (C_ri)
+  calculation from Atwood et al. (2024) benthic carbon stocks, and
+  remapping of dredge-induced carbon fluxes (Jdredge) to the
+  OCIM2-48L transport matrix for steady-state pCO2 perturbation
+  modelling. Uncertainty is propagated via 500-iteration Monte Carlo
+  simulation following GUM (JCGM 100:2008). Target journal:
+  Limnology and Oceanography: Methods (Wiley).
+keywords:
+  - AIS
+  - dredging
+  - vessel tracking
+  - marine spatial planning
+  - Gaussian Mixture Model
+  - DBSCAN
+  - Isolation Forest
+  - swept-volume ratio
+  - seabed disturbance
+  - benthic carbon cycling
+  - carbon release index
+  - OCIM
+  - ocean biogeochemistry
+  - pCO2
+  - marine environmental impact
+  - global footprint
+license: MIT
+version: 1.0.0
+date-released: '2026-01-08'
+preferred-citation:
+  type: article
+  authors:
+    - given-names: Benjamin
+      family-names: LOEFFLER
+      email: benjamin.loeffler@student.uliege.be  # TODO: confirm
+      affiliation: University of Liège            # TODO: confirm
+      orcid: 'https://orcid.org/0000-0000-0000-0000'  # TODO: add real ORCID
+    - given-names: '[Advisor First Name]'
+      family-names: '[Advisor Last Name]'
+      email: '[advisor.email@institution.edu]'
+      affiliation: '[Institution]'
+      orcid: 'https://orcid.org/0000-0000-0000-0000'  # TODO: add advisor ORCID
+  doi: 10.XXXX/XXXXX  # Replace after acceptance
+  journal: "Limnology and Oceanography: Methods"
+  title: >-
+    An AIS-based global pipeline for quantifying dredging
+    vessel activity and estimating seafloor carbon perturbations
+  year: 2026
+  volume: XX
+  issue: X
+  start: XXX
+  end: XXX

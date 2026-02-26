@@ -1,0 +1,97 @@
+{
+  "@context": "https://w3id.org/codemeta/3.0",
+  "@type": "SoftwareSourceCode",
+  "name": "AIS-Based Global Dredging Footprint Pipeline",
+  "description": "A 7-step computational pipeline for detecting and quantifying dredging vessel activities using AIS tracking data and estimating the resulting carbon perturbation via an Ocean Circulation Inverse Model (OCIM). Combines Isolation Forest, Gaussian Mixture Model, DBSCAN, global grid computation of swept-volume ratios, seabed lithology integration, carbon release index calculation, and Jdredge remapping to OCIM2-48L for steady-state pCO2 perturbation modelling.",
+  "version": "1.0.0",
+  "dateCreated": "2025-01-01",
+  "datePublished": "2026-01-08",
+  "license": "https://spdx.org/licenses/MIT.html",
+  "programmingLanguage": [
+    {
+      "@type": "ComputerLanguage",
+      "name": "R",
+      "version": ">=4.2"
+    },
+    {
+      "@type": "ComputerLanguage",
+      "name": "Python",
+      "version": ">=3.9"
+    },
+    {
+      "@type": "ComputerLanguage",
+      "name": "MATLAB",
+      "version": "R2023a"
+    }
+  ],
+  "author": [
+    {
+      "@type": "Person",
+      "givenName": "Benjamin",
+      "familyName": "LOEFFLER",
+      "email": "benjamin.loeffler@student.uliege.be",
+      "@id": "https://orcid.org/0000-0000-0000-0000",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "University of Liège"
+      }
+    }
+  ],
+  "contributor": [
+    {
+      "@type": "Person",
+      "givenName": "[Advisor First Name]",
+      "familyName": "[Advisor Last Name]",
+      "@id": "https://orcid.org/0000-0000-0000-0000",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "[Advisor Institution]"
+      }
+    }
+  ],
+  "codeRepository": "https://github.com/BenLFR/Master-thesis-code-",
+  "identifier": "https://doi.org/10.5281/zenodo.PLACEHOLDER",
+  "keywords": [
+    "AIS",
+    "dredging",
+    "vessel tracking",
+    "swept-volume ratio",
+    "seabed disturbance",
+    "benthic carbon cycling",
+    "OCIM",
+    "ocean biogeochemistry",
+    "marine environmental impact",
+    "global footprint",
+    "machine learning",
+    "DBSCAN",
+    "Gaussian Mixture Model"
+  ],
+  "softwareRequirements": [
+    "R >= 4.2",
+    "Python >= 3.9",
+    "MATLAB R2023a",
+    "SLURM workload manager (for HPC execution)"
+  ],
+  "runtimePlatform": [
+    "Linux (HPC cluster: Beluga / GRIT)",
+    "Windows (local development)"
+  ],
+  "operatingSystem": [
+    "Linux",
+    "Windows"
+  ],
+  "developmentStatus": "active",
+  "isPartOf": {
+    "@type": "ScholarlyArticle",
+    "name": "An AIS-based global pipeline for quantifying dredging vessel activity and estimating seafloor carbon perturbations",
+    "author": "LOEFFLER, Benjamin",
+    "journal": "Limnology and Oceanography: Methods",
+    "year": "2026"
+  },
+  "funder": {
+    "@type": "Organization",
+    "name": "[Funding institution — e.g. FNRS, ANR, ERC — TODO: fill in]"
+  },
+  "citation": "LOEFFLER, B. (2026). An AIS-based global pipeline for quantifying dredging vessel activity and estimating seafloor carbon perturbations. Limnology and Oceanography: Methods. https://doi.org/10.XXXX/XXXXX",
+  "releaseNotes": "Initial release accompanying L&O:Methods submission. Contains Steps 0-7 of the dredging footprint pipeline plus OCIM CO2 perturbation model."
+}

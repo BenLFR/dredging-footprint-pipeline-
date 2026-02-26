@@ -1,0 +1,5 @@
+# MCP config (contains tokens/secrets)
+.mcp.json
+
+# Claude Code temp files
+tmpclaude-*
