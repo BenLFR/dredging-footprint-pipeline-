@@ -1,0 +1,167 @@
+# ============================================================================
+# apptainer.def
+# Apptainer (Singularity-compatible) container definition for the dredging
+# footprint pipeline (Steps 0–7 + OCIM post-processing).
+#
+# Eliminates dependency hell and guarantees reproducibility without requiring
+# the user to manually install R 4.3+, arrow, pROC, sf, etc.
+# GRIT cluster already supports Apptainer natively.
+#
+# Build (on GRIT login node or any system with Apptainer ≥ 1.1):
+#   apptainer build deploy/pipeline_v1.0.0.sif deploy/apptainer.def
+#
+# Verify:
+#   apptainer test deploy/pipeline_v1.0.0.sif
+#
+# Record SHA256 digest for reproducibility statement:
+#   sha256sum deploy/pipeline_v1.0.0.sif >> documentation/ZENODO_INTEGRATION_GUIDE.md
+#
+# Use in SLURM scripts (drop-in replacement for bare Rscript calls):
+#   apptainer exec deploy/pipeline_v1.0.0.sif \
+#     Rscript --vanilla scripts_principaux/sensitivity_oat_analysis.R $SLURM_ARRAY_TASK_ID
+#
+#   apptainer exec deploy/pipeline_v1.0.0.sif \
+#     Rscript --vanilla scripts_principaux/monte_carlo_uncertainty.R $SLURM_ARRAY_TASK_ID
+#
+# Bind mounts needed on GRIT (add to sbatch headers or srun):
+#   apptainer exec --bind /home/bloe/ais-pipeline,/scratch deploy/pipeline_v1.0.0.sif ...
+# ============================================================================
+
+Bootstrap: docker
+From: rocker/r-ver:4.3
+
+%labels
+    Author          Benjamin LOEFFLER
+    Version         1.0.0
+    PipelineSteps   0-7
+    BaseImage       rocker/r-ver:4.3
+    Description     Dredging footprint pipeline container for L&O:Methods reproducibility
+
+%environment
+    export R_LIBS=/usr/local/lib/R/library
+    export DEBIAN_FRONTEND=noninteractive
+    export PYTHONUNBUFFERED=1
+
+%post
+    # ── System dependencies ───────────────────────────────────────────────────
+    apt-get update -qq && apt-get install -y --no-install-recommends \
+        libgdal-dev \
+        libgeos-dev \
+        libproj-dev \
+        libudunits2-dev \
+        libcurl4-openssl-dev \
+        libssl-dev \
+        libxml2-dev \
+        libfontconfig1-dev \
+        libharfbuzz-dev \
+        libfribidi-dev \
+        libfreetype6-dev \
+        libpng-dev \
+        libtiff5-dev \
+        libjpeg-dev \
+        python3.10 \
+        python3-pip \
+        python3-venv \
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
+
+    # ── R packages (all pipeline steps + analysis) ─────────────────────────────
+    # Install in a single Rscript call to minimise layer overhead.
+    # Grouped by pipeline step for readability.
+    Rscript -e "
+      options(repos = c(CRAN = 'https://cloud.r-project.org'))
+
+      pkgs <- c(
+        # Core data wrangling (Steps 0-7)
+        'data.table', 'arrow', 'yaml', 'dplyr', 'tidyr',
+
+        # Geospatial (Steps 2, 5, 6)
+        'sf', 'terra', 'sp',
+
+        # Machine learning / outlier detection (Step 2, 3)
+        'mclust', 'dbscan', 'solitude',
+
+        # Statistical modelling & metrics (Step 3, benchmarking)
+        'pROC', 'caret',
+
+        # fi / CRI computation (Steps 5, 6)
+        'viridis', 'ggplot2',
+
+        # Sensitivity analysis (OAT + Sobol)
+        'sensitivity',
+
+        # Reproducibility & testing
+        'testthat', 'lintr',
+
+        # Parallelism helpers
+        'parallel', 'foreach', 'doParallel',
+
+        # R Markdown / reporting (optional, for audit reports)
+        'rmarkdown', 'knitr'
+      )
+
+      missing <- pkgs[!pkgs %in% installed.packages()[, 'Package']]
+      if (length(missing) > 0) {
+        cat('Installing:', paste(missing, collapse = ', '), '\n')
+        install.packages(missing)
+      } else {
+        cat('All R packages already present.\n')
+      }
+    "
+
+    # ── Python packages (step7 scripts: step7_extract_ocim_cache.py, etc.) ──────
+    python3 -m pip install --upgrade pip
+    python3 -m pip install \
+        geopandas==0.14.4 \
+        pyarrow==15.0.2 \
+        requests==2.31.0 \
+        numpy==1.26.4 \
+        scipy==1.13.0 \
+        pandas==2.2.2
+
+    # ── Verify critical imports load cleanly ──────────────────────────────────
+    Rscript -e "
+      for (pkg in c('data.table', 'arrow', 'sf', 'mclust', 'dbscan', 'sensitivity')) {
+        tryCatch(
+          { library(pkg, character.only = TRUE); cat('OK:', pkg, '\n') },
+          error = function(e) stop('FAILED to load: ', pkg, ' — ', conditionMessage(e))
+        )
+      }
+    "
+
+    python3 -c "
+import geopandas, pyarrow, requests, numpy, scipy, pandas
+print('Python packages OK')
+"
+
+%test
+    # ── Smoke tests run by: apptainer test deploy/pipeline_v1.0.0.sif ────────
+    echo "=== Container smoke tests ==="
+
+    Rscript -e "
+      library(data.table); library(arrow); library(sf)
+      library(mclust); library(dbscan); library(sensitivity)
+      library(pROC); library(testthat)
+      cat('R packages: OK\n')
+
+      # Minimal SAR calculation (mirrors step5 logic)
+      CELL_AREA_M2 <- 1e6
+      dt <- data.table(speed_ms = runif(100, 0.5, 1.5), dt_sec = 600, dredge_width_m = 1.3)
+      dt[, trawled := speed_ms * dt_sec * dredge_width_m]
+      SAR <- sum(dt\$trawled) / CELL_AREA_M2
+      stopifnot(is.finite(SAR) && SAR > 0)
+      cat('SAR calculation: OK (SAR =', round(SAR, 6), ')\n')
+    "
+
+    python3 -c "
+import geopandas, pyarrow, requests
+import numpy as np
+arr = np.zeros((91, 180, 48))  # OCIM2-48L grid dimensions
+print('OCIM grid allocation: OK (shape', arr.shape, ')')
+"
+
+    echo "=== All smoke tests passed ==="
+
+%runscript
+    # Default: launch an interactive R session
+    exec Rscript "$@"
