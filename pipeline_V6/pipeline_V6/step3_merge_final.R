@@ -658,7 +658,7 @@ cadence[prop_long > 0.5, seuil_adaptatif := pmin(1200, 5 * p50_dt)]  # 5 × méd
 #    t_seuil = 30 s ≈ durée max d'un micro-glitch
 t_seuil   <- 30                     # 30 s ≈ durée max d'un micro-glitch
 n_max_cap <- 8                      # plafond pour rester rapide
-cadence[, n_min := pmin(n_max_cap, pmax(3, ceiling(t_seuil / p50_dt)))]
+cadence[, n_min := pmin(n_max_cap, pmax(3, ceiling(p50_dt / t_seuil)))]
 
 # 9) Join avec l'ensemble principal
 ais <- merge(ais, cadence[, .(Navire, n_min, seuil_adaptatif, p50_dt, prop_long)], by = "Navire", all.x = TRUE)
