@@ -1,0 +1,49 @@
+# ── Data: restricted / large ──────────────────────────────────────────────────
+data/external/
+*.rds
+*.parquet
+*.mat
+*.tif
+*.nc
+*.zip
+
+# ── Pipeline outputs ───────────────────────────────────────────────────────────
+output_V6/
+GeoTIFF_Step*/
+outputs_step*/
+sar_*.parquet
+
+# ── SLURM logs ─────────────────────────────────────────────────────────────────
+logs/
+*.out
+*.err
+*.log
+
+# ── R environment ──────────────────────────────────────────────────────────────
+.Rhistory
+.RData
+.Rproj.user/
+renv/library/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+.venv/
+
+# ── OS / editor ───────────────────────────────────────────────────────────────
+Thumbs.db
+.DS_Store
+*.swp
+nul
+
+# ── Thesis / manuscript (not code) ────────────────────────────────────────────
+*.docx
+*.pdf
+*.xlsx
+
+# ── Windows batch launchers (not reproducible on cluster) ────────────────────
+batch_windows/
+*.bat
+
+# ── Junk files ────────────────────────────────────────────────────────────────
+"'@ + $out + @'"
