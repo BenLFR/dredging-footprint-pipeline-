@@ -1,0 +1,147 @@
+# ship_specs.yaml
+# Technical specifications for the 10 TSHDs used in the pipeline
+# Note: Goryo 6 Ho exclu (données corrompues)
+# Units:
+#   - service_speed_kn        : knots
+#   - suction_pipe_diameter_mm: millimetres (single pipe; twin indicated by twin_pipes: 2)
+#   - dredge_width_m          : nominal drag-head width in metres (suction_diameter/1000 by default)
+#   - dredging_depth_m        : maximum dredging depth (m)
+#   - hopper_capacity_m3      : cubic metres
+#   - installed_power_kw      : kilowatts
+#   - length_m                : metres
+#   - draught_m               : metres
+
+ship_specs:
+  - ssvid: 253373000   # Cristobal Colon
+    name: "Cristobal Colon"
+    service_speed_kn: 18
+    suction_pipe_diameter_mm: 1300
+    dredge_width_m: 1.3
+    dredging_depth_m: 155
+    hopper_capacity_m3: 46000
+    installed_power_kw: 38364
+    length_m: 223
+    draught_m: 15.15
+    imo: 9429572
+
+  - ssvid: 253403000   # Leiv Eiriksson
+    name: "Leiv Eiriksson"
+    service_speed_kn: 18
+    suction_pipe_diameter_mm: 1300
+    dredge_width_m: 1.3
+    dredging_depth_m: 155
+    hopper_capacity_m3: 45458
+    installed_power_kw: 38364
+    length_m: 223
+    draught_m: 15.15
+    imo: 9429584
+
+  - ssvid: 245508000   # Ham 318
+    name: "Ham 318"
+    service_speed_kn: 17.3
+    suction_pipe_diameter_mm: 1200
+    dredge_width_m: 1.2
+    dredging_depth_m: 70
+    hopper_capacity_m3: 37293
+    installed_power_kw: 28636
+    length_m: 227.2
+    draught_m: 13.37
+    imo: 9229556
+
+  - ssvid: 209469000   # Fairway
+    name: "Fairway"
+    service_speed_kn: 16.1
+    suction_pipe_diameter_mm: 1200
+    dredge_width_m: 1.2
+    dredging_depth_m: 55
+    hopper_capacity_m3: 35508
+    installed_power_kw: 27550
+    length_m: 230.71
+    draught_m: 11.03
+    imo: 9132454
+
+  - ssvid: 210138000   # Queen of the Netherlands
+    name: "Queen Of The Netherlands"
+    service_speed_kn: 16.1
+    suction_pipe_diameter_mm: 1200
+    dredge_width_m: 1.2
+    dredging_depth_m: 83
+    hopper_capacity_m3: 35500
+    installed_power_kw: 27634
+    length_m: 230.71
+    draught_m: 11.03
+    imo: 9164031
+
+  - ssvid: 533180137   # Inai Kenanga
+    name: "Inai Kenanga"
+    service_speed_kn: 18.4
+    suction_pipe_diameter_mm: 1200
+    twin_pipes: 2
+    dredge_width_m: 2.4        # 2 x 1.2 m
+    dredging_depth_m: 45
+    hopper_capacity_m3: 32000
+    installed_power_kw: 28800
+    length_m: 197.7
+    draught_m: 12
+    imo: 9568782
+
+  - ssvid: 205744000   # Vasco da Gama (MMSI unifié - Belgique, le plus récent)
+    name: "Vasco Da Gama"
+    service_speed_kn: 16.5
+    suction_pipe_diameter_mm: 1400
+    dredge_width_m: 1.4
+    dredging_depth_m: 60
+    hopper_capacity_m3: 33125
+    installed_power_kw: 37060
+    length_m: 201
+    draught_m: 14.6
+    imo: 9187473
+    coverage_period: "2013-2024"
+    observations: 1078681  # 189289 + 889392 (après trim et dé-duplication)
+    mmsi_history:
+      - mmsi: 253193000
+        flag: Luxembourg
+        period: "2013-2019"
+        observations: 189289  # après retrait des 25 lignes chevauchantes
+      - mmsi: 205744000
+        flag: Belgium  
+        period: "2018-2024"
+        observations: 889392
+
+  - ssvid: 246351000   # Vox Maxima
+    name: "Vox Maxima"
+    service_speed_kn: 17
+    suction_pipe_diameter_mm: 1300
+    dredge_width_m: 1.3
+    dredging_depth_m: 70
+    hopper_capacity_m3: 31200
+    installed_power_kw: 31309
+    length_m: 195
+    draught_m: 12.25
+    imo: 9454096
+
+  - ssvid: 253422000   # Charles Darwin
+    name: "Charles Darwin"
+    service_speed_kn: 14
+    suction_pipe_diameter_mm: 1200
+    dredge_width_m: 1.2
+    dredging_depth_m: 93.5
+    hopper_capacity_m3: 30500
+    installed_power_kw: 23600
+    length_m: 183.2
+    draught_m: 13
+    imo: 9528079
+
+  - ssvid: 253688000   # Congo River
+    name: "Congo River"
+    service_speed_kn: 16.6
+    suction_pipe_diameter_mm: 1300
+    dredge_width_m: 1.3
+    dredging_depth_m: 36
+    hopper_capacity_m3: 30000
+    installed_power_kw: 25445
+    length_m: 168
+    draught_m: 9.86
+    imo: 9574523
+
+  # Goryo 6 Ho (MMSI: 312062000, IMO: 8119728) - EXCLU - Données corrompues
