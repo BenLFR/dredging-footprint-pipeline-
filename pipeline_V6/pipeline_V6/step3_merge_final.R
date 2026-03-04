@@ -1484,7 +1484,7 @@ auc_fold <- numeric(max(ais_train$fold))
         # CORRECTIF : Probas restreintes pour calibrer le seuil (labellisées seulement)
         prob_cv <- full_prob[keep_lbl]   # garde l'indexation correcte
         roc_full <- pROC::roc(target_train, prob_cv, quiet = TRUE)
-        optimal_threshold <- pROC::coords(roc_full, "best", ret = "threshold")
+        optimal_threshold <- as.numeric(pROC::coords(roc_full, "best", ret = "threshold")[["threshold"]])
         best <- list(
           weights = weights,
           features = names(weights),
