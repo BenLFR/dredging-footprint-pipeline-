@@ -1,0 +1,34 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Global dredging footprint pipeline"
+abstract: >
+  AIS-based estimation of global seafloor swept-area ratio (SAR) and
+  cumulative risk index (CRI) for trailing-suction hopper dredgers,
+  with OCIM2-48L ocean transport model for CO2 perturbation quantification.
+authors:
+  - family-names: Loeffler
+    given-names: Benjamin
+    # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # add before submission
+version: "1.0.0"
+date-released: "2026"
+doi: "10.5281/zenodo.XXXXXXX"  # placeholder — reserve DOI on Zenodo before submission
+license: MIT
+repository-code: "https://github.com/BenLFR/Master-thesis-code-"
+keywords:
+  - dredging
+  - marine sediment disturbance
+  - AIS vessel tracking
+  - swept-area ratio
+  - carbon cycle
+  - OCIM
+  - benthic ecology
+references:
+  - type: article
+    authors:
+      - family-names: Atwood
+        given-names: T. B.
+    title: "Global patterns in marine sediment carbon stocks"
+    journal: "Frontiers in Marine Science"
+    year: 2020
+    doi: "10.3389/fmars.2020.00165"
