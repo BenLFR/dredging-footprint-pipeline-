@@ -200,7 +200,17 @@ if ("n_with_pl" %in% names(sar_global) && "pl_sum" %in% names(sar_global)) {
 } else {
   sar_global[, p_l := NA_real_]
 }
-sar_global[, p_l_eff := p_l]
+# Option B depth-weighting: surface layer [0-5 cm] + capped deep layer [5-10 cm].
+# Sediment below 10 cm contributes 0 labile fraction on a 1-year timescale
+# (beyond Holocene bioturbated layer; k < 1e-4 a-1, negligible in 365 days).
+# Guard against p_d = 0 or NA (→ treated as 1 m default, consistent with tile worker).
+sar_global[, p_d_safe := fifelse(is.na(p_d) | p_d <= 0, 1, p_d)]
+sar_global[, `:=`(
+  w1 = pmin(0.05, p_d_safe) / p_d_safe,
+  w2 = pmin(0.05, pmax(p_d_safe - 0.05, 0)) / p_d_safe  # Option B: capped at 5 cm thick
+)]
+sar_global[, p_l_eff := w1 * p_l + w2 * p_l * alpha_dep]
+sar_global[, c("p_d_safe", "w1", "w2") := NULL]
 
 cat("SAR  : min=", min(sar_global$SAR, na.rm=TRUE),
     " max=", max(sar_global$SAR, na.rm=TRUE), "\n")
@@ -231,7 +241,6 @@ cat("Provinces Longhurst chargees :", length(prov_codes), "codes\n")
 # Safety init for basin-mode objects (used later in section 5)
 basin_k <- NULL
 norm_basin <- NULL
-province_to_basin <- NULL
 
 # Strict binary: if ANY key matches a Longhurst code -> province mode
 is_province_mode <- any(k_yaml_names %in% prov_codes)
@@ -261,55 +270,26 @@ if (is_province_mode) {
   cat("Basin k_fast values:\n")
   print(basin_k)
 
-  # Province-to-basin mapping function
-  province_to_basin <- function(pr_code, lon_deg, lat_deg) {
-    # Mediterranean
-    med_codes <- c("MEDI")
-    # Gulf of Mexico and Caribbean
-    gulf_codes <- c("CARB")
-    # Arctic
-    arctic_codes <- c("ARCT", "SARC", "BPLR")
-    # Indian
-    indian_codes <- c("MONS", "ISSG", "EAFR", "REDS", "ARAB", "INDE", "INDW",
-                       "AUSW")
-
-    res <- character(length(pr_code))
-    for (i in seq_along(pr_code)) {
-      p <- pr_code[i]
-      lo <- lon_deg[i]
-      la <- lat_deg[i]
-
-      if (p %in% med_codes) {
-        res[i] <- "Mediterranean"
-      } else if (p %in% gulf_codes) {
-        res[i] <- "Gulf of Mexico and Caribbean"
-      } else if (p %in% arctic_codes) {
-        res[i] <- "Arctic"
-      } else if (p %in% indian_codes) {
-        # Indian Ocean: roughly lon 20-150, but some overlap
-        res[i] <- "Indian"
-      } else {
-        # Decide by lon/lat: Pacific vs Atlantic
-        # Pacific: lon < -100 or lon > 100 (roughly)
-        # Atlantic: lon between -100 and 20 (roughly)
-        if (!is.na(lo) && !is.na(la)) {
-          if (lo > 100 || lo < -100) {
-            # Pacific
-            res[i] <- if (la >= 0) "North Pacific" else "South Pacific"
-          } else if (lo > 20 && lo <= 100) {
-            # Indian Ocean region
-            res[i] <- "Indian"
-          } else {
-            # Atlantic
-            res[i] <- "Atlantic"
-          }
-        } else {
-          res[i] <- "Atlantic"  # fallback
-        }
-      }
-    }
-    res
-  }
+  # Authoritative province -> basin lookup (source: Longhurst v4 documentation)
+  PROV_BASIN_LUT <- data.table(
+    prov_code = c("ARCT","SARC","NADR","GFST","NASW","NATR","WTRA","ETRA","SATL",
+                  "NECS","CNRY","GUIN","GUIA","NWCS","MEDI","CARB","NASE","BRAZ",
+                  "FKLD","BENG","MONS","ISSG","EAFR","REDS","ARAB","INDE","SUND",
+                  "NEWZ","SSTC","SANT","CHIL","CHIN","CAMR","CCAL","WARM","NPTG",
+                  "NPPF","NPSG","NPTE","NPEQ","SPTG","SPPF","SPSG","SPTE","SPEQ",
+                  "PEQD","ARCH","ANTA","APLR","BPLR","ALSK","AUSE","AUSW","BERS",
+                  "INDW","KURO","NPSW","PNEC","PSAE","PSAW","TASM"),
+    basin_raw = c("Arctic","Arctic","Atlantic","Atlantic","Atlantic","Atlantic","Atlantic",
+                  "Atlantic","Atlantic","Atlantic","Atlantic","Atlantic","Atlantic","Atlantic",
+                  "Mediterranean","Gulf of Mexico and Caribbean","Atlantic","Atlantic",
+                  "Atlantic","Atlantic","Indian","Indian","Indian","Indian","Indian","Indian",
+                  "Pacific","Pacific","Pacific","Pacific","Pacific","Pacific","Pacific",
+                  "Pacific","Pacific","Pacific","Pacific","Pacific","Pacific","Pacific",
+                  "Pacific","Pacific","Pacific","Pacific","Pacific","Pacific","Pacific",
+                  "Antarctic","Arctic","Arctic","Arctic","Pacific","Pacific","Arctic",
+                  "Indian","Pacific","Pacific","Pacific","Pacific","Pacific","Pacific")
+  )
+  cat("PROV_BASIN_LUT loaded :", nrow(PROV_BASIN_LUT), "provinces\n")
 
   # We will assign basin AFTER the spatial join with Longhurst (section 5)
   # Store basin_k for later
@@ -351,19 +331,29 @@ fi_dt <- merge(fi_dt, coords_4326, by = "grid_id", all.x = TRUE)
 if (!is_province_mode) {
   if (is.null(basin_k)) stop("basin_k non defini (bug logique)")
 
+  # Join LUT on longhurst province code
+  fi_dt <- merge(fi_dt, PROV_BASIN_LUT, by.x = "longhurst_pr", by.y = "prov_code", all.x = TRUE)
 
-  # Assign basin
-  fi_dt[, basin := province_to_basin(
-    fifelse(is.na(longhurst_pr), "UNK", longhurst_pr),
-    lon_deg,
-    lat_deg
+  # Split Pacific N/S by centroid latitude
+  fi_dt[, basin_yaml := basin_raw]
+  fi_dt[basin_raw == "Pacific", basin_yaml := fifelse(lat_deg >= 0, "North Pacific", "South Pacific")]
+
+  # Antarctic fallback: no YAML key -> route to nearest basin
+  fi_dt[basin_raw == "Antarctic", basin_yaml := fifelse(lat_deg >= -60, "South Pacific", "Arctic")]
+
+  # Fallback for cells without Longhurst province (NA or not in LUT)
+  fi_dt[is.na(basin_yaml), basin_yaml := fifelse(
+    lat_deg >= 0 & (lon_deg > 100 | lon_deg < -100), "North Pacific",
+    fifelse(lat_deg < 0 & (lon_deg > 100 | lon_deg < -100), "South Pacific",
+    fifelse(lon_deg > 20 & lon_deg <= 100, "Indian",
+    "Atlantic"))
   )]
 
   # Remove any pre-existing k_fast column to prevent merge collision (k_fast.x/y)
   if ("k_fast" %in% names(fi_dt)) fi_dt[, k_fast := NULL]
 
   # Normalized join to handle YAML key variants
-  fi_dt[, basin_norm := norm_basin(basin)]
+  fi_dt[, basin_norm := norm_basin(basin_yaml)]
   fi_dt <- merge(fi_dt, basin_k[, .(basin_norm, k_fast)], by = "basin_norm", all.x = TRUE)
 
   # Guard: warn if too many NA after basin join
@@ -376,10 +366,10 @@ if (!is_province_mode) {
 
   # Diagnostics
   cat("Basin assignment counts:\n")
-  print(fi_dt[, .N, by = basin][order(-N)])
+  print(fi_dt[, .N, by = basin_yaml][order(-N)])
 
   # Clean up temp cols
-  fi_dt[, basin_norm := NULL]
+  fi_dt[, c("basin_raw", "basin_norm", "basin_yaml") := NULL]
 }
 # lon/lat already merged above for both modes
 
