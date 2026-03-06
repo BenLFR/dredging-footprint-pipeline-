@@ -56,12 +56,12 @@ Rscript step2_process_navire.R 2>&1
 exit_code=$?
 
 if [ $exit_code -eq 0 ]; then
-    echo "✅ Navire $SLURM_ARRAY_TASK_ID traité avec succès: $(date)"
+    echo "Vessel $SLURM_ARRAY_TASK_ID processed successfully: $(date)"
 else
-    echo "❌ Erreur navire $SLURM_ARRAY_TASK_ID: code $exit_code"
+    echo "Error processing vessel $SLURM_ARRAY_TASK_ID: code $exit_code"
     exit $exit_code
 fi
 
-# Affichage résultat
-echo "📊 RÉSUMÉ NAVIRE $SLURM_ARRAY_TASK_ID:"
+# Display result
+echo "VESSEL $SLURM_ARRAY_TASK_ID SUMMARY:"
 ls -lh ~/scratch/ais_split_${SPLIT_JOB_ID}/navire_*${SLURM_ARRAY_TASK_ID}_*_clean.rds 2>/dev/null || echo "Fichier clean non trouvé" 

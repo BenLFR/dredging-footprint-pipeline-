@@ -1,35 +1,35 @@
 #!/usr/bin/env Rscript
 # ====================================================================
-# ÉTAPE 2: TRAITEMENT NAVIRE INDIVIDUEL (ARRAY JOB)
+# STEP 2: INDIVIDUAL VESSEL PROCESSING (ARRAY JOB)
 # ====================================================================
 
-cat("🔄 === TRAITEMENT NAVIRE INDIVIDUEL ===\n")
-cat("Début:", format(Sys.time()), "\n")
+cat("=== INDIVIDUAL VESSEL PROCESSING ===\n")
+cat("Start:", format(Sys.time()), "\n")
 
-# CONFIGURATION R CRITIQUE - AVANT CHARGEMENT PACKAGES
+# CRITICAL R CONFIGURATION - BEFORE LOADING PACKAGES
 .libPaths("~/R/library")
-cat("✅ R configuré avec library:", .libPaths()[1], "\n")
+cat("R library path:", .libPaths()[1], "\n")
 
-# ---- CONFIGURATION ANTI-GFORCE ----
+# ---- ANTI-GFORCE CONFIGURATION ----
 options(mc.cores = 1)
 Sys.setenv(MC_CORES = 1)
-Sys.setenv(DT_GForce = "FALSE")  # CRITIQUE: désactive gforce
+Sys.setenv(DT_GForce = "FALSE")  # CRITICAL: disables gforce
 Sys.setenv(OMP_NUM_THREADS = 1)
 
 # ---- CHARGEMENT PACKAGES ----
 suppressPackageStartupMessages({
   library(data.table)
   
-  # Test qs avec fallback (comme step1)
+  # Test qs with fallback (same as step1)
   use_qs <- FALSE
   tryCatch({
     if (requireNamespace("qs", quietly = TRUE)) {
       library(qs)
       use_qs <- TRUE
-      cat("✅ Package qs disponible\n")
+      cat("Package qs available\n")
     }
   }, error = function(e) {
-    cat("⚠️ Package qs non disponible - fallback RDS\n")
+    cat("Package qs not available - falling back to RDS\n")
   })
   
   library(lubridate)
@@ -45,13 +45,12 @@ sf::sf_use_s2(TRUE)  # garantir les buffers/mesures en mètres sur WGS84
 setDTthreads(1)  # Mono-thread obligatoire
 options(datatable.optimize = 1)
 
-cat("✅ Packages chargés - Configuration mono-thread activée\n")
+cat("Packages loaded - single-thread configuration active\n")
 
-# ---- PARAMÈTRES GÉOSPATIAUX ----
-# Le masque terrestre est optionnel ; s'il est absent, les filtres géospatiaux
-# basés sur les polygones sont ignorés. Vous pouvez fournir un fichier RDS ou
-# GPkg via la variable d'env LAND_MASK_FILE. Un léger buffer (mètres) permet
-# d'éviter les faux positifs en bord de quai.
+# ---- GEOSPATIAL PARAMETERS ----
+# The land mask is optional; if absent, polygon-based geospatial filters are
+# skipped. An RDS or GPkg file can be provided via the LAND_MASK_FILE env var.
+# A small buffer (metres) prevents false positives near quayside.
 land_mask_path   <- Sys.getenv("LAND_MASK_FILE", unset = "~/ais-pipeline/configuration/land_mask/land_polygons.shp")
 land_buffer_m    <- as.numeric(Sys.getenv("LAND_MASK_BUFFER_M", unset = "200"))
 near_coast_km    <- as.numeric(Sys.getenv("LAND_NEAR_COAST_KM", unset = "10"))
@@ -72,7 +71,7 @@ haversine_nm <- function(lat1, lon1, lat2, lon2) {
 
 load_land_polygons <- function(path, buffer_m = 0) {
   if (!file.exists(path)) {
-    cat("⚠️ Masque terrestre introuvable (", path, ") - filtres terre désactivés\n")
+    cat("Land mask not found (", path, ") - land filters disabled\n")
     return(NULL)
   }
 
@@ -83,7 +82,7 @@ load_land_polygons <- function(path, buffer_m = 0) {
     readRDS(path)
   }
   if (!inherits(land, "sf")) {
-    stop("❌ Le masque terrestre doit être un objet sf")
+    stop("Land mask must be an sf object")
   }
 
   if (isFALSE(sf::st_is_longlat(land))) {
@@ -101,21 +100,21 @@ load_land_polygons <- function(path, buffer_m = 0) {
 
 flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_speed_kn,
                                       spike_dist_min_nm = 1, spike_bridge_max_nm = 0.3) {
-  # CORRECTION: Séparer en 2 étapes pour éviter l'erreur 'dt_sec not found'
-  # Étape 1: Créer gc_nm et dt_sec
+  # Split into 2 steps to avoid 'dt_sec not found' error
+  # Step 1: create gc_nm and dt_sec
   dt[, `:=`(
     gc_nm = haversine_nm(Lat, Lon, shift(Lat), shift(Lon)),
     dt_sec = as.numeric(delta_t)
   )]
   
-  # Étape 2: Créer avg_speed_kn et max_plausible_kn qui dépendent de dt_sec
+  # Step 2: create avg_speed_kn and max_plausible_kn which depend on dt_sec
   dt[, `:=`(
     avg_speed_kn = ifelse(!is.na(dt_sec) & dt_sec > 0, gc_nm / dt_sec * 3600, NA_real_),
     max_plausible_kn = fifelse(!is.na(Service_speed), Service_speed * 1.5, default_speed_kn)
   )]
   dt[, geo_flag := FALSE]
 
-  # 1) Points sur terre (si masque disponible)
+  # 1) Points on land (if mask available)
   if (!is.null(land_polygons)) {
     pts_sf <- sf::st_as_sf(dt, coords = c("Lon", "Lat"), crs = 4326, remove = FALSE)
     bbox <- sf::st_bbox(pts_sf)
@@ -129,7 +128,7 @@ flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_
     on_land <- lengths(sf::st_intersects(pts_sf, land_local)) > 0
     dt[on_land, geo_flag := TRUE]
 
-    # 2) Segments traversant la terre (limité aux zones côtières pour performance)
+    # 2) Segments crossing land (limited to coastal zones for performance)
     near_land <- lengths(sf::st_is_within_distance(pts_sf, land_local, dist = near_coast_km * 1000)) > 0
     segment_idx <- which(near_land | shift(near_land, type = "lead", fill = FALSE))
     segment_idx <- segment_idx[segment_idx < nrow(dt)]
@@ -146,8 +145,8 @@ flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_
       if (any(crosses_land)) {
         bad_idx <- segment_idx[crosses_land] + 1L
 
-        # Ne marquer que si le temps est court (impossible de contourner la terre)
-        # Si gap > 1h, le navire a pu légitimement contourner la terre
+        # Only flag if the time gap is short (impossible to go around the land)
+        # If gap > 1h, the vessel could legitimately have rounded the land mass
         dt_sec_at_idx <- dt$dt_sec[bad_idx]
         short_time_jumps <- !is.na(dt_sec_at_idx) & dt_sec_at_idx < 3600
 
@@ -156,11 +155,11 @@ flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_
     }
   }
 
-  # 3) Sauts distance/temps (vitesse moyenne déraisonnable)
+  # 3) Distance/time jumps (unreasonable average speed)
   dt[avg_speed_kn > max_plausible_kn, geo_flag := TRUE]
   dt[gc_nm > 100 & dt_sec <= 3600, geo_flag := TRUE]  # saut long en moins d'1h
 
-  # 4) Courtes séquences hors trajectoire (spikes isolés)
+  # 4) Short off-track sequences (isolated spikes)
   dt[, `:=`(
     dist_prev = haversine_nm(shift(Lat), shift(Lon), Lat, Lon),
     dist_next = haversine_nm(Lat, Lon, shift(Lat, type = "lead"), shift(Lon, type = "lead")),
@@ -180,106 +179,105 @@ flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_
 task_id <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 split_job_id <- Sys.getenv("SPLIT_JOB_ID")
 
-cat("📋 Task ID:", task_id, "\n")
-cat("📋 Split Job ID:", split_job_id, "\n")
+cat("Task ID:", task_id, "\n")
+cat("Split Job ID:", split_job_id, "\n")
 
 # ---- CHEMINS FICHIERS ----
 split_dir <- file.path("~/scratch", paste0("ais_split_", split_job_id))
 metadata_file <- file.path(split_dir, "navires_metadata.csv")
 
 if (!file.exists(metadata_file)) {
-  stop("❌ Métadonnées introuvables: ", metadata_file)
+  stop("Metadata not found: ", metadata_file)
 }
 
-# Lecture métadonnées
+# Read metadata
 metadata <- fread(metadata_file)
-cat("📊 Métadonnées chargées:", nrow(metadata), "navires\n")
+cat("Metadata loaded:", nrow(metadata), "vessels\n")
 
 if (task_id > nrow(metadata)) {
-  stop("❌ Task ID ", task_id, " > nombre navires ", nrow(metadata))
+  stop("Task ID ", task_id, " > vessel count ", nrow(metadata))
 }
 
-# ---- SÉLECTION NAVIRE ----
+# ---- SELECT VESSEL ----
 navire_info <- metadata[task_id]
 input_file <- navire_info$file_path
 navire_name <- navire_info$Navire
 
-cat("🚢 Navire sélectionné:", navire_name, "\n")
-cat("📁 Fichier input:", input_file, "\n")
+cat("Vessel selected:", navire_name, "\n")
+cat("Input file:", input_file, "\n")
 
 if (!file.exists(input_file)) {
-  stop("❌ Fichier navire introuvable: ", input_file)
+  stop("Vessel file not found: ", input_file)
 }
 
-# ---- CHARGEMENT DONNÉES NAVIRE ----
-cat("📖 Chargement données navire...\n")
+# ---- LOAD VESSEL DATA ----
+cat("Loading vessel data...\n")
 system.time({
-  # Détection automatique du format (qs ou rds)
+  # Auto-detect format (qs or rds)
   if (grepl("\\.qs$", input_file)) {
-    # Format QS
+    # QS format
     dt_nav <- qs::qread(input_file, as.data.table = TRUE)
-    cat("✅ Format QS détecté et chargé\n")
+    cat("QS format detected and loaded\n")
   } else if (grepl("\\.rds$", input_file)) {
-    # Format RDS
+    # RDS format
     dt_nav <- readRDS(input_file)
-    setDT(dt_nav)  # S'assurer que c'est un data.table
-    cat("✅ Format RDS détecté et chargé\n")
+    setDT(dt_nav)  # Ensure it is a data.table
+    cat("RDS format detected and loaded\n")
   } else {
-    stop("❌ Format de fichier non reconnu: ", input_file)
+    stop("Unrecognised file format: ", input_file)
   }
 })
 
 # Harmoniser le type de ssvid (character partout)
 if ("ssvid" %in% names(dt_nav)) dt_nav[, ssvid := as.character(ssvid)]
 
-cat("✅ Données chargées:", nrow(dt_nav), "observations\n")
+cat("Data loaded:", nrow(dt_nav), "observations\n")
 
 # ------------------------------------------------------------------
-# LECTURE DES SPÉCIFICATIONS NAVIRES
+# READ VESSEL SPECIFICATIONS
 # ------------------------------------------------------------------
 spec_file <- "~/ais-pipeline/configuration/ship_specs.yaml"
 if (!file.exists(spec_file))
-  stop("❌ ship_specs.yaml introuvable : ", spec_file)
+  stop("ship_specs.yaml not found: ", spec_file)
 
 spec_list  <- yaml::read_yaml(spec_file)$ship_specs
 ship_specs <- rbindlist(spec_list, fill = TRUE)
 
-## --- correctif BEGIN ------------------------------------------------
-# 1) harmoniser le type
+## --- fix BEGIN -------------------------------------------------------
+# 1) normalise type
 ship_specs[, ssvid := as.character(ssvid)]
 
-# 2) garder la première ligne de chaque ssvid (élimine les doublons)
-#    unique(..., by="ssvid") fonctionne à partir de data.table 1.14.4 ;
-#    sinon .SD[1] est universel.
+# 2) keep first row per ssvid (removes duplicates)
+#    unique(..., by="ssvid") works from data.table 1.14.4;
+#    .SD[1] is universally safe.
 ship_specs <- ship_specs[, .SD[1], by = ssvid]
-## --- correctif END --------------------------------------------------
+## --- fix END ---------------------------------------------------------
 
-# mise en forme
+# reformat
 setnames(ship_specs, "service_speed_kn", "Service_speed")
 setkey(ship_specs, ssvid)
 
-# (2) Conversion explicite juste après la fusion
+# (2) Explicit conversion immediately after merge
 if ("ssvid" %chin% names(dt_nav)) {
-  # (SUPPRIMÉ) dt_nav[, ssvid := as.integer(ssvid)]
   dt_nav <- merge(dt_nav, ship_specs[, .(ssvid, Service_speed, dredge_width_m, dredging_depth_m)],
                   by = "ssvid", all.x = TRUE)
   dt_nav[, Service_speed := as.numeric(Service_speed)]
-  # CORRECTION: S'assurer que les specs sont numériques
+  # Ensure spec columns are numeric
   dt_nav[, `:=`(dredge_width_m = as.numeric(dredge_width_m),
                 dredging_depth_m = as.numeric(dredging_depth_m))]
-  # CORRECTION: Fixer la clé pour accélérer les opérations
+  # Set key to speed up operations
   setkey(dt_nav, ssvid)
 } else {
-  warning("Colonne ssvid manquante : fusion specs impossible")
+  warning("ssvid column missing: cannot merge vessel specs")
 }
 
-# (4) Warning si Service_speed totalement manquante
+# (4) Warn if Service_speed is entirely missing
 if (!"Service_speed" %chin% names(dt_nav) || all(is.na(dt_nav$Service_speed))) {
   warning("Aucune vitesse de service pour ", navire_name)
 }
 
 # -----------------------------------------------------------------
-# FILTRE PHYSIQUE VITESSE MAXI (service_speed × 1.15)
+# PHYSICAL SPEED FILTER (service_speed × 1.15)
 # -----------------------------------------------------------------
 if ("Service_speed" %chin% names(dt_nav)) {
   dt_nav[, speed_limit := Service_speed * 1.15]
@@ -289,20 +287,20 @@ if ("Service_speed" %chin% names(dt_nav)) {
   cat(sprintf("✅ Filtre vitesse physique : %d → %d lignes (%.2f %% conservées)\n",
               n_before, n_after, 100 * n_after / n_before))
   dt_nav[, speed_limit := NULL]
-  # (3) CONSERVATION des spécifications pour l'étape 3
-  # dt_nav[, Service_speed := NULL]  # CONSERVÉ pour l'étape 3
+  # (3) Keep specs for step 3
+  # dt_nav[, Service_speed := NULL]  # KEPT for step 3
 }
 
-# Préparation initiale pour les filtres géospatiaux (delta_t avant filtrage)
+# Initial preparation for geospatial filters (delta_t before filtering)
 setorder(dt_nav, Timestamp)
 dt_nav[, delta_t := c(NA_real_, diff(as.numeric(Timestamp)))]
 
 land_polygons <- load_land_polygons(land_mask_path, buffer_m = land_buffer_m)
 
-cat("🌍 Application filtres géospatiaux (terre, segments, sauts)...\n")
+cat("Applying geospatial filters (land, segments, jumps)...\n")
 n_before_geo <- nrow(dt_nav)
 
-# Filtrage itératif pour gérer les courbes serrées autour de la terre
+# Iterative filtering to handle tight curves around land masses
 iteration <- 0
 max_iterations <- 3
 total_removed <- 0
@@ -311,24 +309,24 @@ repeat {
   iteration <- iteration + 1
   cat(sprintf("  Itération %d...\n", iteration))
 
-  # Appliquer le filtrage géospatial
+  # Apply geospatial filtering
   dt_nav <- flag_geospatial_anomalies(dt_nav, land_polygons, near_coast_km, default_speed_kn,
                                       spike_dist_min_nm = spike_dist_min_nm,
                                       spike_bridge_max_nm = spike_bridge_max_nm)
 
-  # Compter les points marqués
+  # Count flagged points
   n_flagged <- sum(dt_nav$geo_flag, na.rm = TRUE)
 
-  # Si aucun point à supprimer, on a fini
+  # If no points to remove, we are done
   if (n_flagged == 0) {
-    cat("  ✅ Aucun nouveau point à supprimer\n")
+    cat("  No new points to remove\n")
     dt_nav[, geo_flag := NULL]
     break
   }
 
-  # Si nombre max d'itérations atteint
+  # If max iterations reached
   if (iteration >= max_iterations) {
-    cat(sprintf("  ⚠️ Nombre max d'itérations atteint (%d), %d points restants marqués\n",
+    cat(sprintf("  Max iterations reached (%d), %d points still flagged\n",
                 max_iterations, n_flagged))
     dt_nav <- dt_nav[geo_flag == FALSE | is.na(geo_flag)]
     dt_nav[, geo_flag := NULL]
@@ -336,14 +334,14 @@ repeat {
     break
   }
 
-  # Supprimer les points marqués
+  # Remove flagged points
   dt_nav <- dt_nav[geo_flag == FALSE | is.na(geo_flag)]
   dt_nav[, geo_flag := NULL]
   total_removed <- total_removed + n_flagged
 
   cat(sprintf("  → %d points supprimés (total cumulé: %d)\n", n_flagged, total_removed))
 
-  # Recalculer delta_t pour la prochaine itération (nécessaire après suppression de points)
+  # Recalculate delta_t for next iteration (required after point removal)
   setorder(dt_nav, Timestamp)
   dt_nav[, delta_t := c(NA_real_, diff(as.numeric(Timestamp)))]
 }
@@ -352,60 +350,60 @@ n_after_geo <- nrow(dt_nav)
 cat(sprintf("✅ Filtres géospatiaux : %d lignes supprimées en %d itération(s) (%.2f %%)\n",
             n_before_geo - n_after_geo, iteration,
             if (n_before_geo > 0) 100 * (n_before_geo - n_after_geo) / n_before_geo else 0))
-cat("   • Total anomalies géospatiales détectées:", total_removed, "\n")
+cat("   - Total geospatial anomalies detected:", total_removed, "\n")
 
-# (1) Calcul des dérivées juste avant l'Isolation Forest (après filtrage géospatial)
+# (1) Compute derivatives just before Isolation Forest (after geospatial filtering)
 setorder(dt_nav, Timestamp)
 dt_nav[, delta_t       := c(NA_real_, diff(as.numeric(Timestamp)))]
 dt_nav[, Course_change := c(NA_real_, abs(diff(Course)))]
 dt_nav[Course_change > 180, Course_change := 360 - Course_change]
 dt_nav[, Accel         := c(NA_real_, diff(Speed))]
 
-# ---- CHARGEMENT CONFIGURATION ----
+# ---- LOAD CONFIGURATION ----
 config_file <- "~/ais-pipeline/configuration/outlier_config_V6.yaml"
 if (file.exists(config_file)) {
   config <- yaml.load_file(config_file)
-  # Utiliser les paramètres de la section isolation_forest
+  # Use parameters from the isolation_forest section
   outlier_config <- list(
     contamination_rate = config$isolation_forest$contamination_rate,
     if_sample_size = config$isolation_forest$sample_size,
     if_num_trees = config$isolation_forest$num_trees,
     memory_conservative = TRUE
   )
-  cat("✅ Configuration chargée:", config_file, "\n")
+  cat("Configuration loaded:", config_file, "\n")
 } else {
-  # Configuration par défaut ultra-conservative
+  # Default ultra-conservative configuration
   outlier_config <- list(
     contamination_rate = 0.02,
     if_sample_size = 256,
     if_num_trees = 25,
     memory_conservative = TRUE
   )
-  cat("⚠️ Configuration par défaut appliquée\n")
+  cat("Default configuration applied\n")
 }
 
 cat("🔧 Paramètres IF: contamination =", outlier_config$contamination_rate, 
     "| trees =", outlier_config$if_num_trees, "\n")
 
-# ---- FONCTIONS ISOLATION FOREST OPTIMISÉES ----
+# ---- OPTIMISED ISOLATION FOREST FUNCTIONS ----
 detect_outliers_IF_optimized <- function(dt, config) {
-  cat("  🌲 Début Isolation Forest...\n")
+  cat("  Isolation Forest starting...\n")
 
-  # Préparation features (basique pour un navire)
+  # Prepare features (basic set for a single vessel)
   features <- c("Lat", "Lon")
   if ("delta_t" %in% names(dt)) features <- c(features, "delta_t")
   if ("Speed" %in% names(dt)) features <- c(features, "Speed")
   
-  # Extraction données numériques
+  # Extract numeric data
   dt_features <- dt[, ..features]
   dt_features <- dt_features[complete.cases(dt_features)]
   
   if (nrow(dt_features) < 50) {
-    cat("  ⚠️ Trop peu de données (", nrow(dt_features), ") - pas d'IF\n")
+    cat("  Too few observations (", nrow(dt_features), ") - skipping IF\n")
     return(rep(FALSE, nrow(dt)))
   }
   
-  # Isolation Forest avec paramètres conservateurs
+  # Isolation Forest with conservative parameters
   if_model <- isolationForest$new(
     sample_size = min(config$if_sample_size, nrow(dt_features)),
     num_trees = config$if_num_trees,
@@ -414,57 +412,57 @@ detect_outliers_IF_optimized <- function(dt, config) {
   
   if_model$fit(dt_features)
   
-  # Prédiction
+  # Prediction
   scores <- if_model$predict(dt_features)
   outliers <- scores$anomaly_score > quantile(scores$anomaly_score, 
                                              1 - config$contamination_rate)
   
-  # Alignement avec données originales
+  # Align with original data
   result <- rep(FALSE, nrow(dt))
   if (nrow(dt_features) == nrow(dt)) {
     result <- outliers
   } else {
-    # Cas où il y a des NA - alignement par index
+    # Case with NAs - align by index
     complete_idx <- which(complete.cases(dt[, ..features]))
     result[complete_idx] <- outliers
   }
   
-  cat("  ✅ IF terminé:", sum(result), "outliers sur", nrow(dt), "points\n")
+  cat("  IF complete:", sum(result), "outliers out of", nrow(dt), "points\n")
   return(result)
 }
 
-# ---- TRAITEMENT PRINCIPAL ----
-cat("🚀 Début traitement Isolation Forest...\n")
+# ---- MAIN PROCESSING ----
+cat("Starting Isolation Forest processing...\n")
 system.time({
   dt_nav[, outlier_IF := detect_outliers_IF_optimized(dt_nav, outlier_config)]
 })
 
-# ---- CRÉATION DE LA COLONNE is_stop (NÉCESSAIRE POUR STEP 3) ----
-cat("🛑 Création de la colonne is_stop...\n")
+# ---- CREATE is_stop COLUMN (REQUIRED FOR STEP 3) ----
+cat("Creating is_stop column...\n")
 
-# Tri par timestamp pour calculs temporels
+# Sort by timestamp for temporal calculations
 setorder(dt_nav, Timestamp)
 
-# delta_t déjà calculé plus haut, pas besoin de le recalculer
+# delta_t already computed above, no need to recalculate
 
-# Détection des arrêts basée sur la vitesse et les intervalles temporels
-# Un arrêt = vitesse < 1 nœud OU intervalle > 5 minutes
+# Stop detection based on speed and time intervals
+# A stop = speed < 1 knot OR interval > 5 minutes
 dt_nav[, is_stop := (Speed < 1) | (delta_t > 300)]
 
-# Nettoyage des valeurs NA
+# Clean up NA values
 dt_nav[is.na(is_stop), is_stop := FALSE]
 
-cat("✅ Colonne is_stop créée:", sum(dt_nav$is_stop), "arrêts détectés\n")
+cat("is_stop column created:", sum(dt_nav$is_stop), "stops detected\n")
 
-# ---- CRÉATION DE COLONNES SUPPLÉMENTAIRES (UTILES POUR STEP 3) ----
-cat("🔧 Création de colonnes supplémentaires...\n")
+# ---- CREATE ADDITIONAL COLUMNS (USEFUL FOR STEP 3) ----
+cat("Creating additional columns...\n")
 
-# Ajout de l'année
+# Add year
 dt_nav[, Annee := year(Timestamp)]
 
-# Course_change et Accel déjà calculés plus haut, pas besoin de les recalculer
+# Course_change and Accel already computed above, no need to recalculate
 
-cat("✅ Colonnes supplémentaires créées (Annee, Course_change, Accel)\n")
+cat("Additional columns created (Annee, Course_change, Accel)\n")
 
 # ---- STATISTIQUES ----
 n_outliers <- sum(dt_nav$outlier_IF)
@@ -472,30 +470,30 @@ outlier_rate <- round(n_outliers / nrow(dt_nav) * 100, 2)
 n_stops <- sum(dt_nav$is_stop)
 stop_rate <- round(n_stops / nrow(dt_nav) * 100, 2)
 
-cat("📊 RÉSULTATS NAVIRE:", navire_name, "\n")
-cat("  • Observations totales:", nrow(dt_nav), "\n")
-cat("  • Outliers détectés:", n_outliers, "(", outlier_rate, "%)\n")
-cat("  • Arrêts détectés:", n_stops, "(", stop_rate, "%)\n")
+cat("VESSEL RESULTS:", navire_name, "\n")
+cat("  - Total observations:", nrow(dt_nav), "\n")
+cat("  - Outliers detected:", n_outliers, "(", outlier_rate, "%)\n")
+cat("  - Stops detected:", n_stops, "(", stop_rate, "%)\n")
 
-# ---- SAUVEGARDE ----
-# Utiliser le dossier de sortie défini dans le script bash
+# ---- SAVE OUTPUT ----
+# Use the output directory defined in the bash script
 output_dir <- file.path("~/scratch", paste0("ais_results_", Sys.getenv("SLURM_ARRAY_JOB_ID")))
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
-# Nom du fichier de sortie
+# Output filename
 safe_name <- gsub("[^A-Za-z0-9_-]", "_", navire_name)
 output_file <- file.path(output_dir, sprintf("%02d_%s_clean.rds", task_id, safe_name))
 
-cat("💾 Sauvegarde:", output_file, "\n")
+cat("Saving:", output_file, "\n")
 
 system.time({
   saveRDS(dt_nav, output_file, compress = "xz")
 })
 
-# ---- NETTOYAGE MÉMOIRE ----
+# ---- MEMORY CLEANUP ----
 if (exists("if_model")) rm(if_model)
 rm(dt_nav)
 gc()
 
-cat("✅ Navire", navire_name, "traité avec succès:", format(Sys.time()), "\n")
-cat("📁 Résultat:", output_file, "\n") 
+cat("Vessel", navire_name, "processed successfully:", format(Sys.time()), "\n")
+cat("Output:", output_file, "\n")

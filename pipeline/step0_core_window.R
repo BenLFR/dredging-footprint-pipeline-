@@ -4,10 +4,10 @@
 # Version améliorée avec analyse complète de toutes les fenêtres candidates
 # ==============================================================================
 
-cat("\n📊  STEP-0 ENHANCED  |  Core Period Selection via Coverage Matrix |  début :", format(Sys.time()), "\n\n")
+cat("\n  STEP-0 ENHANCED  |  Core Period Selection via Coverage Matrix |  start :", format(Sys.time()), "\n\n")
 
 # ---- PACKAGES ET CONFIG ----
-.libPaths("/home/benl/R/library")
+.libPaths("~/R/library")
 suppressPackageStartupMessages({
   library(data.table)
   library(lubridate)
@@ -18,16 +18,16 @@ suppressPackageStartupMessages({
 
 set.seed(42)
 
-# ---- CHARGEMENT DONNÉES ----
+# ---- LOAD DATA ----
 input_pattern <- Sys.getenv("AIS_INPUT_PATTERN", "~/AIS_data/benjamin3_clean.csv")
 output_dir   <- Sys.getenv("AIS_OUTPUT_DIR", "~/scratch/output_V6")
-cat("📁  INPUT  :", input_pattern, "\n")
-cat("📁  OUTPUT :", output_dir, "\n\n")
+cat("  INPUT  :", input_pattern, "\n")
+cat("  OUTPUT :", output_dir, "\n\n")
 
-# Nouvelle logique de détection du fichier d'entrée (CSV **ou** RDS)
+# Input file detection logic (CSV **or** RDS)
 input_file <- Sys.getenv("AIS_INPUT_FILE", "")
 if (nzchar(input_file) && file.exists(input_file)) {
-  cat("🔍  Fichier fourni par AIS_INPUT_FILE :", basename(input_file), "\n\n")
+  cat("  File provided via AIS_INPUT_FILE :", basename(input_file), "\n\n")
 } else {
 csv_files <- Sys.glob(input_pattern)
   rds_pattern <- sub("\\*\\.csv$", "*.rds", input_pattern)
@@ -38,12 +38,12 @@ csv_files <- Sys.glob(input_pattern)
   } else if (length(rds_files)) {
     input_file <- rds_files[1]
   } else {
-    stop("❌  Aucun fichier d'entrée trouvé (CSV ou RDS).")
+    stop("No input file found (CSV or RDS).")
   }
-  cat("🔍  Fichier détecté :", basename(input_file), "\n\n")
+  cat("  File detected :", basename(input_file), "\n\n")
 }
 
-# ---- CHARGEMENT DU FICHIER ---------------------------------------------------
+# ---- LOAD FILE ---------------------------------------------------
 if (grepl("\\.rds$", input_file, ignore.case = TRUE)) {
   ais_dt <- as.data.table(readRDS(input_file))
 } else {
@@ -51,12 +51,12 @@ if (grepl("\\.rds$", input_file, ignore.case = TRUE)) {
 }
 
 setnames(ais_dt, tolower(names(ais_dt)))
-cat("✅", format(nrow(ais_dt), big.mark = " "), "lignes chargées.\n\n")
+cat("", format(nrow(ais_dt), big.mark = " "), "rows loaded.\n\n")
 
-# ---- TABLE CORRESPONDANCE MMSI → NAVIRE ----
-# Note: Vasco Da Gama a eu deux MMSI : 253193000 (Luxembourg, 2013-2019) et 205744000 (Belgique, 2018-2024)
-# On fusionne vers le MMSI le plus récent : 205744000
-# Note: Goryo 6 Ho (312062000) exclu - données corrompues
+# ---- MMSI → VESSEL NAME LOOKUP TABLE ----
+# Note: Vasco Da Gama had two MMSIs: 253193000 (Luxembourg, 2013-2019) and 205744000 (Belgium, 2018-2024)
+# Merged to the most recent MMSI: 205744000
+# Note: Goryo 6 Ho (312062000) excluded - corrupted data
 mmsi_map <- data.table(
   ssvid = c(209469000, 210138000, 245508000, 246351000,
             253193000, 205744000, 253373000, 253403000, 253422000,
@@ -65,25 +65,25 @@ mmsi_map <- data.table(
              "Vox Maxima", "Vasco Da Gama", "Vasco Da Gama", "Cristobal Colon",
              "Leiv Eiriksson", "Charles Darwin", "Congo River",
              "Inai Kenanga"),
-  # MMSI de référence (le plus récent pour Vasco Da Gama)
+  # Reference MMSI (most recent for Vasco Da Gama)
   ssvid_ref = c(209469000, 210138000, 245508000, 246351000,
                 205744000, 205744000, 253373000, 253403000, 253422000,
                 253688000, 533180137)
 )
-# Conversion du type ssvid pour compatibilité
+# Convert ssvid type for compatibility
 mmsi_map[, ssvid := as.character(ssvid)]
 mmsi_map[, ssvid_ref := as.character(ssvid_ref)]
 setkey(mmsi_map, ssvid)
 
 if ("ssvid" %in% names(ais_dt)) {
-  # Conversion du type ssvid pour compatibilité
+  # Convert ssvid type for compatibility
   ais_dt[, ssvid := as.character(ssvid)]
   ais_dt <- merge(ais_dt, mmsi_map, by = "ssvid", all.x = TRUE)
-  
-  # Fusion des MMSI multiples vers le MMSI de référence (cas Vasco Da Gama)
+
+  # Merge multiple MMSIs to the reference MMSI (Vasco Da Gama case)
   ais_dt[!is.na(ssvid_ref), ssvid := ssvid_ref]
-  ais_dt[, ssvid_ref := NULL]  # nettoyer la colonne temporaire
-  
+  ais_dt[, ssvid_ref := NULL]  # clean up temporary column
+
   ais_dt[is.na(Navire), Navire := paste0("unknown_", ssvid)]
 } else if ("navire" %in% names(ais_dt)) {
   setnames(ais_dt, "navire", "Navire")
@@ -96,13 +96,13 @@ ais_dt[, Timestamp := as.POSIXct(get("timestamp"), tz = "UTC")]
 ais_dt[, Date := as.Date(Timestamp)]
 ais_dt[, Annee := year(Timestamp)]
 
-# ---- MATRICE COUVERTURE ----
-# 1. Couverture journalière pour chaque navire-année
+# ---- COVERAGE MATRIX ----
+# 1. Daily coverage for each vessel-year
 cover_dt <- ais_dt[, .(active_days = uniqueN(Date)), by = .(Navire, Annee)]
 cover_dt[, total_days := ifelse(leap_year(Annee), 366, 365)]
 cover_dt[, coverage := active_days / total_days]
 
-# 2. Matrice Navire × Année
+# 2. Vessel × Year matrix
 navires <- sort(unique(cover_dt$Navire))
 annees  <- sort(unique(cover_dt$Annee))
 cov_mat <- matrix(0, nrow = length(navires), ncol = length(annees),
@@ -114,22 +114,22 @@ for (i in seq_along(navires)) {
   }
 }
 
-cat("✅ Matrice couverture :", nrow(cov_mat), "navires ×", ncol(cov_mat), "années\n")
+cat("Coverage matrix:", nrow(cov_mat), "vessels x", ncol(cov_mat), "years\n")
 
-# ---- EXPORT MATRICE NAVIRE × ANNÉE ----
-# Sauvegarde de la matrice complète pour visualisation
+# ---- EXPORT VESSEL × YEAR MATRIX ----
+# Save the full matrix for visualisation
 cov_dt <- as.data.table(cov_mat, keep.rownames = "ship")
 dir.create(output_dir, showWarnings=FALSE, recursive=TRUE)
 fwrite(cov_dt, file.path(output_dir, "coverage_matrix.csv"), row.names = FALSE)
-cat("📊 Matrice de couverture exportée : coverage_matrix.csv\n")
+cat("Coverage matrix exported: coverage_matrix.csv\n")
 
-# ---- ANALYSE COMPLÈTE DE TOUTES LES FENÊTRES ----
+# ---- FULL ANALYSIS OF ALL CANDIDATE WINDOWS ----
 min_L <- 5
 all_windows <- data.table()
 years <- as.numeric(colnames(cov_mat))
 n <- length(years)
 
-cat("🔍 Analyse de toutes les fenêtres candidates (min", min_L, "ans)...\n")
+cat("Analysing all candidate windows (min", min_L, "years)...\n")
 pb <- txtProgressBar(min = 0, max = (n - min_L + 1) * (n - min_L) / 2, style = 3)
 counter <- 0
 
@@ -143,7 +143,7 @@ for (i in seq_len(n - min_L + 1)) {
     CV  <- ifelse(Cbar==0, 1e9, sd(Cyears, na.rm=TRUE)/Cbar)
     S   <- L * Cbar * (Cmin^2) / (1 + CV)
     
-    # Calculs supplémentaires pour l'analyse
+    # Additional calculations for analysis
     navires_actifs <- sum(rowSums(subC > 0) > 0)
     couverture_totale <- mean(subC, na.rm=TRUE)
     
@@ -166,24 +166,24 @@ for (i in seq_len(n - min_L + 1)) {
 }
 close(pb)
 
-# Tri par score décroissant
+# Sort by descending score
 setorder(all_windows, -score)
 
-cat(sprintf("✅ %d fenêtres candidates analysées\n", nrow(all_windows)))
+cat(sprintf("%d candidate windows analysed\n", nrow(all_windows)))
 
-# ---- FENÊTRE OPTIMALE ----
+# ---- OPTIMAL WINDOW ----
 best <- all_windows[1]
 best_window_yrs <- best$years_list[[1]]
 
-cat(sprintf("🎯 Fenêtre optimale : %d-%d (%d ans)\n", best$start_year, best$end_year, best$length))
-cat(sprintf("   • Couverture médiane : %.1f %%\n", 100*best$median_coverage))
-cat(sprintf("   • Couverture minimale : %.1f %%\n", 100*best$min_coverage))
-cat(sprintf("   • CV annuel           : %.3f\n", best$CV_coverage))
-cat(sprintf("   • Score               : %.3f\n", best$score))
-cat(sprintf("   • Navires actifs      : %d\n", best$active_ships))
+cat(sprintf("Optimal window: %d-%d (%d years)\n", best$start_year, best$end_year, best$length))
+cat(sprintf("   - Median coverage  : %.1f %%\n", 100*best$median_coverage))
+cat(sprintf("   - Minimum coverage : %.1f %%\n", 100*best$min_coverage))
+cat(sprintf("   - Annual CV        : %.3f\n", best$CV_coverage))
+cat(sprintf("   - Score            : %.3f\n", best$score))
+cat(sprintf("   - Active vessels   : %d\n", best$active_ships))
 
-# ---- ANALYSE DES ALTERNATIVES ----
-cat("\n🏆 TOP 10 FENÊTRES CANDIDATES:\n")
+# ---- ALTERNATIVE WINDOW ANALYSIS ----
+cat("\nTOP 10 CANDIDATE WINDOWS:\n")
 top_10 <- all_windows[1:10]
 for (i in 1:nrow(top_10)) {
   w <- top_10[i]
@@ -192,47 +192,47 @@ for (i in 1:nrow(top_10)) {
               100*w$median_coverage, w$active_ships))
 }
 
-# Différence avec la 2ème meilleure
+# Margin over the 2nd-best window
 if (nrow(all_windows) >= 2) {
   score_diff <- best$score - all_windows$score[2]
   score_diff_pct <- 100 * score_diff / all_windows$score[2]
-  cat(sprintf("\n📊 Avantage de la meilleure fenêtre: %.3f (%.1f%%)\n", score_diff, score_diff_pct))
-  
+  cat(sprintf("\nBest window advantage: %.3f (%.1f%%)\n", score_diff, score_diff_pct))
+
   if (score_diff_pct < 5) {
-    cat("⚠️  Attention: La différence avec la 2ème meilleure fenêtre est faible (< 5%)\n")
+    cat("WARNING: Margin over the 2nd-best window is small (< 5%)\n")
   }
 }
 
-# ---- SUPPRESSION DES NAVIRES FANTÔMES ----
+# ---- REMOVE INACTIVE (GHOST) VESSELS ----
 yrs_idx <- which(years %in% best_window_yrs)
 present_n <- rowSums(cov_mat[, yrs_idx, drop = FALSE] > 0)
 core_ships <- names(present_n[present_n > 0])
 
 if (length(core_ships) == 0) {
-  stop("❌ La fenêtre optimale ne contient finalement aucun navire actif – à vérifier.")
+  stop("The optimal window contains no active vessels - please check the data.")
 }
 
-cat(sprintf("🔍  Navires actifs dans la fenêtre : %d (sur %d total)\n", 
+cat(sprintf("Active vessels in window: %d (out of %d total)\n",
             length(core_ships), nrow(cov_mat)))
 
 if (length(core_ships) < nrow(cov_mat)) {
   inactive_ships <- setdiff(rownames(cov_mat), core_ships)
-  cat("⚠️  Navires inactifs exclus :", paste(inactive_ships, collapse = ", "), "\n")
+  cat("Inactive vessels excluded:", paste(inactive_ships, collapse = ", "), "\n")
 }
 
 cov_mat <- cov_mat[core_ships, , drop = FALSE]
 best_ships <- core_ships
 
-# ---- EXPORT COMPLET ----
+# ---- FULL EXPORT ----
 dir.create(output_dir, showWarnings=FALSE, recursive=TRUE)
 
-# 1. Toutes les fenêtres candidates
+# 1. All candidate windows
 fwrite(all_windows[, -"years_list"], file.path(output_dir, "all_candidate_windows.csv"))
 
-# 2. Top 20 fenêtres pour analyse rapide
+# 2. Top 20 windows for quick review
 fwrite(all_windows[1:20, -"years_list"], file.path(output_dir, "top_20_windows.csv"))
 
-# 3. CSV avec les métriques de la fenêtre optimale
+# 3. CSV with metrics for the optimal window
 core_window <- data.table(
   start_year = best$start_year,
   end_year   = best$end_year,
@@ -246,33 +246,33 @@ core_window <- data.table(
 )
 fwrite(core_window, file.path(output_dir, "best_core_window.csv"))
 
-# 4. YAML complet avec fenêtre ET liste des navires
+# 4. Full YAML with window AND vessel list
 core_config <- list(
-  # Fenêtre temporelle
+  # Time window
   start_year = best$start_year,
   end_year = best$end_year,
   length_years = best$length,
-  
-  # Métriques de couverture
+
+  # Coverage metrics
   median_coverage = best$median_coverage,
   min_coverage = best$min_coverage,
   cv_coverage = best$CV_coverage,
   score = best$score,
   active_ships = best$active_ships,
   total_coverage = best$total_coverage,
-  
-  # Liste des navires actifs
+
+  # Active vessel list
   core_ships = best_ships,
-  
-  # Années de la fenêtre
+
+  # Window years
   window_years = best_window_yrs,
-  
-  # Analyse des alternatives
+
+  # Alternative window analysis
   total_candidates = nrow(all_windows),
   score_advantage = if(nrow(all_windows) >= 2) best$score - all_windows$score[2] else NA,
   score_advantage_pct = if(nrow(all_windows) >= 2) 100 * (best$score - all_windows$score[2]) / all_windows$score[2] else NA,
-  
-  # Métadonnées
+
+  # Metadata
   execution_date = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
   input_file = basename(input_file),
   total_ships = length(best_ships),
@@ -281,14 +281,14 @@ core_config <- list(
 
 write_yaml(core_config, file.path(output_dir, "core_window.yaml"))
 
-# 5. CSV avec la liste des navires
+# 5. CSV with the vessel list
 ships_dt <- data.table(
   ship_id = seq_along(best_ships),
   ship_name = best_ships
 )
 fwrite(ships_dt, file.path(output_dir, "core_ships.csv"))
 
-# 6. Rapport markdown détaillé
+# 6. Detailed markdown report
 report_md <- sprintf(
   "# Rapport Core Window Enhanced (Coverage Matrix)
 
@@ -338,7 +338,7 @@ report_md <- sprintf(
 
 writeLines(report_md, file.path(output_dir, "core_window_enhanced_report.md"))
 
-# 7. Statistiques par année pour la fenêtre optimale
+# 7. Per-year statistics for the optimal window
 yearly_stats <- data.table(
   year = best_window_yrs,
   median_coverage = sapply(best_window_yrs, function(y) {
@@ -353,15 +353,15 @@ yearly_stats <- data.table(
 )
 fwrite(yearly_stats, file.path(output_dir, "yearly_coverage_stats.csv"))
 
-# ---- RÉSUMÉ FINAL ----
-cat("\n📄  Résumé markdown : core_window_enhanced_report.md\n")
-cat("📋  Configuration YAML : core_window.yaml\n")
-cat("🚢  Liste navires : core_ships.csv\n")
-cat("📊  Toutes les fenêtres : all_candidate_windows.csv\n")
-cat("🏆  Top 20 fenêtres : top_20_windows.csv\n")
-cat("📈  Stats annuelles : yearly_coverage_stats.csv\n")
-cat("💾  Fichiers dans", output_dir, "\n")
-cat("⏱️  Fin :", format(Sys.time()), "\n")
+# ---- FINAL SUMMARY ----
+cat("\n  Markdown report : core_window_enhanced_report.md\n")
+cat("  YAML config     : core_window.yaml\n")
+cat("  Vessel list     : core_ships.csv\n")
+cat("  All windows     : all_candidate_windows.csv\n")
+cat("  Top 20 windows  : top_20_windows.csv\n")
+cat("  Annual stats    : yearly_coverage_stats.csv\n")
+cat("  Files written to", output_dir, "\n")
+cat("  End:", format(Sys.time()), "\n")
 
-cat("\n✅ STEP-0 ENHANCED terminé avec succès :", format(Sys.time()), "\n")
-cat("📄  Fichier de sélection :", file.path(output_dir, "core_window_enhanced_report.md"), "\n") 
+cat("\nSTEP-0 ENHANCED completed successfully:", format(Sys.time()), "\n")
+cat("  Selection file:", file.path(output_dir, "core_window_enhanced_report.md"), "\n")

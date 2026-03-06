@@ -7,9 +7,9 @@
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=2
 #SBATCH --time=02:00:00
-#SBATCH --chdir=/home/bloe/ais-pipeline/pipeline_V6
-#SBATCH --output=/home/bloe/logs/step7_jtrawl_%j.out
-#SBATCH --error=/home/bloe/logs/step7_jtrawl_%j.err
+#SBATCH --chdir=$HOME/ais-pipeline/pipeline_V6
+#SBATCH --output=$HOME/logs/step7_jtrawl_%j.out
+#SBATCH --error=$HOME/logs/step7_jtrawl_%j.err
 #SBATCH --exclude=hpc-08.grit.ucsb.edu
 
 echo "=== STEP 7 : EXPORT Jtrawl (job $SLURM_JOB_ID) ==="

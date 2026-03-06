@@ -10,7 +10,7 @@ pkgs <- c("sf","dplyr","data.table","terra","lubridate")
 invisible(sapply(pkgs, function(pkg) suppressPackageStartupMessages(library(pkg, character.only=TRUE))))
 
 # Configuration Terra pour éviter les problèmes de mémoire
-terraOptions(tempdir = "/scratch/benl/tmp")  # Dossiers lourds dans /scratch
+terraOptions(tempdir = path.expand("~/scratch/tmp_terra"))
 
 cat("--- Étape 6 : Calcul de Cri ---\n")
 
@@ -18,9 +18,9 @@ cat("--- Étape 6 : Calcul de Cri ---\n")
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   # Si aucun argument, rechercher le plus récent
-  cat("ℹ️  Aucun fichier f_i spécifié. Recherche du plus récent...\n")
+  cat("No f_i file specified. Searching for the most recent...\n")
   fi_files <- list.files("~/scratch/output_V6/", pattern="^fi_grid_.*\\.(parquet|rds)$", full.names=TRUE)
-  if(length(fi_files) == 0) stop("❌ Aucun fichier f_i trouvé dans ~/scratch/output_V6/")
+  if(length(fi_files) == 0) stop("No f_i file found in ~/scratch/output_V6/")
   fi_path <- fi_files[which.max(file.info(fi_files)$mtime)]
 } else {
   fi_path <- args[1]
@@ -28,70 +28,70 @@ if (length(args) == 0) {
 cat("✔️ Fichier f_i utilisé :", basename(fi_path), "\n")
 
 ## 1.  Charger les données f_i ----------------------------------------------------
-cat("🔄 1. Chargement des données f_i...\n")
+cat("1. Loading f_i data...\n")
 if (grepl("\\.parquet$", fi_path)) {
-  if(!requireNamespace("arrow", quietly=TRUE)) stop("❌ Le package 'arrow' est requis pour lire les fichiers Parquet.")
+  if(!requireNamespace("arrow", quietly=TRUE)) stop("The 'arrow' package is required to read Parquet files.")
   fi_dt <- arrow::read_parquet(fi_path)
 } else {
   fi_dt <- readRDS(fi_path)
 }
 setDT(fi_dt)
-cat("✅", nrow(fi_dt), "cellules chargées.\n")
+cat(nrow(fi_dt), "cells loaded.\n")
 
-# 🔧 Correction : Ajout des colonnes x/y si absentes
+# Add x/y columns if missing
 if (!("x" %in% names(fi_dt) && "y" %in% names(fi_dt))) {
   if ("col" %in% names(fi_dt) && "row" %in% names(fi_dt)) {
     fi_dt[, x := -18000000 + col*1000 + 500]
     fi_dt[, y :=  9000000 - row*1000 - 500]
-    cat("✅ Coordonnées x/y reconstruites à partir de col/row.\n")
+    cat("x/y coordinates reconstructed from col/row.\n")
   } else if ("grid_id" %in% names(fi_dt)) {
     fi_dt[, col := (grid_id-1L) %% 36000L]
     fi_dt[, row := (grid_id-1L) %/% 36000L]
     fi_dt[, x := -18000000 + col*1000 + 500]
     fi_dt[, y :=  9000000 - row*1000 - 500]
-    cat("✅ Coordonnées x/y reconstruites à partir de grid_id.\n")
+    cat("x/y coordinates reconstructed from grid_id.\n")
   } else {
-    stop("❌ Impossible de retrouver les coordonnées : ni x/y ni col/row ni grid_id dans fi_dt.")
+    stop("Cannot recover coordinates: neither x/y nor col/row nor grid_id found in fi_dt.")
   }
 }
 
-# 🔧 Vérification de la contiguïté des grid_id
+# Verify grid_id contiguity
 stopifnot(all(fi_dt$grid_id >= 1 & fi_dt$grid_id <= 18000*36000))
-cat("✅ Vérification grid_id : contiguïté OK.\n")
+cat("grid_id contiguity check OK.\n")
 
 coords <- fi_dt[, .(x, y)]
 
-## 2.  Charger le stock de carbone (C0i) et les incertitudes ------------------------------------------
-cat("🔄 2. Chargement du stock de carbone (C0i) et des incertitudes...\n")
-carbon_dir <- path.expand("/home/benl/")
+## 2.  Load carbon stock (C0i) and uncertainties ------------------------------------------
+cat("2. Loading carbon stock (C0i) and uncertainties...\n")
+carbon_dir <- Sys.getenv("CARBON_DIR", path.expand("~/scratch/configuration/atwood_carbon_full"))
 
 # Charger tous les fichiers TIF de carbone
 carbon_files <- list.files(carbon_dir, pattern = "\\.tif$", full.names = TRUE)
-cat("📁 Fichiers TIF trouvés:", length(carbon_files), "\n")
+cat("TIF files found:", length(carbon_files), "\n")
 cat("   ", paste(basename(carbon_files), collapse=", "), "\n")
 
 if(length(carbon_files) == 0) {
-  stop("❌ Aucun fichier TIF de stock de carbone trouvé dans", carbon_dir, 
-       "\n   Veuillez y téléverser les données d'Atwood & al.")
+  stop("No carbon stock TIF files found in ", carbon_dir,
+       "\n   Please upload Atwood et al. data there.")
 }
 
-# Charger les rasters de carbone
+# Load carbon rasters
 carbon_rasters <- list()
 for(file in carbon_files) {
   name <- tools::file_path_sans_ext(basename(file))
-  name_clean <- tolower(gsub(" ", "_", name)) # ex: "Mean carbon_stock" -> "mean_carbon_stock"
+  name_clean <- tolower(gsub(" ", "_", name)) # e.g. "Mean carbon_stock" -> "mean_carbon_stock"
   carbon_rasters[[name_clean]] <- terra::rast(file)
-  cat("✔️ Raster chargé :", basename(file), "->", name_clean, "\n")
+  cat("Raster loaded:", basename(file), "->", name_clean, "\n")
 }
 
-# 🔧 Optimisation : reprojection une seule fois si nécessaire
+# Reproject once if needed (optimisation)
 template_raster <- terra::rast(nrows=18000, ncols=36000, crs="EPSG:6933",
                               xmin=-18000000, xmax=18000000, ymin=-9000000, ymax=9000000)
 
 for(name in names(carbon_rasters)) {
   # Vérifier si la projection correspond
   if (!terra::compareGeom(carbon_rasters[[name]], template_raster, stopOnError = FALSE)) {
-    cat("🔄 Reprojection du raster", name, "vers EPSG:6933...\n")
+    cat("Reprojecting raster", name, "to EPSG:6933...\n")
     carbon_rasters[[name]] <- terra::project(carbon_rasters[[name]], template_raster)
   }
 }
@@ -100,37 +100,37 @@ for(name in names(carbon_rasters)) {
 for(name in names(carbon_rasters)) {
   col_name <- paste0("C0i_", name)
   fi_dt[[col_name]] <- terra::extract(carbon_rasters[[name]], coords, ID=FALSE)[[1]]
-  fi_dt[is.na(get(col_name)), (col_name) := 0] # Remplacer les NA par 0
-  cat("✅", col_name, "extrait pour", sum(fi_dt[[col_name]] > 0), "cellules.\n")
+  fi_dt[is.na(get(col_name)), (col_name) := 0] # Replace NA with 0
+  cat(col_name, "extracted for", sum(fi_dt[[col_name]] > 0), "cells.\n")
 }
 
 # Détermination de la couche centrale et min/max
 if("C0i_mean_carbon_stock" %in% names(fi_dt)) {
   fi_dt$C0i <- fi_dt$C0i_mean_carbon_stock
 } else {
-  stop("❌ Pas de raster 'Mean carbon_stock' trouvé. Vérifiez le nom du fichier !")
+  stop("Raster 'Mean carbon_stock' not found. Check the file name.")
 }
 if("C0i_global_error_lower_bound" %in% names(fi_dt)) {
   fi_dt$C0i_lower <- fi_dt$C0i_global_error_lower_bound
 } else {
-  cat("⚠️ Pas de raster 'global_error_lower_bound' trouvé. Pas de Cri_lower.\n")
+  cat("WARNING: 'global_error_lower_bound' raster not found. No Cri_lower.\n")
 }
 if("C0i_global_error_upper_bound" %in% names(fi_dt)) {
   fi_dt$C0i_upper <- fi_dt$C0i_global_error_upper_bound
 } else {
-  cat("⚠️ Pas de raster 'global_error_upper_bound' trouvé. Pas de Cri_upper.\n")
+  cat("WARNING: 'global_error_upper_bound' raster not found. No Cri_upper.\n")
 }
-cat("✅ Stock de carbone (C0i) extrait pour", sum(fi_dt$C0i > 0), "cellules.\n")
+cat("Carbon stock (C0i) extracted for", sum(fi_dt$C0i > 0), "cells.\n")
 
-## 3.  Calculer le facteur de déplétion (di) --------------------------------------
-cat("🔄 3. Calcul du facteur de déplétion (di)...\n")
+## 3.  Compute depletion factor (di) --------------------------------------
+cat("3. Computing depletion factor (di)...\n")
 trawling_history_path <- path.expand("~/scratch/configuration/trawling_history.rds")
 if (!file.exists(trawling_history_path)) {
-  cat("⚠️  Fichier d'historique de chalutage introuvable à :", trawling_history_path, "\n")
-  cat("   Application d'un facteur de déplétion (di) par défaut de 1.0\n")
+  cat("Trawling history file not found at:", trawling_history_path, "\n")
+  cat("   Applying default depletion factor (di) of 1.0\n")
   fi_dt[, di := 1.0]
 } else {
-  cat("✔️ Fichier d'historique de chalutage trouvé.\n")
+  cat("Trawling history file found.\n")
   trawling_dt <- readRDS(trawling_history_path)
   setDT(trawling_dt)
   
@@ -142,11 +142,11 @@ if (!file.exists(trawling_history_path)) {
   } else {
     fi_dt[, di := 1.0]
   }
-  cat("✅ Facteur de déplétion (di) calculé.\n")
+  cat("Depletion factor (di) computed.\n")
 }
 
-## 4.  Calcul final de Cri --------------------------------------------------------
-cat("🔄 4. Calcul du carbone reminéralisé (Cri)...\n")
+## 4.  Compute final Cri --------------------------------------------------------
+cat("4. Computing remineralised carbon (Cri)...\n")
 fi_dt[, C_ri := C0i * f_i_full * di]
 fi_dt[, C_ri_conservative := C0i * f_i_conservative * di]
 if("C0i_lower" %in% names(fi_dt)) {
@@ -155,26 +155,26 @@ if("C0i_lower" %in% names(fi_dt)) {
 if("C0i_upper" %in% names(fi_dt)) {
   fi_dt[, C_ri_upper := C0i_upper * f_i_full * di]
 }
-cat("✅ Calcul de Cri (central et incertitudes) terminé.\n")
+cat("Cri (central and uncertainty bounds) computed.\n")
 
-## 5.  Sauvegarde finale ----------------------------------------------------------
-cat("💾 5. Sauvegarde finale...\n")
+## 5.  Final save ----------------------------------------------------------
+cat("5. Final save...\n")
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-output_prefix <- file.path(path.expand("/scratch/benl/output_V6/"), paste0("cri_final_", timestamp))
+output_prefix <- file.path(path.expand("~/scratch/output_V6/"), paste0("cri_final_", timestamp))
 
-# Sauvegarde des données complètes
+# Save full dataset
 out_rds <- paste0(output_prefix, ".rds")
 saveRDS(fi_dt, out_rds)
-cat("✔️ Données complètes sauvegardées en RDS:", basename(out_rds), "\n")
+cat("Full dataset saved as RDS:", basename(out_rds), "\n")
 if(requireNamespace("arrow", quietly = TRUE)) {
   out_parquet <- paste0(output_prefix, ".parquet")
   arrow::write_parquet(fi_dt, out_parquet)
-  cat("✔️ Données complètes sauvegardées en Parquet:", basename(out_parquet), "\n")
+  cat("Full dataset saved as Parquet:", basename(out_parquet), "\n")
 }
 
-# 🔧 Fonction optimisée pour l'écriture des rasters par blocs
+# Optimised block-write function for rasters
 write_cri_raster <- function(values, filename) {
-  cat("🗺️  Création du raster :", basename(filename), "\n")
+  cat("Creating raster:", basename(filename), "\n")
   g <- rast(nrows = 18000, ncols = 36000,
             xmin = -18000000, xmax = 18000000,
             ymin =  -9000000, ymax =   9000000,
@@ -183,23 +183,23 @@ write_cri_raster <- function(values, filename) {
   g[fi_dt$grid_id] <- values
   writeRaster(g, filename, datatype = "FLT4S", overwrite = TRUE,
               gdal = c("COMPRESS=LZW", "TILED=YES"))
-  cat("✅ Raster sauvegardé :", basename(filename), "\n")
+  cat("Raster saved:", basename(filename), "\n")
 }
 
-# Sauvegarde du raster GeoTIFF (central, lower, upper)
-cat("🗺️  Création des rasters GeoTIFF...\n")
+# Save GeoTIFF rasters (central, lower, upper)
+cat("Creating GeoTIFF rasters...\n")
 
-# Raster principal (central)
+# Main (central) raster
 write_cri_raster(fi_dt$C_ri, paste0(output_prefix, ".tif"))
 
-# Raster min (lower)
+# Lower bound raster
 if("C_ri_lower" %in% names(fi_dt)) {
   write_cri_raster(fi_dt$C_ri_lower, paste0(output_prefix, "_lower.tif"))
 }
 
-# Raster max (upper)
+# Upper bound raster
 if("C_ri_upper" %in% names(fi_dt)) {
   write_cri_raster(fi_dt$C_ri_upper, paste0(output_prefix, "_upper.tif"))
 }
 
-cat("\n🎉 Terminé !\n") 
+cat("\nDone.\n")

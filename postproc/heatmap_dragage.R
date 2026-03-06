@@ -10,8 +10,8 @@ suppressPackageStartupMessages({
   library(maps)         # trait de côte
 })
 
-## ── 1. données ─────────────────────────────────────────────────────────
-ais_rds <- "/home/benl/scratch/output_V6/AIS_data_core_preprocessed_V6_20250726_130813_flagOK.rds"
+## ── 1. data ─────────────────────────────────────────────────────────
+ais_rds <- Sys.getenv("AIS_INPUT_RDS", "~/scratch/output_V6/AIS_data_core_preprocessed_V6_latest_flagOK.rds")
 stopifnot(file.exists(ais_rds))
 
 dt <- as.data.table(readRDS(ais_rds))[Dragage_flag == 1, .(Lon, Lat)]

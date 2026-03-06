@@ -7,9 +7,9 @@
 #SBATCH --mem=64G
 #SBATCH --cpus-per-task=4
 #SBATCH --time=08:00:00
-#SBATCH --chdir=/home/bloe/ais-pipeline/pipeline_V6
-#SBATCH --output=/home/bloe/logs/step6_cri_%j.out
-#SBATCH --error=/home/bloe/logs/step6_cri_%j.err
+#SBATCH --chdir=$HOME/ais-pipeline/pipeline_V6
+#SBATCH --output=$HOME/logs/step6_cri_%j.out
+#SBATCH --error=$HOME/logs/step6_cri_%j.err
 #SBATCH --exclude=hpc-08.grit.ucsb.edu
 
 echo "=== STEP 6 : CALCUL DE CRI (job $SLURM_JOB_ID) ==="
@@ -24,7 +24,7 @@ mkdir -p ~/ais-pipeline/pipeline_V6/logs
 mkdir -p ~/scratch/output_V6
 mkdir -p ~/scratch/tmp_terra
 
-cd ~/ais-pipeline/pipeline_V6 || { echo "❌ Repertoire manquant"; exit 2; }
+cd ~/ais-pipeline/pipeline_V6 || { echo "Repertoire manquant"; exit 2; }
 
 echo "✅ Repertoire courant: $(pwd)"
 echo "✅ R library path: $R_LIBS_USER"
@@ -56,7 +56,7 @@ fi
 echo "✅ constants.R present"
 
 echo ""
-echo "🔄 Lancement step6_calculate_cri_corrected.R ..."
+echo "Lancement step6_calculate_cri_corrected.R ..."
 
 Rscript --vanilla -e "
   .libPaths('~/R/library')
@@ -67,8 +67,8 @@ exit_code=$?
 if [ $exit_code -eq 0 ]; then
     echo ""
     echo "✅ STEP 6 termine avec succes : $(date)"
-    echo "📄 Fichiers generes :"
-    ls -lh ~/scratch/output_V6/cri_final_* 2>/dev/null || echo "   ⚠️ Aucun fichier cri_final trouve"
+    echo "Fichiers generes :"
+    ls -lh ~/scratch/output_V6/cri_final_* 2>/dev/null || echo "   Aucun fichier cri_final trouve"
 else
     echo "❌ STEP 6 a echoue (code $exit_code)"
     exit $exit_code

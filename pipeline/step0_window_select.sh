@@ -10,7 +10,7 @@
 #SBATCH --output=logs/step0_window_enhanced_%j.out
 #SBATCH --error=logs/step0_window_enhanced_%j.err
 
-echo "🔍 === STEP 0bis ENHANCED : FENÊTRE OPTIMALE (job $SLURM_JOB_ID) ==="
+echo "=== STEP 0bis ENHANCED : FENETRE OPTIMALE (job $SLURM_JOB_ID) ==="
 echo "Node:  $SLURMD_NODENAME"
 echo "Début: $(date)"
 
@@ -20,11 +20,11 @@ export R_LIBS_USER=~/R/library
 
 # Répertoires utiles
 mkdir -p logs
-cd ~/ais-pipeline/pipeline_V6 || { echo "❌ Répertoire manquant"; exit 2; }
+cd ~/ais-pipeline/pipeline_V6 || { echo "Repertoire manquant"; exit 2; }
 
-echo "✅  Répertoire courant: $(pwd)"
-echo "✅  R library path: $R_LIBS_USER"
-echo "✅  Lancement step0_core_window_enhanced.R ..."
+echo "  Repertoire courant: $(pwd)"
+echo "  R library path: $R_LIBS_USER"
+echo "  Lancement step0_core_window_enhanced.R ..."
 
 # Appel de l'interpréteur R avec override du .libPaths
 Rscript --vanilla -e "
@@ -34,12 +34,12 @@ Rscript --vanilla -e "
 
 exit_code=$?
 if [ $exit_code -eq 0 ]; then
-    echo "✅  STEP 0bis ENHANCED terminé avec succès : $(date)"
-    echo "📄  Fichier de sélection : ~/scratch/output_V6/core_window_report.md"
-    echo "📊  Analyse complète : ~/scratch/output_V6/all_windows_analysis.csv"
-    echo "🏆  Top 20 fenêtres : ~/scratch/output_V6/top_20_windows.csv"
-    echo "📈  Statistiques annuelles : ~/scratch/output_V6/annual_statistics.csv"
-    echo "🗺️  Matrice de couverture : ~/scratch/output_V6/coverage_matrix.csv"
+    echo "  STEP 0bis ENHANCED completed successfully: $(date)"
+    echo "  Selection file      : ~/scratch/output_V6/core_window_report.md"
+    echo "  Full analysis       : ~/scratch/output_V6/all_windows_analysis.csv"
+    echo "  Top 20 windows      : ~/scratch/output_V6/top_20_windows.csv"
+    echo "  Annual statistics   : ~/scratch/output_V6/annual_statistics.csv"
+    echo "  Coverage matrix     : ~/scratch/output_V6/coverage_matrix.csv"
 else
-    echo "❌  STEP 0bis ENHANCED a échoué (code $exit_code)"
+    echo "  STEP 0bis ENHANCED failed (code $exit_code)"
 fi

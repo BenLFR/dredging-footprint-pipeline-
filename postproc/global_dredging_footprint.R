@@ -12,19 +12,25 @@ library(sf)
 library(ggplot2)
 library(dplyr)
 library(data.table)
-library(viridisLite)  # Utiliser viridisLite au lieu de viridis
+library(viridisLite)  # Use viridisLite instead of viridis
 
-# 📂 1. Lire les données de grille (fichier spécifique Step 5)
+# 1. Read grid data (Step 5 output)
 library(arrow)
 
-# Utiliser le fichier Step 5 le plus récent disponible
-step5_file <- "~/scratch/output_V6/fi_grid_20250731_155047.parquet"
-
-if(!file.exists(step5_file)) {
-  stop("❌ Fichier Step 5 non trouvé: ", step5_file)
+# Use the most recent Step 5 file available, or override via env var
+step5_file <- Sys.getenv("FI_GRID_FILE", "")
+if (!nzchar(step5_file)) {
+  candidates <- list.files("~/scratch/output_V6/", pattern = "^fi_grid_.*\\.parquet$",
+                           full.names = TRUE)
+  if (length(candidates) == 0) stop("No fi_grid parquet file found in ~/scratch/output_V6/")
+  step5_file <- candidates[which.max(file.info(candidates)$mtime)]
 }
 
-cat("✅ Fichier de grille Step 5 trouvé:", basename(step5_file), "\n")
+if(!file.exists(step5_file)) {
+  stop("Step 5 file not found: ", step5_file)
+}
+
+cat("Step 5 grid file:", basename(step5_file), "\n")
 
 fi_dt <- as.data.table(read_parquet(step5_file))
 
@@ -33,7 +39,7 @@ longhurst_shp <- "~/scratch/configuration/longhurst.gpkg"      # adapte selon di
 if(file.exists(longhurst_shp)) {
   longhurst <- st_read(longhurst_shp, quiet = TRUE)
 } else {
-  cat("⚠️ Fichier Longhurst non trouvé, visualisation sans contours\n")
+  cat("Longhurst file not found, visualisation without province outlines\n")
   longhurst <- NULL
 }
 
@@ -66,7 +72,7 @@ ggsave("~/scratch/output_V6/fi_map_1km.png", plot = gg, width = 18, height = 9, 
 print(gg)
 
 # Statistiques sur les données
-cat("\n📊 STATISTIQUES:\n")
+cat("\nSTATISTICS:\n")
 cat("   Total grid cells:", nrow(fi_dt), "\n")
 cat("   Cells avec f_i > 0:", sum(fi_dt$f_i_full > 0), "\n")
 cat("   f_i moyen:", mean(fi_dt$f_i_full, na.rm = TRUE), "\n")
@@ -76,4 +82,4 @@ cat("   Couverture géographique:\n")
 cat("     X:", range(fi_dt$x), "\n")
 cat("     Y:", range(fi_dt$y), "\n")
 
-cat("\n✅ Carte exportée: ~/scratch/output_V6/fi_map_1km.png\n") 
+cat("\nMap exported: ~/scratch/output_V6/fi_map_1km.png\n")
