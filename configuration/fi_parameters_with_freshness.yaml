@@ -13,66 +13,74 @@ scenarios:
     fast_fraction: 0.30
     slow_k: 0.05
     preservation_factor: 0.87
+    # Province-scale freshness correction applied to p_l_eff before kinetics.
+    # ×1.5 = high-export provinces (upwelling, high primary productivity, reactive OC flux)
+    # ×0.5 = cold sub-polar or isolated/hypoxic provinces (slow degradation / preservation)
+    # ×1.0 = default (oligotrophic gyres, transitional provinces)
+    # Source: Longhurst v4 2010 ProvCode (Longhurst_world_v4_2010.shp, field ProvCode)
     fresh_fact:
-      BENG: 1.5
-      CHIL: 1.5
-      GUIN: 1.5
-      ISSG: 1.5
-      MONS: 1.5
-      NATR: 1.5
-      SATL: 1.5
-      WTRA: 1.5
-      ETRA: 1.5
-      BRAZ: 1.5
-      INDE: 1.5
-      INDW: 1.5
-      SUND: 1.5
-      CCAL: 1.5
-      NECS: 1.5
-      NWCS: 1.5
-      CARB: 1.5
-      WARM: 1.5
-      AUSE: 1.5
-      AUSW: 1.5
-      NEWZ: 1.5
-      FKLD: 1.5
-      ARCT: 0.5
-      SARC: 0.5
-      BPLR: 0.5
-      NPPF: 0.5
-      ALSK: 0.5
-      ANTA: 0.5
-      APLR: 0.5
-      SANT: 0.5
-      SSTC: 0.5
-      BERS: 0.5
-      PSAE: 0.5
-      PSAW: 0.5
-      ARCH: 0.5
-      PEQD: 0.5
-      REDS: 0.5
-      ARAB: 0.5
-      KURO: 0.5
-      TASM: 0.5
-      CHIN: 0.5
-      CAMR: 0.5
-      SPTE: 0.5
-      NASW: 1.0
-      NASE: 1.0
-      NADR: 1.0
-      GFST: 1.0
-      CNRY: 1.0
-      MEDI: 1.0
-      NPSG: 1.0
-      SPSG: 1.0
-      SPTG: 1.0
-      SPEQ: 1.0
-      SPPF: 1.0
-      NPSW: 1.0
-      NPTG: 1.0
-      PNEC: 1.0
-      EAFR: 1.0
-      GUIA: 1.0
+      # ── High-export provinces (×1.5) ─────────────────────────────────────────
+      ARAB: 1.5   # Arabian Sea — monsoon-driven upwelling, high PP (confirmed literature)
+      PSAE: 1.5   # Pacific S. America East — Peru-Chile upwelling (same system as CHIL)
+      PSAW: 1.5   # Pacific S. America West — Peru-Chile upwelling (same system as CHIL)
+      CHIL: 1.5   # Chile-Peru Current — eastern boundary upwelling
+      BENG: 1.5   # Benguela Current — eastern boundary upwelling
+      CCAL: 1.5   # California Current — eastern boundary upwelling
+      PEQD: 1.5   # Pacific Equatorial Divergence — equatorial upwelling
+      KURO: 1.5   # Kuroshio Current — productive warm western boundary current
+      CHIN: 1.5   # China Sea Coastal — high riverine input (Yangtze), coastal productive
+      GUIN: 1.5   # Guinea Current — coastal upwelling
+      NECS: 1.5   # NE Atlantic Coastal — temperate coastal, high productivity
+      NWCS: 1.5   # NW African Coastal — Canary upwelling system
+      ETRA: 1.5   # Eastern Tropical Atlantic — equatorial upwelling influence
+      WTRA: 1.5   # Western Tropical Atlantic — moderate to high productivity
+      INDE: 1.5   # Indian Ocean — productive Indian province
+      INDW: 1.5   # Indian West — western Indian coastal, upwelling-influenced
+      SUND: 1.5   # Sunda-Arafura Shelves — productive coastal shelf
+      MONS: 1.5   # Monsoon Gyres — strong seasonal productivity pulse
+      NATR: 1.5   # North Atlantic Tropical — moderate-high export flux
+      AUSE: 1.5   # Australia East — productive boundary current province
+      AUSW: 1.5   # Australia West — coastal upwelling influence
+      NEWZ: 1.5   # New Zealand Coastal — productive coastal province
+      CARB: 1.5   # Caribbean Sea — coastal productive
+      # ── Cold sub-polar or hypoxic/isolated provinces (×0.5) ──────────────────
+      ARCT: 0.5   # Arctic Province — polar, cold
+      SARC: 0.5   # Subarctic Atlantic — cold sub-polar
+      BPLR: 0.5   # Bering Sea Polar — polar
+      NPPF: 0.5   # N. Pacific Polar Front — cold sub-polar
+      ALSK: 0.5   # Alaska Coastal — cold
+      BERS: 0.5   # Bering Sea — cold polar
+      ANTA: 0.5   # Antarctic Province — polar
+      APLR: 0.5   # Austral Polar — polar
+      SANT: 0.5   # Subantarctic Water Ring — cold
+      SSTC: 0.5   # S. Subtropical Convergence — cold subpolar
+      SPTE: 0.5   # S. Pacific Transition Zone — cold sub-polar transition
+      FKLD: 0.5   # Falkland/Malvinas Current — cold subpolar boundary current
+      REDS: 0.5   # Red Sea — isolated, low export, highly stratified
+      # ── Default / oligotrophic provinces (×1.0) ──────────────────────────────
+      NASW: 1.0   # N. Atlantic Subtropical Gyre West — oligotrophic gyre
+      NASE: 1.0   # N. Atlantic Subtropical Gyre East — oligotrophic gyre
+      NADR: 1.0   # N. Atlantic Drift — temperate, moderate
+      GFST: 1.0   # Gulf Stream — transitional
+      CNRY: 1.0   # Canary Current — moderate
+      MEDI: 1.0   # Mediterranean Sea — moderate
+      NPSG: 1.0   # N. Pacific Subtropical Gyre — oligotrophic
+      NPTG: 1.0   # N. Pacific Tropical Gyre — oligotrophic
+      NPSW: 1.0   # N. Pacific Subtropical Gyre West — oligotrophic
+      SPSG: 1.0   # S. Pacific Subtropical Gyre — oligotrophic
+      SPTG: 1.0   # S. Pacific Tropical Gyre — oligotrophic
+      SPPF: 1.0   # S. Pacific Polar Front — transitional
+      SPEQ: 1.0   # S. Pacific Equatorial Countercurrent — moderate
+      PNEC: 1.0   # Pacific N. Equatorial Current — oligotrophic
+      ISSG: 1.0   # Indian S. Subtropical Gyre — oligotrophic gyre
+      SATL: 1.0   # S. Atlantic Gyral Province — oligotrophic gyre
+      WARM: 1.0   # W. Pacific Warm Pool — oligotrophic, nutrient-poor
+      BRAZ: 1.0   # Brazil Current — low productivity oligotrophic WBC
+      TASM: 1.0   # Tasman Sea — temperate, moderate
+      ARCH: 1.0   # Archipelagic Deep Basins — oligotrophic deep basins
+      CAMR: 1.0   # Central American Coastal — moderate productivity
+      EAFR: 1.0   # Eastern Africa Coastal — moderate
+      GUIA: 1.0   # Guyana Current — moderate
   conservative:
     inherit: default
     k_fast_multiplier: 0.5
