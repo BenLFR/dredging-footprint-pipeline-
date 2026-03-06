@@ -73,15 +73,17 @@ k_yaml_vals  <- unlist(par$k_fast) *
 alpha_dep     <- par$alpha_dep
 fast_frac     <- par$fast_fraction
 slow_k        <- par$slow_k
-preserv_fact  <- ifelse(is.null(par$preservation_factor), 0.272, par$preservation_factor)
+preserv_fact  <- ifelse(is.null(par$preservation_factor), 0.87,  par$preservation_factor)  # p_r
+depletion_di  <- ifelse(is.null(par$depletion_factor),    0.272, par$depletion_factor)       # d_i
 
 cat("Parametres f_i :\n")
 cat("   - alpha_dep       :", alpha_dep, "\n")
 cat("   - fast_fraction   :", fast_frac, "\n")
 cat("   - slow_k          :", slow_k, "a-1\n")
-cat("   - preserv_factor  :", preserv_fact, "\n")
+cat("   - p_r (preserv)   :", preserv_fact, "\n")
+cat("   - d_i (depletion) :", depletion_di, "\n")
 cat("   - k_fast keys     :", paste(k_yaml_names, collapse=", "), "\n")
-stopifnot(!is.na(alpha_dep), !is.na(fast_frac), !is.na(slow_k), !is.na(preserv_fact))
+stopifnot(!is.na(alpha_dep), !is.na(fast_frac), !is.na(slow_k), !is.na(preserv_fact), !is.na(depletion_di))
 cat("Tous les parametres sont valides\n\n")
 
 # =============================================================================
@@ -398,6 +400,9 @@ fi_dt[, `:=`(
 
 t <- 1
 fi_dt[, `:=`(
+  # f_i_full: base formula (Sala et al. 2021 structure)
+  # f_i = SVR × p_l_corr × p_r × [two-pool kinetics]
+  # p_r = 0.87: fraction of disturbed OC that resettles in originating cell (spatial factor)
   f_i_full = SVR * p_l_corr * preserv_fact *
              ( fast_frac * (1 - exp(-k_used * t)) +
                (1 - fast_frac) * (1 - exp(-slow_k * t)) ),
@@ -407,8 +412,15 @@ fi_dt[, `:=`(
                   (1 - fast_frac) * (1 - exp(-slow_k / 2 * t)) )
 )]
 
-# CAP f_i dans [0, 1]
+# f_i_depleted: applies d_i depletion factor for chronically trawled cells (Atwood et al. 2023)
+# d_i = 0.272 for cells trawled annually >10 years; d_i = 1 otherwise.
+# Here applied globally as conservative default (all active cells assumed chronically disturbed).
+# C_r,i = C_0,i × f_i_depleted  (Atwood et al. eq.)
+fi_dt[, f_i_depleted := f_i_full * depletion_di]
+
+# CAP dans [0, 1]
 fi_dt[, f_i_full         := pmin(pmax(f_i_full, 0), 1)]
+fi_dt[, f_i_depleted     := pmin(pmax(f_i_depleted, 0), 1)]
 fi_dt[, f_i_conservative := pmin(pmax(f_i_conservative, 0), 1)]
 
 cat("f_i calcule\n")

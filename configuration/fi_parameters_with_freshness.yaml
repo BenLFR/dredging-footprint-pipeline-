@@ -12,7 +12,8 @@ scenarios:
     alpha_dep: 0.25
     fast_fraction: 0.30
     slow_k: 0.05
-    preservation_factor: 0.87
+    preservation_factor: 0.87   # p_r: fraction that resettles in originating cell (Sala et al. 2021)
+    depletion_factor: 0.272     # d_i: OC stock depletion after >10 years chronic trawling (Atwood et al. 2023)
     # Province-scale freshness correction applied to p_l_eff before kinetics.
     # ×1.5 = high-export provinces (upwelling, high primary productivity, reactive OC flux)
     # ×0.5 = cold sub-polar or isolated/hypoxic provinces (slow degradation / preservation)
