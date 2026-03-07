@@ -22,11 +22,11 @@ echo ""
 STAGING=$(mktemp -d)
 trap "rm -rf $STAGING" EXIT
 
-echo "📦 Preparation des fichiers..."
+echo " Preparation des fichiers..."
 
 CARBON_DIR="installation/atwood_carbon"
 if [ ! -d "$CARBON_DIR" ]; then
-    echo "   ❌ Repertoire local $CARBON_DIR introuvable"
+    echo "    Repertoire local $CARBON_DIR introuvable"
     echo "   Lancez ce script depuis la racine du projet"
     exit 1
 fi
@@ -51,7 +51,7 @@ echo ""
 scp -F "$SSH_CONFIG" "$STAGING"/* "$REMOTE:/tmp/step6_staging/"
 
 echo ""
-echo "   ✅ Upload termine"
+echo "    Upload termine"
 echo ""
 
 # --- Connection 2: move files to final locations + verify --------------------
@@ -71,21 +71,21 @@ ssh -F "$SSH_CONFIG" "$REMOTE" '
   rm -rf /tmp/step6_staging
 
   echo "=========================================="
-  echo "🔍 VERIFICATION (sur GRIT)"
+  echo " VERIFICATION (sur GRIT)"
   echo "=========================================="
   echo ""
   echo "Rasters carbone:"
-  ls -lh ~/scratch/configuration/atwood_carbon_full/*.tif 2>/dev/null || echo "  ❌ Aucun TIF"
+  ls -lh ~/scratch/configuration/atwood_carbon_full/*.tif 2>/dev/null || echo "   Aucun TIF"
   echo ""
   echo "Scripts pipeline_V6:"
-  ls -lh ~/ais-pipeline/pipeline_V6/step6_calculate_cri_corrected.R 2>/dev/null || echo "  ❌ step6 R manquant"
-  ls -lh ~/ais-pipeline/pipeline_V6/step6_calculate_cri_grit.sh 2>/dev/null || echo "  ❌ SLURM manquant"
-  ls -lh ~/ais-pipeline/pipeline_V6/constants.R 2>/dev/null || echo "  ❌ constants.R manquant"
+  ls -lh ~/ais-pipeline/pipeline_V6/step6_calculate_cri_corrected.R 2>/dev/null || echo "   step6 R manquant"
+  ls -lh ~/ais-pipeline/pipeline_V6/step6_calculate_cri_grit.sh 2>/dev/null || echo "   SLURM manquant"
+  ls -lh ~/ais-pipeline/pipeline_V6/constants.R 2>/dev/null || echo "   constants.R manquant"
 '
 
 echo ""
 echo "=========================================="
-echo "✅ Upload termine !"
+echo " Upload termine !"
 echo ""
 echo "Pour lancer Step 6 sur GRIT :"
 echo "  ssh -F ~/.ssh/config_grit grit"

@@ -13,24 +13,24 @@ echo "Task ID: $SLURM_ARRAY_TASK_ID"
 echo "Node: $SLURMD_NODENAME"
 echo "Debut: $(date)"
 
-# Configuration mémoire conservative
+# Conservative memory configuration
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 
-# Configuration géospatiale CRITIQUE
+# CRITICAL geospatial configuration
 export LAND_MASK_FILE=~/ais-pipeline/configuration/land_mask/land_polygons.shp
 export LAND_MASK_BUFFER_M=0
 export LAND_NEAR_COAST_KM=5
 
-# Vérification land mask
+# Land mask check
 if [ -f "$HOME/ais-pipeline/configuration/land_mask/land_polygons.shp" ]; then
     echo "Land mask trouvé: $(ls -lh $HOME/ais-pipeline/configuration/land_mask/land_polygons.shp | awk '{print $5}')"
 else
     echo "ATTENTION: Land mask NON TROUVE!"
 fi
 
-# Répertoires
+# Directories
 SPLIT_JOB_ID=${1:-"12990"}
 mkdir -p ~/ais-pipeline/pipeline_V6/logs
 
@@ -42,7 +42,7 @@ echo "LAND_MASK_FILE: $LAND_MASK_FILE"
 echo "LAND_MASK_BUFFER_M: $LAND_MASK_BUFFER_M"
 echo "LAND_NEAR_COAST_KM: $LAND_NEAR_COAST_KM"
 
-# Surcharge tiling pour navires à empreinte mondiale (trop de tiles en 5°)
+# Override tiling for vessels with global footprint (too many tiles at 5 deg)
 if [[ "${SLURM_ARRAY_TASK_ID}" -eq 2 ]]; then
   export LAND_TILE_DEG=10
   export LAND_TILE_MAX_TILES=500

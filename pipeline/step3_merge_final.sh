@@ -11,12 +11,12 @@ echo "Job ID: $SLURM_JOB_ID"
 echo "Node: $(hostname)"
 echo "Debut: $(date)"
 
-# Configuration memoire
+# Memory configuration
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 
-# Repertoires
+# Directories
 PIPELINE_DIR=~/ais-pipeline/pipeline_V6
 LOGS_DIR=$PIPELINE_DIR/logs
 
@@ -25,14 +25,14 @@ mkdir -p ~/scratch/output_V6
 
 cd $PIPELINE_DIR
 
-# Parametres: SPLIT_JOB_ID et RESULTS_DIR depuis environnement ou arguments
+# Parameters: SPLIT_JOB_ID and RESULTS_DIR from environment or arguments
 SPLIT_JOB_ID=${SPLIT_JOB_ID:-${1:-"12990"}}
 RESULTS_DIR=${RESULTS_DIR:-~/scratch/ais_results_14542}
 
 echo "Job fractionnement reference: $SPLIT_JOB_ID"
 echo "Dossier resultats Step 2: $RESULTS_DIR"
 
-# Verification fichiers d'entree
+# Input file verification
 echo ""
 echo "Verification des fichiers *_clean.rds:"
 CLEAN_COUNT=$(ls $RESULTS_DIR/*_clean.rds 2>/dev/null | wc -l)
@@ -48,14 +48,14 @@ if [ "$CLEAN_COUNT" -gt 5 ]; then
     echo "  ... et $(($CLEAN_COUNT - 5)) autres"
 fi
 
-# Verification fichier R
+# R script verification
 echo ""
 echo "Verification fichier R: $(ls -la step3_merge_final.R 2>/dev/null | awk '{print $NF}' || echo 'FICHIER MANQUANT')"
 
 echo ""
 echo "Lancement fusion et grid search..."
 
-# Export des variables pour le script R
+# Export variables for the R script
 export SPLIT_JOB_ID
 export RESULTS_DIR
 export SLURM_CPUS_PER_TASK=${SLURM_CPUS_PER_TASK:-8}
@@ -64,7 +64,7 @@ Rscript step3_merge_final.R 2>&1
 
 exit_code=$?
 
-# Deplacer les logs
+# Move logs
 if [ -f "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.out" ]; then
     mv "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.out" $LOGS_DIR/
 fi

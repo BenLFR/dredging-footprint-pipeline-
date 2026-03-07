@@ -37,5 +37,5 @@ TILE_BUFFER_M <- BUFFER_TEST_VALUES[BUFFER_IDX]
 
 cat(sprintf("[INFO] TILE_BUFFER_M set to %d m (BUFFER_IDX = %d)\n", TILE_BUFFER_M, BUFFER_IDX))
 
-# Paramètres de sauvegarde
-PARQUET_VERSION_MIN <- "14.0.0"  # Version minimale d'arrow pour Parquet 
+# Save parameters
+PARQUET_VERSION_MIN <- "14.0.0"  # Minimum arrow version for Parquet

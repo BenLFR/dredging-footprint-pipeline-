@@ -16,11 +16,11 @@ echo "Début: $(date)"
 module load StdEnv/2020 gcc/9.3.0 r/4.2.1
 export R_LIBS=~/.local/R/4.2.1/
 
-# Variables d'environnement
+# Environment variables
 export CORE_CONFIG_PATH=${CORE_CONFIG_PATH:-"~/scratch/output_V6/core_window.yaml"}
 export AIS_INPUT_FILE=${AIS_INPUT_FILE:-"~/AIS_data/benjamin3_clean.csv"}
 
-# Création répertoires
+# Create directories
 mkdir -p logs
 
 cd ~/R_scripts/pipeline_V6

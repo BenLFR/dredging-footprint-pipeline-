@@ -1,12 +1,12 @@
 #!/usr/bin/env Rscript
 # ==============================================================================
 # STEP-0 ENHANCED : Core Period Selection via Coverage Matrix (Eriksen et al., 2018 style)
-# Version améliorée avec analyse complète de toutes les fenêtres candidates
+# Enhanced version: exhaustive analysis of all candidate time windows
 # ==============================================================================
 
 cat("\n  STEP-0 ENHANCED  |  Core Period Selection via Coverage Matrix |  start :", format(Sys.time()), "\n\n")
 
-# ---- PACKAGES ET CONFIG ----
+# ---- PACKAGES AND CONFIG ----
 .libPaths("~/R/library")
 suppressPackageStartupMessages({
   library(data.table)
@@ -292,7 +292,7 @@ fwrite(ships_dt, file.path(output_dir, "core_ships.csv"))
 report_md <- sprintf(
   "# Rapport Core Window Enhanced (Coverage Matrix)
 
-## 🎯 Fenêtre Optimale
+##  Fenêtre Optimale
 - **Période :** %d–%d (%d ans)
 - **Couverture médiane :** %.1f %%
 - **Couverture minimale :** %.1f %%
@@ -300,19 +300,19 @@ report_md <- sprintf(
 - **Score d'optimisation :** %.3f
 - **Navires actifs :** %d
 
-## 📊 Analyse des Alternatives
+##  Analyse des Alternatives
 - **Total de fenêtres analysées :** %d
 - **Avantage sur la 2ème meilleure :** %.3f (%.1f%%)
 
 ### Top 5 Fenêtres Alternatives
 %s
 
-## 🔍 Détails Techniques
+##  Détails Techniques
 - **Fenêtre minimale :** 5 ans
 - **Critère d'optimisation :** L × Cbar × (Cmin²) / (1 + CV)
 - **Navires exclus :** %s
 
-## 📁 Fichiers Générés
+##  Fichiers Générés
 - `all_candidate_windows.csv` : Toutes les fenêtres candidates
 - `top_20_windows.csv` : Top 20 fenêtres pour analyse rapide
 - `best_core_window.csv` : Métriques de la fenêtre optimale

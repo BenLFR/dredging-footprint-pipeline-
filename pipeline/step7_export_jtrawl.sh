@@ -19,7 +19,7 @@ echo "Debut: $(date)"
 # R setup
 export R_LIBS_USER=~/R/library
 
-# Repertoires utiles
+# Working directories
 mkdir -p ~/ais-pipeline/pipeline_V6/logs
 mkdir -p ~/scratch/output_V6
 

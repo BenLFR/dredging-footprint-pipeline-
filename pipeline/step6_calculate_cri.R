@@ -1,23 +1,23 @@
 #!/usr/bin/env Rscript
 # ────────────────────────────────────────────────────────────────────────────────
-# STEP-6  ─  CALCUL DU CARBONE REMINÉRALISÉ (Cri)
-# Corrigé pour produire aussi les bornes inf/sup et robuste sur les coordonnées
-# Version optimisée avec gestion mémoire et robustesse améliorée
+# STEP-6  ─  REMINERALISED CARBON CALCULATION (CRI)
+# Also produces lower/upper bounds; robust coordinate handling
+# Optimised version with improved memory management and robustness
 # ────────────────────────────────────────────────────────────────────────────────
 
-## 0.  Bibliothèques et Paramètres ----------------------------------------------
+## 0.  Libraries and Parameters -------------------------------------------------
 pkgs <- c("sf","dplyr","data.table","terra","lubridate")
 invisible(sapply(pkgs, function(pkg) suppressPackageStartupMessages(library(pkg, character.only=TRUE))))
 
-# Configuration Terra pour éviter les problèmes de mémoire
+# Configure Terra to avoid memory issues
 terraOptions(tempdir = path.expand("~/scratch/tmp_terra"))
 
 cat("--- Étape 6 : Calcul de Cri ---\n")
 
-# Argument: chemin vers le fichier fi_grid de l'étape 5
+# Argument: path to the fi_grid file produced by step 5
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
-  # Si aucun argument, rechercher le plus récent
+  # No argument given: find the most recent file
   cat("No f_i file specified. Searching for the most recent...\n")
   fi_files <- list.files("~/scratch/output_V6/", pattern="^fi_grid_.*\\.(parquet|rds)$", full.names=TRUE)
   if(length(fi_files) == 0) stop("No f_i file found in ~/scratch/output_V6/")
@@ -25,9 +25,9 @@ if (length(args) == 0) {
 } else {
   fi_path <- args[1]
 }
-cat("✔️ Fichier f_i utilisé :", basename(fi_path), "\n")
+cat("✔ Fichier f_i utilisé :", basename(fi_path), "\n")
 
-## 1.  Charger les données f_i ----------------------------------------------------
+## 1.  Load f_i data --------------------------------------------------------------
 cat("1. Loading f_i data...\n")
 if (grepl("\\.parquet$", fi_path)) {
   if(!requireNamespace("arrow", quietly=TRUE)) stop("The 'arrow' package is required to read Parquet files.")
@@ -89,14 +89,14 @@ template_raster <- terra::rast(nrows=18000, ncols=36000, crs="EPSG:6933",
                               xmin=-18000000, xmax=18000000, ymin=-9000000, ymax=9000000)
 
 for(name in names(carbon_rasters)) {
-  # Vérifier si la projection correspond
+  # Check if projection matches
   if (!terra::compareGeom(carbon_rasters[[name]], template_raster, stopOnError = FALSE)) {
     cat("Reprojecting raster", name, "to EPSG:6933...\n")
     carbon_rasters[[name]] <- terra::project(carbon_rasters[[name]], template_raster)
   }
 }
 
-# Extraction des valeurs pour chaque cellule
+# Extract values for each cell
 for(name in names(carbon_rasters)) {
   col_name <- paste0("C0i_", name)
   fi_dt[[col_name]] <- terra::extract(carbon_rasters[[name]], coords, ID=FALSE)[[1]]
@@ -104,7 +104,7 @@ for(name in names(carbon_rasters)) {
   cat(col_name, "extracted for", sum(fi_dt[[col_name]] > 0), "cells.\n")
 }
 
-# Détermination de la couche centrale et min/max
+# Determine central layer and min/max bounds
 if("C0i_mean_carbon_stock" %in% names(fi_dt)) {
   fi_dt$C0i <- fi_dt$C0i_mean_carbon_stock
 } else {
@@ -134,7 +134,7 @@ if (!file.exists(trawling_history_path)) {
   trawling_dt <- readRDS(trawling_history_path)
   setDT(trawling_dt)
   
-  # 🔧 Correction : utilisation de fifelse au lieu de ifelse avec argument na
+  #  FIX: use fifelse instead of ifelse with na argument
   if ("years_trawled" %in% names(trawling_dt)) {
   fi_dt <- merge(fi_dt, trawling_dt[, .(grid_id, years_trawled)], by = "grid_id", all.x = TRUE)
     fi_dt[, di := fifelse(is.na(years_trawled), 1.0,

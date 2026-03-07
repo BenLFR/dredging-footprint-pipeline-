@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# STEP 4 vNext - Ajout lithologie via HubOcean/dbSEABED
+# STEP 4 vNext - Add lithology via HubOcean/dbSEABED
 #
 # FIX #1: Le dossier logs/ doit exister AVANT sbatch
 # Usage:
@@ -14,20 +14,20 @@
 #SBATCH --output=%x_%j.out
 #SBATCH --error=%x_%j.err
 
-# Note: output/error dans le repertoire courant, puis deplace dans logs/
-# Ceci evite l'erreur si logs/ n'existe pas au moment du sbatch
+# Note: output/error written to current directory, then moved to logs/
+# This avoids an error if logs/ does not exist at sbatch submission time
 
 echo "=== ETAPE 4 vNext: AJOUT LITHOLOGIE (HubOcean/dbSEABED) ==="
 echo "Job ID: $SLURM_JOB_ID"
 echo "Node: $(hostname)"
 echo "Debut: $(date)"
 
-# Configuration memoire conservative
+# Conservative memory configuration
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 
-# Repertoires
+# Directories
 PIPELINE_DIR=~/ais-pipeline/pipeline_V6
 LOGS_DIR=$PIPELINE_DIR/logs
 
@@ -35,7 +35,7 @@ mkdir -p $LOGS_DIR
 
 cd $PIPELINE_DIR
 
-# Verification pre-requis: cache HubOcean
+# Pre-requisite check: HubOcean cache
 CACHE_DIR=~/scratch/hubocean_cache
 if [ ! -d "$CACHE_DIR" ]; then
     echo "ERREUR: Cache HubOcean non trouve: $CACHE_DIR"
@@ -53,13 +53,13 @@ ls -lh $CACHE_DIR/hard_soft/*.tif 2>/dev/null || ls -lh $CACHE_DIR/hard_soft__*.
 echo "  rock:"
 ls -lh $CACHE_DIR/rock/*.tif 2>/dev/null || ls -lh $CACHE_DIR/rock__*.tif 2>/dev/null || echo "    (none)"
 
-# Verification fichier AIS Step 3
+# AIS Step 3 file check
 AIS_DIR=~/scratch/output_V6
 echo ""
 echo "Fichiers AIS disponibles:"
 ls -lh $AIS_DIR/AIS_data_core_preprocessed_V6_*.rds 2>/dev/null || echo "  ERREUR: Aucun fichier AIS trouve"
 
-# Espace disque
+# Disk space
 echo ""
 echo "Espace disque disponible:"
 df -h ~/scratch
@@ -71,7 +71,7 @@ Rscript step4_add_lithology_vNext.R 2>&1
 
 exit_code=$?
 
-# Deplacer les logs dans le bon dossier
+# Move logs to the correct directory
 if [ -f "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.out" ]; then
     mv "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.out" $LOGS_DIR/
 fi

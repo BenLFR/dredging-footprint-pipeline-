@@ -16,7 +16,7 @@ Sys.setenv(MC_CORES = 1)
 Sys.setenv(DT_GForce = "FALSE")  # CRITICAL: disables gforce
 Sys.setenv(OMP_NUM_THREADS = 1)
 
-# ---- CHARGEMENT PACKAGES ----
+# ---- LOAD PACKAGES ----
 suppressPackageStartupMessages({
   library(data.table)
   
@@ -37,9 +37,9 @@ suppressPackageStartupMessages({
   library(solitude)   # Isolation Forest
   library(mclust)     # GMM
   library(zoo)        # rollmean
-  library(sf)         # filtres géospatiaux
+  library(sf)         # geospatial filters
 })
-sf::sf_use_s2(TRUE)  # garantir les buffers/mesures en mètres sur WGS84
+sf::sf_use_s2(TRUE)  # ensure buffers/distances are computed in metres on WGS84
 
 # Configuration data.table conservative
 setDTthreads(1)  # Mono-thread obligatoire
@@ -58,7 +58,7 @@ default_speed_kn <- as.numeric(Sys.getenv("MAX_JUMP_SPEED_KN", unset = "30"))
 spike_dist_min_nm   <- as.numeric(Sys.getenv("SPIKE_DIST_MIN_NM", unset = "1"))
 spike_bridge_max_nm <- as.numeric(Sys.getenv("SPIKE_BRIDGE_MAX_NM", unset = "0.3"))
 
-# ---- FONCTIONS OUTILS ----
+# ---- UTILITY FUNCTIONS ----
 haversine_nm <- function(lat1, lon1, lat2, lon2) {
   r <- 6371000
   to_rad <- pi / 180
@@ -66,7 +66,7 @@ haversine_nm <- function(lat1, lon1, lat2, lon2) {
   dlon <- (lon2 - lon1) * to_rad
   a <- sin(dlat / 2)^2 + cos(lat1 * to_rad) * cos(lat2 * to_rad) * sin(dlon / 2)^2
   c <- 2 * atan2(sqrt(a), sqrt(1 - a))
-  (r * c) / 1852  # en milles nautiques
+  (r * c) / 1852  # in nautical miles
 }
 
 load_land_polygons <- function(path, buffer_m = 0) {
@@ -157,7 +157,7 @@ flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_
 
   # 3) Distance/time jumps (unreasonable average speed)
   dt[avg_speed_kn > max_plausible_kn, geo_flag := TRUE]
-  dt[gc_nm > 100 & dt_sec <= 3600, geo_flag := TRUE]  # saut long en moins d'1h
+  dt[gc_nm > 100 & dt_sec <= 3600, geo_flag := TRUE]  # large jump in under 1 h
 
   # 4) Short off-track sequences (isolated spikes)
   dt[, `:=`(
@@ -175,14 +175,14 @@ flag_geospatial_anomalies <- function(dt, land_polygons, near_coast_km, default_
   dt
 }
 
-# ---- PARAMÈTRES ENVIRONNEMENT ----
+# ---- ENVIRONMENT PARAMETERS ----
 task_id <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 split_job_id <- Sys.getenv("SPLIT_JOB_ID")
 
 cat("Task ID:", task_id, "\n")
 cat("Split Job ID:", split_job_id, "\n")
 
-# ---- CHEMINS FICHIERS ----
+# ---- FILE PATHS ----
 split_dir <- file.path("~/scratch", paste0("ais_split_", split_job_id))
 metadata_file <- file.path(split_dir, "navires_metadata.csv")
 
@@ -228,7 +228,7 @@ system.time({
   }
 })
 
-# Harmoniser le type de ssvid (character partout)
+# Normalise ssvid to character everywhere
 if ("ssvid" %in% names(dt_nav)) dt_nav[, ssvid := as.character(ssvid)]
 
 cat("Data loaded:", nrow(dt_nav), "observations\n")
@@ -284,7 +284,7 @@ if ("Service_speed" %chin% names(dt_nav)) {
   n_before <- nrow(dt_nav)
   dt_nav   <- dt_nav[is.na(speed_limit) | Speed <= speed_limit]
   n_after  <- nrow(dt_nav)
-  cat(sprintf("✅ Filtre vitesse physique : %d → %d lignes (%.2f %% conservées)\n",
+  cat(sprintf(" Filtre vitesse physique : %d → %d lignes (%.2f %% conservées)\n",
               n_before, n_after, 100 * n_after / n_before))
   dt_nav[, speed_limit := NULL]
   # (3) Keep specs for step 3
@@ -347,7 +347,7 @@ repeat {
 }
 
 n_after_geo <- nrow(dt_nav)
-cat(sprintf("✅ Filtres géospatiaux : %d lignes supprimées en %d itération(s) (%.2f %%)\n",
+cat(sprintf(" Filtres géospatiaux : %d lignes supprimées en %d itération(s) (%.2f %%)\n",
             n_before_geo - n_after_geo, iteration,
             if (n_before_geo > 0) 100 * (n_before_geo - n_after_geo) / n_before_geo else 0))
 cat("   - Total geospatial anomalies detected:", total_removed, "\n")
@@ -382,7 +382,7 @@ if (file.exists(config_file)) {
   cat("Default configuration applied\n")
 }
 
-cat("🔧 Paramètres IF: contamination =", outlier_config$contamination_rate, 
+cat(" Paramètres IF: contamination =", outlier_config$contamination_rate, 
     "| trees =", outlier_config$if_num_trees, "\n")
 
 # ---- OPTIMISED ISOLATION FOREST FUNCTIONS ----

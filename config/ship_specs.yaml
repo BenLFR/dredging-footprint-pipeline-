@@ -1,6 +1,6 @@
 # ship_specs.yaml
 # Technical specifications for the 10 TSHDs used in the pipeline
-# Note: Goryo 6 Ho exclu (données corrompues)
+# Note: Goryo 6 Ho excluded (corrupted data)
 # Units:
 #   - service_speed_kn        : knots
 #   - suction_pipe_diameter_mm: millimetres (single pipe; twin indicated by twin_pipes: 2)
@@ -85,7 +85,7 @@ ship_specs:
     draught_m: 12
     imo: 9568782
 
-  - ssvid: 205744000   # Vasco da Gama (MMSI unifié - Belgique, le plus récent)
+  - ssvid: 205744000   # Vasco da Gama (unified MMSI - Belgium, most recent)
     name: "Vasco Da Gama"
     service_speed_kn: 16.5
     suction_pipe_diameter_mm: 1400
@@ -97,12 +97,12 @@ ship_specs:
     draught_m: 14.6
     imo: 9187473
     coverage_period: "2013-2024"
-    observations: 1078681  # 189289 + 889392 (après trim et dé-duplication)
+    observations: 1078681  # 189289 + 889392 (after trim and deduplication)
     mmsi_history:
       - mmsi: 253193000
         flag: Luxembourg
         period: "2013-2019"
-        observations: 189289  # après retrait des 25 lignes chevauchantes
+        observations: 189289  # after removing 25 overlapping rows
       - mmsi: 205744000
         flag: Belgium  
         period: "2018-2024"
@@ -144,4 +144,4 @@ ship_specs:
     draught_m: 9.86
     imo: 9574523
 
-  # Goryo 6 Ho (MMSI: 312062000, IMO: 8119728) - EXCLU - Données corrompues
+  # Goryo 6 Ho (MMSI: 312062000, IMO: 8119728) - EXCLUDED - Corrupted data

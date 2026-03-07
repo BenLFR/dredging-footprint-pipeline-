@@ -9,9 +9,9 @@ REMOTE_HOST="grit"
 REMOTE_PATH="~/ais-pipeline"
 SSH_CONFIG="$HOME/.ssh/config_grit"
 
-echo "🚀 Synchronisation vers GRIT..."
+echo " Synchronisation vers GRIT..."
 
-# Créer le répertoire distant si nécessaire
+# Create remote directory if needed
 ssh -F "$SSH_CONFIG" "$REMOTE_HOST" "mkdir -p $REMOTE_PATH"
 
 # Synchroniser les dossiers principaux
@@ -62,5 +62,5 @@ rsync -avz --progress \
   batch_windows/ \
   "$REMOTE_HOST:$REMOTE_PATH/batch_windows/"
 
-echo "✅ Synchronisation terminée !"
+echo " Synchronisation terminée !"
 echo "📍 Fichiers sur GRIT : $REMOTE_HOST:$REMOTE_PATH/"

@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-#  SLURM – STEP 0bis ENHANCED : Sélection de la fenêtre temporelle optimale
+#  SLURM – STEP 0bis ENHANCED : Optimal time window selection
 #  Version GRIT-adapted
 ###############################################################################
 #SBATCH --job-name=ais_window_V6_enhanced
@@ -18,7 +18,7 @@ echo "Début: $(date)"
 module load R
 export R_LIBS_USER=~/R/library
 
-# Répertoires utiles
+# Working directories
 mkdir -p logs
 cd ~/ais-pipeline/pipeline_V6 || { echo "Repertoire manquant"; exit 2; }
 
@@ -26,7 +26,7 @@ echo "  Repertoire courant: $(pwd)"
 echo "  R library path: $R_LIBS_USER"
 echo "  Lancement step0_core_window_enhanced.R ..."
 
-# Appel de l'interpréteur R avec override du .libPaths
+# Launch R interpreter with .libPaths override
 Rscript --vanilla -e "
   .libPaths('~/R/library')
   source('step0_core_window_enhanced.R')

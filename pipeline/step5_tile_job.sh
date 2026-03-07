@@ -21,39 +21,39 @@ IMG="$HOME/scratch/rocker_geospatial_step5.sif"
 SCRIPT="$HOME/scratch/pipeline_V6/step5_modulaire/step5_tile_worker.R"
 TILES_FILE="$HOME/scratch/output_V6/tiles_1000km.gpkg"
 
-# Vérifications préliminaires
-echo "🚀 $(date) – Lancement tuile $TILE_ID"
+# Pre-flight checks
+echo " $(date) – Lancement tuile $TILE_ID"
 echo "   - Image : $(basename $IMG)"
 echo "   - Script : $(basename $SCRIPT)"
 echo "   - Fichier tuiles : $(basename $TILES_FILE)"
 
-# Vérification des fichiers
+# Verify required files
 if [ ! -f "$IMG" ]; then
-    echo "❌ Image Apptainer manquante : $IMG"
+    echo " Image Apptainer manquante : $IMG"
     exit 1
 fi
 
 if [ ! -f "$SCRIPT" ]; then
-    echo "❌ Script R manquant : $SCRIPT"
+    echo " Script R manquant : $SCRIPT"
     exit 1
 fi
 
 if [ ! -f "$TILES_FILE" ]; then
-    echo "❌ Fichier tuiles manquant : $TILES_FILE"
+    echo " Fichier tuiles manquant : $TILES_FILE"
     exit 1
 fi
 
-# Création du répertoire de logs si nécessaire
+# Create log directory if needed
 mkdir -p logs
 
 # Lancement du traitement
-echo "🔄 Début traitement tuile $TILE_ID"
+echo " Début traitement tuile $TILE_ID"
 apptainer exec --bind /scratch,/home --pwd $PWD "$IMG" stdbuf -oL -eL Rscript "$SCRIPT" $TILE_ID
 
-# Vérification du statut
+# Check exit status
 if [ $? -eq 0 ]; then
-    echo "✅ Tuile $TILE_ID terminée avec succès"
+    echo " Tuile $TILE_ID terminée avec succès"
 else
-    echo "❌ Tuile $TILE_ID échouée"
+    echo " Tuile $TILE_ID échouée"
     exit 1
 fi 
