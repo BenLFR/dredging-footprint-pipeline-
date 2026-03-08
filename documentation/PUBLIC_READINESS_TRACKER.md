@@ -1,0 +1,92 @@
+# Public Readiness Tracker
+
+Date de creation: 2026-03-08  
+Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILITE.md`
+
+## Statut global
+
+- [ ] Gate G1 (Legal) valide
+- [ ] Gate G2 (Run path) valide
+- [ ] Gate G3 (Repro env) valide
+- [ ] Gate G4 (FAIR) valide
+- [ ] Gate G5 (Journal) valide
+
+## Phase 0 - Baseline et triage
+
+- [ ] Creer la liste unique des findings avec IDs
+- [x] Cartographier chemins canoniques vs legacy
+- [ ] Identifier tous les hard-codes infra
+- [x] Integrer la baseline scripts GRIT (`documentation/GRIT_SCRIPT_BASELINE_20260308.md`)
+- [x] Produire mapping `script_grit -> chemin_local` pour les steps 0-7
+
+## Phase 1 - Legal et licences
+
+- [x] Ajouter `LICENSE`
+- [x] Ajouter `THIRD_PARTY_NOTICES.md`
+- [x] Relire `Manuscript Paper 1 v1 - Benjamin LOEFFLER.docx` pour extraire les composants tiers a notifier
+- [x] Ajouter la table de tracabilite `manuscript mention -> THIRD_PARTY_NOTICES`
+- [ ] Regulariser `co2model/inpaint_nans.m`
+- [ ] Regulariser `co2model/sw_pres.m` (ou retrait public)
+- [x] Aligner `CITATION.cff` avec licence effective
+
+## Phase 2 - Integrite pipeline et entrypoints
+
+- [x] Verifier que les scripts appeles correspondent a la baseline GRIT la plus recente
+- [x] Corriger `pipeline/step4_add_lithology.sh`
+- [x] Corriger `pipeline/step5_merge_slurm.sh`
+- [x] Corriger `pipeline/step6_calculate_cri.sh`
+- [x] Corriger `pipeline/step7_export_jtrawl.sh` (chemin script)
+- [x] Aligner Step4->Step5 sur pattern fichier lithology
+- [x] Verifier/couvrir la logique `t_seuil` dans Step3
+- [x] Ajouter smoke test Steps 3-6
+
+## Phase 3 - Decouplage infra et templates
+
+- [ ] Introduire variables env (`PIPELINE_DIR`, `OUTPUT_DIR`, `CONFIG_DIR`, `SCRATCH_DIR`)
+- [ ] Remplacer infos GRIT/Beluga hard-codees par templates
+- [ ] Isoler `deploy/` interne ou neutraliser en templates publics
+- [ ] Ajouter templates SLURM generiques
+
+## Phase 4 - Environnements reproductibles
+
+- [ ] Generer `renv.lock`
+- [ ] Ajouter spec Python (`requirements.txt` ou `environment.yml`)
+- [ ] Verifier/mettre a jour `deploy/apptainer.def`
+- [ ] Documenter build, test, SHA256 conteneur
+- [ ] Aligner CI sur ces specs
+
+## Phase 5 - FAIR et archivage
+
+- [ ] Ajouter `ARCHIVE_MANIFEST.yaml`
+- [ ] Completer `configuration/codemeta.json`
+- [ ] Finaliser `documentation/ZENODO_INTEGRATION_GUIDE.md`
+- [ ] Remplacer placeholders DOI quand release publiee
+- [ ] Verifier checksums des outputs archives
+
+## Phase 6 - Methodes, limites, transparence
+
+- [ ] Brancher warnings runtime de limites dans pipeline
+- [ ] Verifier liens vers `documentation/LIMITATIONS.md`
+- [ ] Finaliser protocoles benchmark/validation/uncertainty
+- [ ] Ajouter mapping "resultat -> script -> input -> output"
+
+## Phase 7 - CI et release decision
+
+- [ ] Etendre CI (testthat + benchmark continu + seuils regression)
+- [ ] Nettoyer doublons/non-canonical (`*(1).md`, legacy ambigu)
+- [ ] Tester clone neuf (quickstart toy)
+- [ ] Tester chemin HPC template (sans donnees proprietaires)
+- [ ] Produire verdict Go/No-Go documente
+
+## Journal d'avancement
+
+| Date | Item | Statut | Commentaire |
+|---|---|---|---|
+| 2026-03-08 | Plan initial cree | DONE | Plan + tracker ajoutes dans `documentation/` |
+| 2026-03-08 | Contrainte manuscrit + baseline GRIT integrees | DONE | Plan mis a jour avec revue manuscrit en Phase 1 et baseline GRIT comme reference autoritative |
+| 2026-03-08 | Revue manuscrit Paper 1 effectuee pour notices tiers | DONE | `THIRD_PARTY_NOTICES.md` cree avec table de tracabilite manuscrit -> notices |
+| 2026-03-08 | LICENSE MIT ajoute + alignement citation confirme | DONE | `LICENSE` cree, `CITATION.cff` deja `license: MIT`, notices de regularisation ajoutees |
+| 2026-03-08 | Baseline canonique scripts mappee | DONE | `documentation/CANONICAL_PATHS_AND_DEPRECATIONS.md` ajoute avec mapping baseline GRIT -> chemins locaux |
+| 2026-03-08 | Correctifs critiques wrappers Step4/5/6/7 | DONE | resolution robuste des scripts + correction chainage Step4->Step5 + fallback constants Step7 |
+| 2026-03-08 | Step5 wrapper + checks Step3/Steps3-6 ajoutes | DONE | `pipeline/step5_merge_slurm.sh` corrige, test `tests/smoke_test_steps3_6_entrypoints.R` ajoute et passe |
+| 2026-03-08 | Decouplage infra demarre (partiel) | IN_PROGRESS | `PIPELINE_DIR` / `LOGS_DIR` / `SCRATCH_DIR` parametrables dans wrappers Step4-7 |

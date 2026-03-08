@@ -24,12 +24,12 @@ export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 
-# Repertoires
-PIPELINE_DIR=~/ais-pipeline/pipeline_V6
-LOGS_DIR=$PIPELINE_DIR/logs
-mkdir -p $LOGS_DIR
+# Repertoires (override possible via env vars)
+PIPELINE_DIR="${PIPELINE_DIR:-~/ais-pipeline/pipeline_V6}"
+LOGS_DIR="${LOGS_DIR:-$PIPELINE_DIR/logs}"
+mkdir -p "$LOGS_DIR"
 
-cd $PIPELINE_DIR
+cd "$PIPELINE_DIR" || { echo "ERREUR: Repertoire pipeline introuvable: $PIPELINE_DIR"; exit 2; }
 
 # GeoTIFF active par defaut (mettre false pour desactiver)
 export MAKE_TIFF="${MAKE_TIFF:-TRUE}"
@@ -69,17 +69,38 @@ if [ "$LONGHURST_FOUND" -eq 0 ]; then
 fi
 
 # Verification constants.R
-if [ ! -f "$PIPELINE_DIR/constants.R" ]; then
-  echo "ERREUR: constants.R manquant dans $PIPELINE_DIR"
+CONSTANTS_PATH=""
+for cand in "$PIPELINE_DIR/constants.R" "$PIPELINE_DIR/pipeline/constants.R"; do
+  if [ -f "$cand" ]; then
+    CONSTANTS_PATH="$cand"
+    break
+  fi
+done
+if [ -z "$CONSTANTS_PATH" ]; then
+  echo "ERREUR: constants.R manquant (candidats testes: $PIPELINE_DIR/constants.R ; $PIPELINE_DIR/pipeline/constants.R)"
   exit 1
 fi
+echo "constants.R: $CONSTANTS_PATH"
 
-SCRIPT_PATH="$PIPELINE_DIR/step5_merge_tiles_optimized.R"
-if [ ! -f "$SCRIPT_PATH" ]; then
-  echo "ERREUR: Script R non trouve: $SCRIPT_PATH"
+SCRIPT_PATH=""
+for cand in \
+  "$PIPELINE_DIR/step5_merge_tiles_optimized.R" \
+  "$PIPELINE_DIR/pipeline_V6/step5_merge_tiles_optimized.R" \
+  "$PIPELINE_DIR/pipeline/step5_merge_tiles.R"; do
+  if [ -f "$cand" ]; then
+    SCRIPT_PATH="$cand"
+    break
+  fi
+done
+if [ -z "$SCRIPT_PATH" ]; then
+  echo "ERREUR: Aucun script merge Step 5 trouve."
+  echo "Candidats testes:"
+  echo "  - $PIPELINE_DIR/step5_merge_tiles_optimized.R"
+  echo "  - $PIPELINE_DIR/pipeline_V6/step5_merge_tiles_optimized.R"
+  echo "  - $PIPELINE_DIR/pipeline/step5_merge_tiles.R"
   exit 1
 fi
-echo "Script R: $SCRIPT_PATH"
+echo "Script R selectionne: $SCRIPT_PATH"
 
 # Lancement
 /usr/bin/Rscript "$SCRIPT_PATH" 2>&1

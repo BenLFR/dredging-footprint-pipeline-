@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================================
-# STEP 4 vNext - Add lithology via HubOcean/dbSEABED
+# STEP 4 vNext - Ajout lithologie via HubOcean/dbSEABED
 #
 # FIX #1: Le dossier logs/ doit exister AVANT sbatch
 # Usage:
@@ -14,28 +14,28 @@
 #SBATCH --output=%x_%j.out
 #SBATCH --error=%x_%j.err
 
-# Note: output/error written to current directory, then moved to logs/
-# This avoids an error if logs/ does not exist at sbatch submission time
+# Note: output/error dans le repertoire courant, puis deplace dans logs/
+# Ceci evite l'erreur si logs/ n'existe pas au moment du sbatch
 
 echo "=== ETAPE 4 vNext: AJOUT LITHOLOGIE (HubOcean/dbSEABED) ==="
 echo "Job ID: $SLURM_JOB_ID"
 echo "Node: $(hostname)"
 echo "Debut: $(date)"
 
-# Conservative memory configuration
+# Configuration memoire conservative
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 
-# Directories
-PIPELINE_DIR=~/ais-pipeline/pipeline_V6
-LOGS_DIR=$PIPELINE_DIR/logs
+# Repertoires (override possible via env vars)
+PIPELINE_DIR="${PIPELINE_DIR:-~/ais-pipeline/pipeline_V6}"
+LOGS_DIR="${LOGS_DIR:-$PIPELINE_DIR/logs}"
 
-mkdir -p $LOGS_DIR
+mkdir -p "$LOGS_DIR"
 
-cd $PIPELINE_DIR
+cd "$PIPELINE_DIR" || { echo "ERREUR: Repertoire pipeline introuvable: $PIPELINE_DIR"; exit 2; }
 
-# Pre-requisite check: HubOcean cache
+# Verification pre-requis: cache HubOcean
 CACHE_DIR=~/scratch/hubocean_cache
 if [ ! -d "$CACHE_DIR" ]; then
     echo "ERREUR: Cache HubOcean non trouve: $CACHE_DIR"
@@ -53,13 +53,13 @@ ls -lh $CACHE_DIR/hard_soft/*.tif 2>/dev/null || ls -lh $CACHE_DIR/hard_soft__*.
 echo "  rock:"
 ls -lh $CACHE_DIR/rock/*.tif 2>/dev/null || ls -lh $CACHE_DIR/rock__*.tif 2>/dev/null || echo "    (none)"
 
-# AIS Step 3 file check
+# Verification fichier AIS Step 3
 AIS_DIR=~/scratch/output_V6
 echo ""
 echo "Fichiers AIS disponibles:"
 ls -lh $AIS_DIR/AIS_data_core_preprocessed_V6_*.rds 2>/dev/null || echo "  ERREUR: Aucun fichier AIS trouve"
 
-# Disk space
+# Espace disque
 echo ""
 echo "Espace disque disponible:"
 df -h ~/scratch
@@ -67,16 +67,38 @@ df -h ~/scratch
 echo ""
 echo "Lancement Step 4 vNext..."
 
-Rscript step4_add_lithology_vNext.R 2>&1
+# Resolution robuste du script Step 4 selon la structure du depot/deploiement
+SCRIPT_PATH=""
+for cand in \
+    "$PIPELINE_DIR/step4_add_lithology_vNext.R" \
+    "$PIPELINE_DIR/pipeline_V6/step4_add_lithology_vNext.R" \
+    "$PIPELINE_DIR/pipeline/step4_add_lithology.R"; do
+    if [ -f "$cand" ]; then
+        SCRIPT_PATH="$cand"
+        break
+    fi
+done
+
+if [ -z "$SCRIPT_PATH" ]; then
+    echo "ERREUR: Aucun script Step 4 valide trouve."
+    echo "Candidats testes:"
+    echo "  - $PIPELINE_DIR/step4_add_lithology_vNext.R"
+    echo "  - $PIPELINE_DIR/pipeline_V6/step4_add_lithology_vNext.R"
+    echo "  - $PIPELINE_DIR/pipeline/step4_add_lithology.R"
+    exit 1
+fi
+
+echo "Script selectionne: $SCRIPT_PATH"
+Rscript "$SCRIPT_PATH" 2>&1
 
 exit_code=$?
 
-# Move logs to the correct directory
+# Deplacer les logs dans le bon dossier
 if [ -f "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.out" ]; then
-    mv "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.out" $LOGS_DIR/
+    mv "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.out" "$LOGS_DIR"/
 fi
 if [ -f "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.err" ]; then
-    mv "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.err" $LOGS_DIR/
+    mv "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.err" "$LOGS_DIR"/
 fi
 
 if [ $exit_code -eq 0 ]; then
