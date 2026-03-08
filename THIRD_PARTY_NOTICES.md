@@ -27,7 +27,7 @@ Current source policy:
   with Atwood data-availability wording ("OCIM code is available upon email request").
 
 Implementation:
-- `deploy/upload_step7_to_grit.sh --co2model-src <dir>`: uploads fetched files.
+- `deploy/upload_step7_to_cluster.sh --co2model-src <dir>`: uploads fetched files.
 
 ## B) Third-party code dependencies (external, not bundled)
 

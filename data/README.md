@@ -91,7 +91,7 @@ mkdir -p data/external/co2model_vendor
 Use `data/external/co2model_vendor/` as `--co2model-src` when running:
 
 ```bash
-bash deploy/upload_step7_to_grit.sh --co2model-src data/external/co2model_vendor
+bash deploy/upload_step7_to_cluster.sh --co2model-src data/external/co2model_vendor
 ```
 
 ---

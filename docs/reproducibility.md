@@ -64,10 +64,10 @@ After receiving the package, place files under:
 data/external/co2model_vendor/
 ```
 
-Then provide the fetched directory when uploading step 7 assets to GRIT:
+Then provide the fetched directory when uploading step 7 assets:
 
 ```bash
-bash deploy/upload_step7_to_grit.sh --co2model-src data/external/co2model_vendor
+bash deploy/upload_step7_to_cluster.sh --co2model-src data/external/co2model_vendor
 ```
 
 ## Apptainer / Singularity Container (for cluster portability)

@@ -15,10 +15,10 @@ bundle used in this workflow.
 
 1. Request the OCIM code package by email from TD.
 2. Place the received files in `data/external/co2model_vendor/`.
-3. Upload that source directory to GRIT:
+3. Upload that source directory to your cluster:
 
 ```bash
-bash deploy/upload_step7_to_grit.sh --co2model-src data/external/co2model_vendor
+bash deploy/upload_step7_to_cluster.sh --co2model-src data/external/co2model_vendor
 ```
 
 Legal tracking and attribution are maintained in `THIRD_PARTY_NOTICES.md`.
