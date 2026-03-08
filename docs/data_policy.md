@@ -43,8 +43,10 @@ reproduce downstream analyses without the raw AIS data:
 > (https://www.exactearth.com). The processed swept-area ratio (f_i) and
 > cumulative risk index (C_ri) rasters are deposited on Zenodo
 > (https://doi.org/10.5281/zenodo.XXXXXXX). All pipeline code is available at
-> https://github.com/BenLFR/Master-thesis-code- (MIT licence). The OCIM2-48L
-> ocean circulation matrix is available from T. DeVries (tdevries@ucsb.edu).
+> https://github.com/BenLFR/Master-thesis-code- (MIT licence). Third-party
+> MATLAB CO2 model source code is not redistributed in this repository and must
+> be obtained from the upstream author source. The OCIM2-48L ocean circulation
+> matrix is available from T. DeVries (tdevries@ucsb.edu).
 > The organic carbon stock raster (C₀) is available from Atwood et al. (2020,
 > https://doi.org/10.5281/zenodo.3772915). All other auxiliary datasets
 > (dbSEABED, Longhurst provinces, land mask) are freely available from the

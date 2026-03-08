@@ -17,8 +17,8 @@ This document explains how to obtain each input.
 | step5 | Longhurst provinces | SHP | ~5 MB |
 | step5 | C₀ carbon stock raster (Atwood et al.) | GeoTIFF | ~500 MB |
 | step6 | C₀ raster (same as above) | GeoTIFF | — |
-| step7/co2model | OCIM2-48L transport matrix | .mat | ~8 GB |
-| step7/co2model | WOA09 nutrients | .mat | ~500 MB |
+| step7/co2model (external) | OCIM2-48L transport matrix | .mat | ~8 GB |
+| step7/co2model (external) | WOA09 nutrients | .mat | ~500 MB |
 
 Place all real data in `data/external/` (gitignored).
 
@@ -71,6 +71,28 @@ Required files:
 - `woa09po4.mat` / `woa09si.mat` — World Ocean Atlas 2009 nutrients
 
 Place in `data/external/ocim/`.
+
+---
+
+## 3b. CO2 model source code (external dependency)
+
+The MATLAB OCIM CO2 solver code is third-party material and is not redistributed
+in this repository.
+
+Fetch it from the upstream author repository at a pinned tag/commit:
+
+```bash
+bash deploy/fetch_co2model_dependency.sh \
+  --repo <author_repo_url> \
+  --ref <tag_or_commit> \
+  --dest data/external/co2model_vendor
+```
+
+Use `data/external/co2model_vendor/` as `--co2model-src` when running:
+
+```bash
+bash deploy/upload_step7_to_grit.sh --co2model-src data/external/co2model_vendor
+```
 
 ---
 

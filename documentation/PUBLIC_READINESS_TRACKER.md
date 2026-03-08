@@ -25,8 +25,8 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 - [x] Ajouter `THIRD_PARTY_NOTICES.md`
 - [x] Relire `Manuscript Paper 1 v1 - Benjamin LOEFFLER.docx` pour extraire les composants tiers a notifier
 - [x] Ajouter la table de tracabilite `manuscript mention -> THIRD_PARTY_NOTICES`
-- [ ] Regulariser `co2model/inpaint_nans.m`
-- [ ] Regulariser `co2model/sw_pres.m` (ou retrait public)
+- [x] Regulariser `co2model/inpaint_nans.m` (retire du bundle public; dependance externe)
+- [x] Regulariser `co2model/sw_pres.m` (retire du bundle public; dependance externe)
 - [x] Aligner `CITATION.cff` avec licence effective
 
 ## Phase 2 - Integrite pipeline et entrypoints
@@ -44,7 +44,7 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 
 - [ ] Introduire variables env (`PIPELINE_DIR`, `OUTPUT_DIR`, `CONFIG_DIR`, `SCRATCH_DIR`)
 - [ ] Remplacer infos GRIT/Beluga hard-codees par templates
-- [ ] Isoler `deploy/` interne ou neutraliser en templates publics
+- [x] Isoler `deploy/` interne ou neutraliser en templates publics (co2model: fetch externe + upload parametre)
 - [ ] Ajouter templates SLURM generiques
 
 ## Phase 4 - Environnements reproductibles
@@ -90,3 +90,4 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 | 2026-03-08 | Correctifs critiques wrappers Step4/5/6/7 | DONE | resolution robuste des scripts + correction chainage Step4->Step5 + fallback constants Step7 |
 | 2026-03-08 | Step5 wrapper + checks Step3/Steps3-6 ajoutes | DONE | `pipeline/step5_merge_slurm.sh` corrige, test `tests/smoke_test_steps3_6_entrypoints.R` ajoute et passe |
 | 2026-03-08 | Decouplage infra demarre (partiel) | IN_PROGRESS | `PIPELINE_DIR` / `LOGS_DIR` / `SCRATCH_DIR` parametrables dans wrappers Step4-7 |
+| 2026-03-08 | CO2 model de-vendore + workflow externe ajoute | DONE | fichiers `co2model/*` tiers retires du git; `deploy/fetch_co2model_dependency.sh` + `--co2model-src` dans upload Step7 |

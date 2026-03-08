@@ -1,6 +1,7 @@
 #!/bin/bash
 # Upload Step 7 files to GRIT cluster
-# Usage: bash deploy/upload_step7_to_grit.sh
+# Usage:
+#   bash deploy/upload_step7_to_grit.sh [--no-ocim] [--co2model-src <dir>]
 #
 # Uses TWO connections:
 #  1) scp: uploads files to staging dir
@@ -40,13 +41,35 @@ fi
 echo "   $(ls "$STAGING" | wc -l) fichiers ($(du -sh "$STAGING" | cut -f1))"
 echo ""
 
-# Optional: upload OCIM2_48L_CTL.mat if it exists locally (skip with --no-ocim)
+# Optional:
+# - upload OCIM2_48L_CTL.mat if available locally (skip with --no-ocim)
+# - provide explicit CO2 model source directory with --co2model-src
 SKIP_OCIM=false
-for arg in "$@"; do
-    [ "$arg" = "--no-ocim" ] && SKIP_OCIM=true
+CO2MODEL_SRC_ARG=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --no-ocim)
+            SKIP_OCIM=true
+            shift
+            ;;
+        --co2model-src)
+            [[ $# -ge 2 ]] || { echo "Option --co2model-src requires a directory path"; exit 2; }
+            CO2MODEL_SRC_ARG="$2"
+            shift 2
+            ;;
+        --co2model-src=*)
+            CO2MODEL_SRC_ARG="${1#*=}"
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 2
+            ;;
+    esac
 done
 
 OCIM_LOCAL=""
+OCIM_MODEL_DIR=""
 if [ "$SKIP_OCIM" = false ]; then
     for candidate in \
         "Trawling model-20250623T085752Z-1-001/Trawling model/OCIM2_48L_CTL.mat" \
@@ -65,17 +88,79 @@ if [ -n "$OCIM_LOCAL" ]; then
     echo "OCIM source found: $OCIM_LOCAL ($(du -h "$OCIM_LOCAL" | cut -f1))"
     echo "   Will upload to ~/scratch/configuration/ocim/"
     cp "$OCIM_LOCAL" "$STAGING/"
-    # Also copy the MATLAB model files needed to run co2model.m
-    for mfile in co2model.m ns_step_eb.m CO2SYS.m eqco2.m eqdic.m inpaint_nans.m \
-                 mfactor.m nsgmres.m nsnew.m schmidt.m sw_pres.m \
-                 netemission.txt schmidt_coeff.mat woa09po4.mat woa09si.mat; do
-        if [ -f "$OCIM_MODEL_DIR/$mfile" ]; then
-            cp "$OCIM_MODEL_DIR/$mfile" "$STAGING/"
+    # Optional support files commonly distributed with OCIM assets
+    for matfile in schmidt_coeff.mat woa09po4.mat woa09si.mat; do
+        if [ -f "$OCIM_MODEL_DIR/$matfile" ]; then
+            cp "$OCIM_MODEL_DIR/$matfile" "$STAGING/"
         fi
     done
-    echo "   + MATLAB model files from $OCIM_MODEL_DIR"
 else
     echo "OCIM2_48L_CTL.mat skipped (use --no-ocim or already on GRIT)"
+fi
+
+# Resolve source directory for third-party CO2 model solver files.
+CO2MODEL_SRC=""
+if [ -n "$CO2MODEL_SRC_ARG" ]; then
+    if [ -d "$CO2MODEL_SRC_ARG" ]; then
+        CO2MODEL_SRC="$CO2MODEL_SRC_ARG"
+    else
+        echo "WARNING: --co2model-src path does not exist: $CO2MODEL_SRC_ARG"
+    fi
+fi
+
+if [ -z "$CO2MODEL_SRC" ] && [ -n "${CO2MODEL_SRC_DIR:-}" ] && [ -d "$CO2MODEL_SRC_DIR" ]; then
+    CO2MODEL_SRC="$CO2MODEL_SRC_DIR"
+fi
+if [ -z "$CO2MODEL_SRC" ] && [ -d "data/external/co2model_vendor" ]; then
+    CO2MODEL_SRC="data/external/co2model_vendor"
+fi
+if [ -z "$CO2MODEL_SRC" ] && [ -d "data/external/co2model" ]; then
+    CO2MODEL_SRC="data/external/co2model"
+fi
+if [ -z "$CO2MODEL_SRC" ] && [ -n "$OCIM_MODEL_DIR" ] && [ -d "$OCIM_MODEL_DIR" ]; then
+    CO2MODEL_SRC="$OCIM_MODEL_DIR"
+fi
+
+CO2_REQUIRED=(
+    co2model.m
+    ns_step_eb.m
+    CO2SYS.m
+    eqco2.m
+    eqdic.m
+    inpaint_nans.m
+    mfactor.m
+    nsgmres.m
+    nsnew.m
+    schmidt.m
+    sw_pres.m
+    netemission.txt
+)
+
+if [ -n "$CO2MODEL_SRC" ]; then
+    echo "CO2 model source candidate: $CO2MODEL_SRC"
+    MISSING=()
+    for f in "${CO2_REQUIRED[@]}"; do
+        if [ -f "$CO2MODEL_SRC/$f" ]; then
+            cp "$CO2MODEL_SRC/$f" "$STAGING/"
+        else
+            MISSING+=("$f")
+        fi
+    done
+    if [ "${#MISSING[@]}" -gt 0 ]; then
+        echo "WARNING: CO2 model source is incomplete (${#MISSING[@]} missing files):"
+        for f in "${MISSING[@]}"; do
+            echo "   - $f"
+        done
+        echo "   Use a complete source with --co2model-src or run:"
+        echo "   bash deploy/fetch_co2model_dependency.sh --repo <author_repo_url> --ref <tag_or_commit>"
+    else
+        echo "   + MATLAB model files from $CO2MODEL_SRC"
+    fi
+else
+    echo "WARNING: CO2 model files were not found locally."
+    echo "   Run:"
+    echo "   bash deploy/fetch_co2model_dependency.sh --repo <author_repo_url> --ref <tag_or_commit>"
+    echo "   or pass --co2model-src <directory>"
 fi
 echo ""
 

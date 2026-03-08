@@ -38,7 +38,7 @@ AIS tracks (CSV/Parquet)
 [step7] Export J_dredge array → OCIM2 grid (KDTree matching)
         │  Output: Jdredge_*.mat
         ▼
-[co2model] MATLAB OCIM2 solver → pCO2 perturbation + net emission flux
+[co2model, external] MATLAB OCIM2 solver → pCO2 perturbation + net emission flux
         │  Output: co2_output_*.mat
         ▼
 [postproc] Atwood-style figures, timeseries CSVs
@@ -58,7 +58,7 @@ AIS tracks (CSV/Parquet)
 | step5c | sar_*.parquet, Longhurst.shp, C0.tif | fi_grid.parquet, fi_grid.tif | GRIT |
 | step6 | fi_grid.parquet, C0.tif | cri_grid.parquet, cri_grid.tif | GRIT |
 | step7 | cri_grid.parquet, OCIM2_48L.mat | Jdredge.mat | GRIT |
-| co2model | Jdredge.mat, OCIM2_48L.mat | co2_output.mat | GRIT (MATLAB) |
+| co2model (external dependency) | Jdredge.mat, OCIM2_48L.mat | co2_output.mat | GRIT (MATLAB) |
 
 ## Projection
 

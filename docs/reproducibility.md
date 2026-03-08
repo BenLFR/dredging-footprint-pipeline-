@@ -50,11 +50,23 @@ Key packages: `numpy`, `scipy` (KDTree, step7), `pandas`, `pyarrow`,
 
 ## MATLAB Environment
 
-The CO2 model (`co2model/`) requires **MATLAB R2021a or later** with the
-Parallel Computing Toolbox (optional, for faster OCIM solves).
+The CO2 model step requires **MATLAB R2021a or later** (Parallel Computing
+Toolbox optional for faster OCIM solves).
 
-No additional toolboxes are required — all solver internals are included as
-`.m` files.
+The third-party CO2 solver source is **not vendored** in this repository.
+Fetch it from the upstream author repository at a pinned commit/tag:
+
+```bash
+bash deploy/fetch_co2model_dependency.sh \
+  --repo <author_repo_url> \
+  --ref <tag_or_commit>
+```
+
+Then provide the fetched directory when uploading step 7 assets to GRIT:
+
+```bash
+bash deploy/upload_step7_to_grit.sh --co2model-src data/external/co2model_vendor
+```
 
 ## Apptainer / Singularity Container (for cluster portability)
 
