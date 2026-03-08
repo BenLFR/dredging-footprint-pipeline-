@@ -20,7 +20,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `pipeline/step6_calculate_cri.R/sh`: cumulative risk index
 - `pipeline/step7_export_jtrawl.sh`: J_dredge export for OCIM
 - `pipeline/step7_extract_ocim_cache.py/.m`: OCIM2 grid enrichment (KDTree, 9 fields)
-- `deploy/fetch_co2model_dependency.sh`: pinned external fetch helper for third-party CO2 model code
 - `config/outlier_config.yaml`: step2 filter parameters
 - `config/ship_specs.yaml`: 10 TSHD vessel specifications (beam, hopper, speed)
 - `postproc/`: Python/R post-processing and visualisation scripts

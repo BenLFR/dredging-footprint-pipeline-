@@ -90,4 +90,5 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 | 2026-03-08 | Correctifs critiques wrappers Step4/5/6/7 | DONE | resolution robuste des scripts + correction chainage Step4->Step5 + fallback constants Step7 |
 | 2026-03-08 | Step5 wrapper + checks Step3/Steps3-6 ajoutes | DONE | `pipeline/step5_merge_slurm.sh` corrige, test `tests/smoke_test_steps3_6_entrypoints.R` ajoute et passe |
 | 2026-03-08 | Decouplage infra demarre (partiel) | IN_PROGRESS | `PIPELINE_DIR` / `LOGS_DIR` / `SCRATCH_DIR` parametrables dans wrappers Step4-7 |
-| 2026-03-08 | CO2 model de-vendore + workflow externe ajoute | DONE | fichiers `co2model/*` tiers retires du git; `deploy/fetch_co2model_dependency.sh` + `--co2model-src` dans upload Step7 |
+| 2026-03-08 | CO2 model de-vendore + workflow externe ajoute | DONE | fichiers `co2model/*` tiers retires du git; workflow `--co2model-src` pour upload Step7 |
+| 2026-03-08 | Source OCIM precisee (pas de repo GitHub public confirme) | DONE | docs/notices alignees sur acces par demande email a TD (`tdevries@geog.ucsb.edu`) |

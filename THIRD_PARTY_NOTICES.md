@@ -20,10 +20,13 @@ Status labels:
 ## A) Repository policy for third-party CO2 model code
 
 As of 2026-03-08, third-party MATLAB CO2 solver source files are **not bundled**
-in this Git repository. They must be fetched from upstream with a pinned ref.
+in this Git repository.
+
+Current source policy:
+- Primary source: direct request to TD (`tdevries@geog.ucsb.edu`), consistent
+  with Atwood data-availability wording ("OCIM code is available upon email request").
 
 Implementation:
-- `deploy/fetch_co2model_dependency.sh`: fetches from upstream repo/tag/commit.
 - `deploy/upload_step7_to_grit.sh --co2model-src <dir>`: uploads fetched files.
 
 ## B) Third-party code dependencies (external, not bundled)
@@ -40,6 +43,10 @@ Source URLs used for verification:
 - `inpaint_nans`: https://www.mathworks.com/matlabcentral/fileexchange/4551-inpaint_nans
 - MathWorks File Exchange licensing guidance: https://www.mathworks.com/help/matlab/matlab_prog/share-code-on-file-exchange.html
 - CSIRO seawater `sw_copy.m` source: https://talleylab.ucsd.edu/sio210/propseawater/ppsw_matlab/sw_copy.m
+
+Additional source evidence:
+- Atwood-related data availability wording: OCIM code available upon email
+  request to TD at `tdevries@geog.ucsb.edu`.
 
 ## C) External datasets/services mentioned in manuscript
 
@@ -76,16 +83,15 @@ Source URLs used for verification:
 ## F) Upstream capture requirements for TP-CODE items
 
 Before public release, keep the following evidence in release notes or archive:
-- Upstream repository URL.
-- Requested ref (`tag` or `commit`) and resolved commit SHA.
-- Retrieval date (UTC).
-- File list and checksums (`UPSTREAM_MANIFEST.txt` from fetch script).
+- Provider contact and request channel (email to `tdevries@geog.ucsb.edu`).
+- Retrieval date (UTC) and received package identifier/name.
+- File list and checksums of the received package.
 - Written permission and/or explicit license terms where required.
 
 ## Immediate legal closure checklist
 
 - [x] Add root `LICENSE` file and align with `CITATION.cff`.
 - [x] Remove bundled third-party CO2 model source from public git history going forward.
-- [x] Provide pinned external dependency fetch workflow (`deploy/fetch_co2model_dependency.sh`).
-- [ ] Store final upstream URL + pinned commit actually used for release.
+- [x] Provide external dependency workflow via author-request + local source directory.
+- [ ] Store provider response evidence (email/request date) and package checksum for release.
 - [ ] Resolve all `PENDING_VERIFY` items before public release.

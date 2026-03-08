@@ -63,7 +63,7 @@ Or download manually from: https://hub.ocean.digital/stac
 **Source**: T. DeVries lab, UC Santa Barbara.
 
 - Zenodo record (if published): https://zenodo.org/record/XXXXXXX
-- Or request directly: tdevries@ucsb.edu
+- Or request directly: tdevries@geog.ucsb.edu
 
 Required files:
 - `OCIM2_48L_CTL.mat` (~8 GB) — baseline circulation
@@ -79,13 +79,13 @@ Place in `data/external/ocim/`.
 The MATLAB OCIM CO2 solver code is third-party material and is not redistributed
 in this repository.
 
-Fetch it from the upstream author repository at a pinned tag/commit:
+Current acquisition path:
+- request the OCIM code package by email to `tdevries@geog.ucsb.edu`
+  (consistent with Atwood data availability wording).
 
 ```bash
-bash deploy/fetch_co2model_dependency.sh \
-  --repo <author_repo_url> \
-  --ref <tag_or_commit> \
-  --dest data/external/co2model_vendor
+# after receiving files, place them here
+mkdir -p data/external/co2model_vendor
 ```
 
 Use `data/external/co2model_vendor/` as `--co2model-src` when running:

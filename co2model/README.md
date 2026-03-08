@@ -3,17 +3,19 @@
 This repository does not redistribute the third-party MATLAB OCIM CO2 solver
 source code.
 
-To run the optional CO2 step, fetch the dependency from the upstream author
-repository at a pinned tag or commit:
+According to the data availability statement used in Atwood-related materials,
+the OCIM code is available upon email request to TD:
 
-```bash
-bash deploy/fetch_co2model_dependency.sh \
-  --repo <author_repo_url> \
-  --ref <tag_or_commit> \
-  --dest data/external/co2model_vendor
-```
+- `tdevries@geog.ucsb.edu`
 
-Then upload from that source directory:
+There is no confirmed public GitHub repository for the exact OCIM MATLAB code
+bundle used in this workflow.
+
+## Recommended workflow
+
+1. Request the OCIM code package by email from TD.
+2. Place the received files in `data/external/co2model_vendor/`.
+3. Upload that source directory to GRIT:
 
 ```bash
 bash deploy/upload_step7_to_grit.sh --co2model-src data/external/co2model_vendor

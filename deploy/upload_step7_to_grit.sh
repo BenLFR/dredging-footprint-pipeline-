@@ -151,16 +151,15 @@ if [ -n "$CO2MODEL_SRC" ]; then
         for f in "${MISSING[@]}"; do
             echo "   - $f"
         done
-        echo "   Use a complete source with --co2model-src or run:"
-        echo "   bash deploy/fetch_co2model_dependency.sh --repo <author_repo_url> --ref <tag_or_commit>"
+        echo "   Use a complete source with --co2model-src."
+        echo "   If needed, request the official package from TD: tdevries@geog.ucsb.edu"
     else
         echo "   + MATLAB model files from $CO2MODEL_SRC"
     fi
 else
     echo "WARNING: CO2 model files were not found locally."
-    echo "   Run:"
-    echo "   bash deploy/fetch_co2model_dependency.sh --repo <author_repo_url> --ref <tag_or_commit>"
-    echo "   or pass --co2model-src <directory>"
+    echo "   Request the OCIM code package from TD: tdevries@geog.ucsb.edu"
+    echo "   Then pass --co2model-src <directory>."
 fi
 echo ""
 

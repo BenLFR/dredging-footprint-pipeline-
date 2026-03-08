@@ -54,12 +54,14 @@ The CO2 model step requires **MATLAB R2021a or later** (Parallel Computing
 Toolbox optional for faster OCIM solves).
 
 The third-party CO2 solver source is **not vendored** in this repository.
-Fetch it from the upstream author repository at a pinned commit/tag:
+Current source path is email request to TD:
+
+- `tdevries@geog.ucsb.edu`
+
+After receiving the package, place files under:
 
 ```bash
-bash deploy/fetch_co2model_dependency.sh \
-  --repo <author_repo_url> \
-  --ref <tag_or_commit>
+data/external/co2model_vendor/
 ```
 
 Then provide the fetched directory when uploading step 7 assets to GRIT:
