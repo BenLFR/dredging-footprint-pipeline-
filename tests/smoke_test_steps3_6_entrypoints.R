@@ -61,7 +61,6 @@ invisible(resolve_script(
 invisible(resolve_script(
   "Step6 CRI",
   c(
-    "ORGANISATION_BELUGA/pipeline_study/step6_cri/step6_calculate_cri_corrected.R",
     "pipeline/step6_calculate_cri.R"
   )
 ))

@@ -42,10 +42,10 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 
 ## Phase 3 - Decouplage infra et templates
 
-- [ ] Introduire variables env (`PIPELINE_DIR`, `OUTPUT_DIR`, `CONFIG_DIR`, `SCRATCH_DIR`)
-- [ ] Remplacer infos GRIT/Beluga hard-codees par templates
+- [x] Introduire variables env (`PIPELINE_DIR`, `OUTPUT_DIR`, `CONFIG_DIR`, `SCRATCH_DIR`)
+- [x] Remplacer infos GRIT/Beluga hard-codees par templates (wrappers Step4-7)
 - [x] Isoler `deploy/` interne ou neutraliser en templates publics (co2model: fetch externe + upload parametre)
-- [ ] Ajouter templates SLURM generiques
+- [x] Ajouter templates SLURM generiques
 
 ## Phase 4 - Environnements reproductibles
 
@@ -92,3 +92,4 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 | 2026-03-08 | Decouplage infra demarre (partiel) | IN_PROGRESS | `PIPELINE_DIR` / `LOGS_DIR` / `SCRATCH_DIR` parametrables dans wrappers Step4-7 |
 | 2026-03-08 | CO2 model de-vendore + workflow externe ajoute | DONE | fichiers `co2model/*` tiers retires du git; workflow `--co2model-src` pour upload Step7 |
 | 2026-03-08 | Source OCIM precisee (pas de repo GitHub public confirme) | DONE | docs/notices alignees sur acces par demande email a TD (`tdevries@geog.ucsb.edu`) |
+| 2026-03-08 | Phase 3 cloturee sur wrappers Step4-7 | DONE | suppression hard-codes cluster + ajout `OUTPUT_DIR`/`CONFIG_DIR` + templates `config/templates/slurm/` |

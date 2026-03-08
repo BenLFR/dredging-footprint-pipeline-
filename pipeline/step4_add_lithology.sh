@@ -27,16 +27,24 @@ export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 
+# Repertoire par defaut: racine du depot (parent du dossier pipeline/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_PIPELINE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 # Repertoires (override possible via env vars)
-PIPELINE_DIR="${PIPELINE_DIR:-~/ais-pipeline/pipeline_V6}"
+PIPELINE_DIR="${PIPELINE_DIR:-$DEFAULT_PIPELINE_DIR}"
+SCRATCH_DIR="${SCRATCH_DIR:-~/scratch}"
+OUTPUT_DIR="${OUTPUT_DIR:-$SCRATCH_DIR/output_V6}"
+CONFIG_DIR="${CONFIG_DIR:-$SCRATCH_DIR/configuration}"
 LOGS_DIR="${LOGS_DIR:-$PIPELINE_DIR/logs}"
+HUBOCEAN_CACHE_DIR="${HUBOCEAN_CACHE_DIR:-$SCRATCH_DIR/hubocean_cache}"
 
 mkdir -p "$LOGS_DIR"
 
 cd "$PIPELINE_DIR" || { echo "ERREUR: Repertoire pipeline introuvable: $PIPELINE_DIR"; exit 2; }
 
 # Verification pre-requis: cache HubOcean
-CACHE_DIR=~/scratch/hubocean_cache
+CACHE_DIR="$HUBOCEAN_CACHE_DIR"
 if [ ! -d "$CACHE_DIR" ]; then
     echo "ERREUR: Cache HubOcean non trouve: $CACHE_DIR"
     echo "Executez d'abord sur login node: python prefetch_hubocean_stac.py"
@@ -54,7 +62,7 @@ echo "  rock:"
 ls -lh $CACHE_DIR/rock/*.tif 2>/dev/null || ls -lh $CACHE_DIR/rock__*.tif 2>/dev/null || echo "    (none)"
 
 # Verification fichier AIS Step 3
-AIS_DIR=~/scratch/output_V6
+AIS_DIR="$OUTPUT_DIR"
 echo ""
 echo "Fichiers AIS disponibles:"
 ls -lh $AIS_DIR/AIS_data_core_preprocessed_V6_*.rds 2>/dev/null || echo "  ERREUR: Aucun fichier AIS trouve"
@@ -62,7 +70,7 @@ ls -lh $AIS_DIR/AIS_data_core_preprocessed_V6_*.rds 2>/dev/null || echo "  ERREU
 # Espace disque
 echo ""
 echo "Espace disque disponible:"
-df -h ~/scratch
+df -h "$SCRATCH_DIR"
 
 echo ""
 echo "Lancement Step 4 vNext..."

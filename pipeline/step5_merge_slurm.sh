@@ -1,15 +1,14 @@
 #!/bin/bash
 # ============================================================================
-# STEP 5 - FUSION TUILES SAR -> fi_grid (pipeline V6, cluster GRIT)
+# STEP 5 - FUSION TUILES SAR -> fi_grid (pipeline V6, cluster-agnostic)
 # ============================================================================
 
 #SBATCH --job-name=step5_merge
-#SBATCH --output=logs/step5_merge_%j.out
-#SBATCH --error=logs/step5_merge_%j.err
+#SBATCH --output=%x_%j.out
+#SBATCH --error=%x_%j.err
 #SBATCH --time=06:00:00
 #SBATCH --mem=128G
 #SBATCH --cpus-per-task=8
-#SBATCH --nodelist=hpc-05.grit.ucsb.edu
 
 # R packages installes dans ~/R/library
 export R_LIBS_USER=~/R/library
@@ -24,8 +23,15 @@ export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 
+# Repertoire par defaut: racine du depot (parent du dossier pipeline/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_PIPELINE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 # Repertoires (override possible via env vars)
-PIPELINE_DIR="${PIPELINE_DIR:-~/ais-pipeline/pipeline_V6}"
+PIPELINE_DIR="${PIPELINE_DIR:-$DEFAULT_PIPELINE_DIR}"
+SCRATCH_DIR="${SCRATCH_DIR:-~/scratch}"
+OUTPUT_DIR="${OUTPUT_DIR:-$SCRATCH_DIR/output_V6}"
+CONFIG_DIR="${CONFIG_DIR:-$SCRATCH_DIR/configuration}"
 LOGS_DIR="${LOGS_DIR:-$PIPELINE_DIR/logs}"
 mkdir -p "$LOGS_DIR"
 
@@ -36,17 +42,17 @@ export MAKE_TIFF="${MAKE_TIFF:-TRUE}"
 echo "Generation GeoTIFF: $MAKE_TIFF"
 
 # Verification tuiles SAR
-SAR_COUNT=$(ls ~/scratch/output_V6/sar_*.parquet 2>/dev/null | wc -l)
+SAR_COUNT=$(ls "$OUTPUT_DIR"/sar_*.parquet 2>/dev/null | wc -l)
 echo "Tuiles SAR trouvees: $SAR_COUNT"
 
 if [ "$SAR_COUNT" -eq 0 ]; then
-  echo "ERREUR: Aucune tuile SAR trouvee dans ~/scratch/output_V6/"
+  echo "ERREUR: Aucune tuile SAR trouvee dans $OUTPUT_DIR/"
   exit 1
 fi
 
 # Verification fichiers requis
-for f in ~/scratch/configuration/fi_parameters_with_freshness.yaml \
-         ~/scratch/output_V6/tiles_1000km.gpkg; do
+for f in "$CONFIG_DIR/fi_parameters_with_freshness.yaml" \
+         "$OUTPUT_DIR/tiles_1000km.gpkg"; do
   if [ ! -f "$f" ]; then
     echo "ERREUR: Fichier requis manquant: $f"
     exit 1
@@ -55,9 +61,9 @@ done
 
 # Verification Longhurst
 LONGHURST_FOUND=0
-for d in ~/scratch/configuration/longhurst_v4_2010/Longhurst_world_v4_2010.shp \
-         ~/scratch/configuration/longhurst/longhurst.shp \
-         ~/scratch/configuration/longhurst.gpkg; do
+for d in "$CONFIG_DIR/longhurst_v4_2010/Longhurst_world_v4_2010.shp" \
+         "$CONFIG_DIR/longhurst/longhurst.shp" \
+         "$CONFIG_DIR/longhurst.gpkg"; do
   if [ -f "$d" ]; then
     echo "Longhurst trouve: $d"
     LONGHURST_FOUND=1
@@ -107,13 +113,21 @@ echo "Script R selectionne: $SCRIPT_PATH"
 
 exit_code=$?
 
+# Deplacer les logs vers LOGS_DIR (si generes dans le repertoire courant)
+if [ -f "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.out" ]; then
+  mv "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.out" "$LOGS_DIR"/
+fi
+if [ -f "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.err" ]; then
+  mv "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.err" "$LOGS_DIR"/
+fi
+
 if [ $exit_code -eq 0 ]; then
   echo ""
   echo "Step 5 merge termine avec succes: $(date)"
   echo "Fichiers generes:"
-  ls -lh ~/scratch/output_V6/fi_grid_*.parquet 2>/dev/null || echo "  (aucun parquet)"
-  ls -lh ~/scratch/output_V6/fi_grid_*.rds 2>/dev/null || echo "  (aucun rds)"
-  ls -lh ~/scratch/output_V6/fi_grid_*.tif 2>/dev/null || echo "  (aucun tif)"
+  ls -lh "$OUTPUT_DIR"/fi_grid_*.parquet 2>/dev/null || echo "  (aucun parquet)"
+  ls -lh "$OUTPUT_DIR"/fi_grid_*.rds 2>/dev/null || echo "  (aucun rds)"
+  ls -lh "$OUTPUT_DIR"/fi_grid_*.tif 2>/dev/null || echo "  (aucun tif)"
 else
   echo "ERREUR Step 5 merge: code $exit_code"
   exit $exit_code

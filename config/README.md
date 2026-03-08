@@ -22,3 +22,8 @@ SAR = (beam × distance_dredging) / cell_area
 
 All values were sourced from publicly available vessel registry data
 and literature (Van Rijn, 1993; Kenny et al., 2003).
+
+## `templates/slurm/`
+Cluster-neutral SLURM templates for wrappers (Step 4-7):
+- `cluster_overrides.env.example`: path and scheduler override variables
+- `submit_step.sh`: generic `sbatch` helper
