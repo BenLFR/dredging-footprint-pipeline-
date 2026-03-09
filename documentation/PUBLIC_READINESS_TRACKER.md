@@ -7,7 +7,7 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 
 - [ ] Gate G1 (Legal) valide
 - [ ] Gate G2 (Run path) valide
-- [ ] Gate G3 (Repro env) valide
+- [x] Gate G3 (Repro env) valide
 - [ ] Gate G4 (FAIR) valide
 - [ ] Gate G5 (Journal) valide
 
@@ -49,11 +49,11 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 
 ## Phase 4 - Environnements reproductibles
 
-- [ ] Generer `renv.lock`
-- [ ] Ajouter spec Python (`requirements.txt` ou `environment.yml`)
-- [ ] Verifier/mettre a jour `deploy/apptainer.def`
-- [ ] Documenter build, test, SHA256 conteneur
-- [ ] Aligner CI sur ces specs
+- [x] Generer `renv.lock`
+- [x] Ajouter spec Python (`requirements.txt` ou `environment.yml`)
+- [x] Verifier/mettre a jour `deploy/apptainer.def`
+- [x] Documenter build, test, SHA256 conteneur
+- [x] Aligner CI sur ces specs
 
 ## Phase 5 - FAIR et archivage
 
@@ -93,3 +93,4 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 | 2026-03-08 | CO2 model de-vendore + workflow externe ajoute | DONE | fichiers `co2model/*` tiers retires du git; workflow `--co2model-src` pour upload Step7 |
 | 2026-03-08 | Source OCIM precisee (pas de repo GitHub public confirme) | DONE | docs/notices alignees sur acces par demande email a TD (`tdevries@geog.ucsb.edu`) |
 | 2026-03-08 | Phase 3 cloturee sur wrappers Step4-7 | DONE | suppression hard-codes cluster + ajout `OUTPUT_DIR`/`CONFIG_DIR` + templates `config/templates/slurm/` |
+| 2026-03-09 | Phase 4 completee (specs R/Python + conteneur + CI) | DONE | `renv.lock` + `requirements.txt` + `deploy/apptainer.def` + `docs/reproducibility.md`; CI smoke alignee sur R `4.4.1` et cache renv |

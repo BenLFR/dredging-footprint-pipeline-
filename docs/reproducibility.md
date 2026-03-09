@@ -1,103 +1,92 @@
 # Reproducibility Guide
 
-## R Environment
+## Scope
 
-The pipeline was developed and validated on **R 4.3.x** with the package
-versions listed in `renv.lock` (to be generated — see below).
+This repository ships a cluster-neutral pipeline (steps 0-7) and an optional
+external MATLAB CO2 step.
 
-### Using renv (recommended)
+## R Environment (locked with `renv`)
 
-```r
-# Install renv if needed
-install.packages("renv")
+The reference dependency set is tracked in [`renv.lock`](../renv.lock).
+The lockfile was generated with R `4.4.1`.
 
-# Restore the exact package versions
-renv::restore()
-```
-
-If `renv.lock` is not yet present, bootstrap from the GRIT R session:
-```bash
-# On GRIT cluster (emlab_nodes):
-Rscript -e "renv::snapshot()"
-scp -F ~/.ssh/config_grit grit:~/ais-pipeline/renv.lock .
-```
-
-### Key R packages
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| data.table | ≥ 1.14 | Fast tabular I/O |
-| sf | ≥ 1.0 | Vector spatial operations |
-| terra | ≥ 1.7 | Raster operations (replaces raster) |
-| mclust | ≥ 6.0 | GMM classification (step3) |
-| dbscan | ≥ 1.1 | DBSCAN clustering (step3) |
-| arrow | ≥ 12.0 | Parquet I/O |
-| qs | ≥ 0.25 | Fast RDS-like serialisation |
-| yaml | ≥ 2.3 | Config file parsing |
-| dplyr | ≥ 1.1 | Data manipulation |
-| ggplot2 | ≥ 3.4 | Visualisation |
-
-## Python Environment
-
-Post-processing scripts require Python ≥ 3.10.
+Restore with:
 
 ```bash
-pip install -r pipeline_V6/requirements_postproc_atwood.txt
+Rscript -e "install.packages('renv', repos='https://cloud.r-project.org')"
+Rscript -e "renv::consent(provided = TRUE); renv::restore(lockfile='renv.lock', prompt=FALSE)"
 ```
 
-Key packages: `numpy`, `scipy` (KDTree, step7), `pandas`, `pyarrow`,
-`matplotlib`, `cartopy`.
+If you need to refresh the lockfile after intentional dependency changes:
 
-## MATLAB Environment
+```bash
+Rscript -e "renv::consent(provided = TRUE); renv::snapshot(prompt=FALSE)"
+```
 
-The CO2 model step requires **MATLAB R2021a or later** (Parallel Computing
-Toolbox optional for faster OCIM solves).
+## Python Environment (`requirements.txt`)
 
-The third-party CO2 solver source is **not vendored** in this repository.
-Current source path is email request to TD:
+Step 7 and post-processing scripts use Python dependencies pinned in
+[`requirements.txt`](../requirements.txt).
+
+```bash
+python -m venv .venv
+# Linux/macOS: source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+## MATLAB CO2 Dependency (external, not vendored)
+
+The exact OCIM CO2 MATLAB source is not redistributed in this repository.
+According to Atwood-related data-availability wording, access is via email
+request to TD:
 
 - `tdevries@geog.ucsb.edu`
 
-After receiving the package, place files under:
+After receiving the package, place it under:
 
 ```bash
 data/external/co2model_vendor/
 ```
 
-Then provide the fetched directory when uploading step 7 assets:
+Then use:
 
 ```bash
 bash deploy/upload_step7_to_cluster.sh --co2model-src data/external/co2model_vendor
 ```
 
-## Apptainer / Singularity Container (for cluster portability)
+See [`co2model/README.md`](../co2model/README.md) and
+[`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) for compliance details.
 
-For fully reproducible HPC execution, an Apptainer image is available:
+## Apptainer Container
+
+Container definition file: [`deploy/apptainer.def`](../deploy/apptainer.def).
+
+Build:
 
 ```bash
-# Pull (if published):
-apptainer pull oras://ghcr.io/BenLFR/ais-pipeline:v1.0
-
-# Run a step:
-apptainer exec ais-pipeline_v1.0.sif Rscript pipeline/step3_merge_final.R
+apptainer build ais-pipeline.sif deploy/apptainer.def
 ```
 
-To build locally from the definition file:
+Quick checks:
+
 ```bash
-apptainer build ais-pipeline.sif apptainer.def  # definition file TBD
+apptainer exec ais-pipeline.sif R --version
+apptainer exec ais-pipeline.sif python3 --version
+apptainer exec ais-pipeline.sif Rscript tests/smoke_test_steps3_6_entrypoints.R
 ```
 
-## SLURM Cluster Setup
+Record image checksum:
 
-Tested on:
-- **GRIT** (UCSB emlab, `sequoia` node): R 4.3.1, MATLAB R2022b
-- **Beluga** (Alliance Canada): R 4.2.x, modules `r/4.3.1` and `gcc/11.3.0`
+```bash
+sha256sum ais-pipeline.sif > ais-pipeline.sif.sha256
+```
 
-Account: `def-wailung` (Beluga) / `emlab_nodes` (GRIT).
+## Output Verification
 
-## Step-by-step verification
+After a full run, verify expected columns and non-empty output:
 
-After a full run, verify outputs:
 ```r
 library(arrow)
 fi <- read_parquet("output_V6/fi_grid_YYYYMMDD.parquet")
@@ -106,5 +95,3 @@ stopifnot(all(c("lon", "lat", "fi") %in% names(fi)))
 summary(fi$fi)
 ```
 
-Expected: non-zero SAR values in known dredging hotspots (North Sea, Manila Bay,
-Rotterdam Waterway, Singapore Strait).
