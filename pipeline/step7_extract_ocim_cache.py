@@ -2,9 +2,17 @@
 """step7_extract_ocim_cache.py — Python replacement for MATLAB script.
 
 Extracts a portable cache from OCIM2_48L_CTL.mat for use in R.
-Includes 6 spatial enrichment fields for conservative remapping:
+Includes 9 spatial enrichment fields for conservative remapping:
   depth2d, oceanfrac2d, dist_to_coast2d, shelf_mask2d,
-  shelf_component2d, seed_shelf_ij
+  shelf_component2d, seed_shelf_ij,
+  ocean_component2d, coastal_wet_mask2d, seed_ocean_ij
+
+The ocean connectivity fields enforce basin-aware redistribution:
+  - ocean_component2d: 4-connectivity flood-fill on full wet mask (kbot>0),
+    preventing diagonal leaks across isthmuses
+  - coastal_wet_mask2d: ocean cells adjacent to land (4-conn), the preferred
+    redistribution targets (Adcroft regrid_runoff coastal wet-point approach)
+  - seed_ocean_ij: nearest coastal wet-point per land cell via KDTree
 
 Usage on GRIT:
   python3 ~/ais-pipeline/pipeline_V6/step7_extract_ocim_cache.py
@@ -53,7 +61,7 @@ def compute_oceanfrac(lon2d, lat2d, kbot, ni, nj, land_shp_path):
     into two sub-polygons before intersection.
     """
     import geopandas as gpd
-    from shapely.geometry import box, Polygon, MultiPolygon
+    from shapely.geometry import box
     from shapely.ops import transform as shp_transform
     from pyproj import Transformer
 
@@ -230,6 +238,89 @@ def extract_and_enrich(lon2d, lat2d, M3d, DZT3d, DXT3d, DYT3d, dzt, ni, nj, nk):
     n_unique = len(np.unique(shelf_component2d[shelf_component2d > 0]))
     print(f"  Shelf components: {n_unique} (after dateline merge)")
 
+    # ── A5b. ocean_component2d: connected components on full wet mask ─────
+    # Uses 4-connectivity (not 8) to prevent diagonal leaks across isthmuses
+    print("Computing ocean_component2d (4-connectivity + dateline wrap) ...")
+    struct_4conn = np.array([[0, 1, 0],
+                             [1, 1, 1],
+                             [0, 1, 0]], dtype=np.int32)
+    padded_wet = np.hstack([is_ocean.astype(np.int32), is_ocean[:, 0:1].astype(np.int32)])
+    ocomp_padded, n_ocomp = label(padded_wet, structure=struct_4conn)
+
+    ocean_component2d = ocomp_padded[:, :nj].copy()
+    for i in range(ni):
+        lbl_left = ocean_component2d[i, 0]
+        lbl_right = ocomp_padded[i, nj]
+        if lbl_left > 0 and lbl_right > 0 and lbl_left != lbl_right:
+            old_lbl = max(lbl_left, lbl_right)
+            new_lbl = min(lbl_left, lbl_right)
+            ocean_component2d[ocean_component2d == old_lbl] = new_lbl
+
+    n_ocomp_unique = len(np.unique(ocean_component2d[ocean_component2d > 0]))
+    print(f"  Ocean components: {n_ocomp_unique} (after dateline merge)")
+
+    # Log component sizes (largest = world ocean)
+    ocomp_labels, ocomp_counts = np.unique(
+        ocean_component2d[ocean_component2d > 0], return_counts=True
+    )
+    sort_idx = np.argsort(-ocomp_counts)
+    for rank, idx in enumerate(sort_idx[:5]):
+        print(f"    Component {ocomp_labels[idx]}: {ocomp_counts[idx]} cells")
+    if len(sort_idx) > 5:
+        print(f"    ... and {len(sort_idx) - 5} smaller components")
+
+    # ── A5c. coastal_wet_mask2d: ocean cells adjacent to land (4-conn) ────
+    print("Computing coastal_wet_mask2d (ocean cells with land neighbor) ...")
+    coastal_wet_mask2d = np.zeros((ni, nj), dtype=bool)
+    for i in range(ni):
+        for j in range(nj):
+            if not is_ocean[i, j]:
+                continue
+            # 4-connectivity neighbors (N, S, E, W with dateline wrap on E/W)
+            neighbors = []
+            if i > 0:
+                neighbors.append((i - 1, j))
+            if i < ni - 1:
+                neighbors.append((i + 1, j))
+            neighbors.append((i, (j - 1) % nj))  # W with wrap
+            neighbors.append((i, (j + 1) % nj))  # E with wrap
+            for ni_, nj_ in neighbors:
+                if not is_ocean[ni_, nj_]:
+                    coastal_wet_mask2d[i, j] = True
+                    break
+
+    n_coastal = int(np.sum(coastal_wet_mask2d))
+    n_ocean_total = int(np.sum(is_ocean))
+    print(f"  Coastal wet cells: {n_coastal} / {n_ocean_total} ocean cells "
+          f"({100 * n_coastal / max(n_ocean_total, 1):.1f}%)")
+
+    # ── A5d. seed_ocean_ij: nearest coastal wet-point per land cell ───────
+    print("Computing seed_ocean_ij (KDTree on coastal wet-points) ...")
+    seed_ocean_i = np.zeros((ni, nj), dtype=np.float64)
+    seed_ocean_j = np.zeros((ni, nj), dtype=np.float64)
+
+    coastal_ij = np.argwhere(coastal_wet_mask2d)  # (n_coastal, 2)
+    if len(coastal_ij) > 0 and np.any(land_mask):
+        coastal_xyz = lonlat_to_xyz(lon2d[coastal_wet_mask2d], lat2d[coastal_wet_mask2d])
+        tree_coastal = cKDTree(coastal_xyz)
+
+        land_ij = np.argwhere(land_mask)
+        land_xyz_pts = lonlat_to_xyz(lon2d[land_mask], lat2d[land_mask])
+        _, coastal_idx = tree_coastal.query(land_xyz_pts, k=1)
+
+        for k, (li, lj) in enumerate(land_ij):
+            ci, cj = coastal_ij[coastal_idx[k]]
+            seed_ocean_i[li, lj] = ci + 1  # 1-based for MATLAB/R
+            seed_ocean_j[li, lj] = cj + 1
+
+    n_seeded_ocean = int(np.sum(seed_ocean_i > 0))
+    print(f"  Land cells with coastal wet seed: {n_seeded_ocean}")
+
+    # Verify every land cell has a seed
+    n_land = int(np.sum(land_mask))
+    if n_seeded_ocean < n_land and n_coastal > 0:
+        print(f"  WARNING: {n_land - n_seeded_ocean} land cells without coastal wet seed")
+
     # ── A6. seed_shelf_ij: nearest shelf cell for each land cell ──────────
     print("Computing seed_shelf_ij (KDTree) ...")
     seed_shelf_i = np.zeros((ni, nj), dtype=np.float64)
@@ -254,10 +345,22 @@ def extract_and_enrich(lon2d, lat2d, M3d, DZT3d, DXT3d, DYT3d, dzt, ni, nj, nk):
     print(f"  Land cells with shelf seed: {n_seeded}")
 
     # ── A2. oceanfrac2d: true ocean fraction per 2-deg cell ───────────────
-    oceanfrac2d = compute_oceanfrac(lon2d, lat2d, kbot, ni, nj, LAND_SHP)
+    # Prefer precomputed file (from scripts_principaux/precompute_oceanfrac2d.py)
+    oceanfrac_precomputed = os.path.join(ocim_dir, "oceanfrac2d.mat")
+    if os.path.isfile(oceanfrac_precomputed):
+        print(f"Loading precomputed oceanfrac from {oceanfrac_precomputed}")
+        tmp = sio.loadmat(oceanfrac_precomputed)
+        oceanfrac2d = tmp["oceanfrac2d"]
+        assert oceanfrac2d.shape == (ni, nj), \
+            f"oceanfrac2d shape mismatch: {oceanfrac2d.shape} vs ({ni},{nj})"
+    else:
+        print("No precomputed oceanfrac2d.mat found — computing from scratch ...")
+        print("  (requires geopandas, shapely, pyproj)")
+        oceanfrac2d = compute_oceanfrac(lon2d, lat2d, kbot, ni, nj, LAND_SHP)
 
     return (iocn, m, kbot, depth2d, oceanfrac2d, shelf_mask2d,
-            dist_to_coast2d, shelf_component2d, seed_shelf_i, seed_shelf_j)
+            dist_to_coast2d, shelf_component2d, seed_shelf_i, seed_shelf_j,
+            ocean_component2d, coastal_wet_mask2d, seed_ocean_i, seed_ocean_j)
 
 
 # ── Load OCIM data ────────────────────────────────────────────────────────
@@ -302,7 +405,8 @@ except NotImplementedError:
 
 # ── Compute all enrichment fields ─────────────────────────────────────────
 (iocn, m, kbot, depth2d, oceanfrac2d, shelf_mask2d,
- dist_to_coast2d, shelf_component2d, seed_shelf_i, seed_shelf_j) = \
+ dist_to_coast2d, shelf_component2d, seed_shelf_i, seed_shelf_j,
+ ocean_component2d, coastal_wet_mask2d, seed_ocean_i, seed_ocean_j) = \
     extract_and_enrich(lon2d, lat2d, M3d, DZT3d, DXT3d, DYT3d, dzt, ni, nj, nk)
 
 # ── Save cache ────────────────────────────────────────────────────────────
@@ -330,6 +434,11 @@ sio.savemat(out_file, {
     "shelf_component2d": shelf_component2d.astype(np.float64),
     "seed_shelf_i": seed_shelf_i,
     "seed_shelf_j": seed_shelf_j,
+    # Ocean connectivity fields (ice-9 flood-fill)
+    "ocean_component2d": ocean_component2d.astype(np.float64),
+    "coastal_wet_mask2d": coastal_wet_mask2d.astype(np.float64),
+    "seed_ocean_i": seed_ocean_i,
+    "seed_ocean_j": seed_ocean_j,
 }, do_compression=True)
 
 size_mb = os.path.getsize(out_file) / 1e6

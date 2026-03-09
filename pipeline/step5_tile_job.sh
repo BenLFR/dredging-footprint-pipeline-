@@ -1,59 +1,57 @@
 #!/bin/bash
-#SBATCH --account=def-wailung
+# ============================================================================
+# STEP 5 - WORKER TUILE (pipeline V6, cluster GRIT)
+# ============================================================================
+
+#SBATCH --job-name=step5_tile
 #SBATCH --time=12:00:00
-#SBATCH --mem=16G
-#SBATCH --cpus-per-task=2
-#SBATCH --array=1-648
-#SBATCH --output=slurm-%A_%a.out
-#SBATCH --error=slurm-%A_%a.err
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=benl@example.com
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=4
+#SBATCH --array=1-525
+#SBATCH --output=logs/step5_tile_%A_%a.out
+#SBATCH --error=logs/step5_tile_%A_%a.err
 
-# Configuration
-module load StdEnv/2023 apptainer gdal
-export R_PRINT_BUF_SIZE=0
-export PYTHONUNBUFFERED=1
-export TERM=xterm-256color
+echo "=== ETAPE 5: TRAITEMENT TUILE $SLURM_ARRAY_TASK_ID ==="
+echo "Array Job ID: $SLURM_ARRAY_JOB_ID"
+echo "Task ID: $SLURM_ARRAY_TASK_ID"
+echo "Node: $(hostname)"
+echo "Debut: $(date)"
 
-# Variables d'environnement
-TILE_ID=$SLURM_ARRAY_TASK_ID
-IMG="$HOME/scratch/rocker_geospatial_step5.sif"
-SCRIPT="$HOME/scratch/pipeline_V6/step5_modulaire/step5_tile_worker.R"
+# Configuration memoire conservative
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+
+# Repertoires
+PIPELINE_DIR=~/ais-pipeline/pipeline_V6
+mkdir -p $PIPELINE_DIR/logs
+mkdir -p ~/scratch/output_V6
+
+cd $PIPELINE_DIR
+
+TILE_ID=${SLURM_ARRAY_TASK_ID}
+SCRIPT="$PIPELINE_DIR/step5_tile_worker_corrected.R"
 TILES_FILE="$HOME/scratch/output_V6/tiles_1000km.gpkg"
 
-# Pre-flight checks
-echo " $(date) – Lancement tuile $TILE_ID"
-echo "   - Image : $(basename $IMG)"
-echo "   - Script : $(basename $SCRIPT)"
-echo "   - Fichier tuiles : $(basename $TILES_FILE)"
+echo "Lancement tuile $TILE_ID"
+[ -f "$SCRIPT" ] || { echo "ERREUR: Script R manquant: $SCRIPT"; exit 1; }
+[ -f "$TILES_FILE" ] || { echo "ERREUR: Fichier tuiles manquant: $TILES_FILE"; exit 1; }
 
-# Verify required files
-if [ ! -f "$IMG" ]; then
-    echo " Image Apptainer manquante : $IMG"
-    exit 1
+# Verification skip si deja traite
+OUT_FILE=~/scratch/output_V6/sar_$(printf "%03d" $TILE_ID).parquet
+if [ -s "$OUT_FILE" ]; then
+    echo "Sortie deja presente: $OUT_FILE - SKIP"
+    exit 0
 fi
 
-if [ ! -f "$SCRIPT" ]; then
-    echo " Script R manquant : $SCRIPT"
-    exit 1
-fi
+export LD_LIBRARY_PATH=$HOME/lib:${LD_LIBRARY_PATH:-}
+export R_LIBS_USER=$HOME/R/library
+/usr/bin/Rscript "$SCRIPT" "$TILE_ID" 2>&1
 
-if [ ! -f "$TILES_FILE" ]; then
-    echo " Fichier tuiles manquant : $TILES_FILE"
-    exit 1
-fi
-
-# Create log directory if needed
-mkdir -p logs
-
-# Lancement du traitement
-echo " Début traitement tuile $TILE_ID"
-apptainer exec --bind /scratch,/home --pwd $PWD "$IMG" stdbuf -oL -eL Rscript "$SCRIPT" $TILE_ID
-
-# Check exit status
-if [ $? -eq 0 ]; then
-    echo " Tuile $TILE_ID terminée avec succès"
+exit_code=$?
+if [ $exit_code -eq 0 ]; then
+    echo "Tuile $TILE_ID traitee avec succes: $(date)"
 else
-    echo " Tuile $TILE_ID échouée"
-    exit 1
-fi 
+    echo "ERREUR tuile $TILE_ID: code $exit_code"
+    exit $exit_code
+fi

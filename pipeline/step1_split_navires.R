@@ -1,31 +1,31 @@
 #!/usr/bin/env Rscript
 # =====================================================================
-# STEP 1 - AIS SPLIT BY VESSEL  (pipeline V6, Beluga cluster)
-# Uses the time window and fleet selected by step0_core_window.R (core_window.yaml)
+# STEP 1 ─ FRACTIONNEMENT AIS PAR NAVIRE  (pipeline V6, cluster Béluga)
+# Utilise la période et la flotte sélectionnées par step0_core_window.R (core_window.yaml)
 # =====================================================================
 
-cat("\n  STEP-1  |  AIS SPLIT BY VESSEL  |  start :",
+cat("\n🚀  STEP-1  |  FRACTIONNEMENT AIS PAR NAVIRE  |  début :",
     format(Sys.time()), "\n\n")
 
 # CONFIGURATION R CRITIQUE - AVANT CHARGEMENT PACKAGES
 .libPaths("~/R/library")
-cat("R library path:", .libPaths()[1], "\n")
+cat("✅ R configuré avec library:", .libPaths()[1], "\n")
 
 suppressPackageStartupMessages({
-  library(data.table)   # fast + low RAM
-  library(yaml)         # read step 0 configuration
-  # library(fst)          # replaced by qs (GLIBC issue)
-
-  # Test qs with RDS fallback (packages pre-installed per README_BELUGA.md)
+  library(data.table)   # ultra-rapide + faible RAM
+  library(yaml)         # lecture configuration step 0
+  # library(fst)          # ❌ REMPLACÉ par qs (problème GLIBC)
+  
+  # Test qs avec fallback RDS (selon README_BELUGA.md - packages déjà installés)
   use_qs <- FALSE
   tryCatch({
     if (!requireNamespace("qs", quietly = TRUE))
-      stop("qs not available")
-    library(qs)
+      stop("qs non disponible")
+    library(qs)           
     use_qs <- TRUE
-    cat("Using QS format\n")
+    cat("✅ Utilisation du format QS\n")
   }, error = function(e) {
-    cat("QS not available, falling back to RDS\n")
+    cat("⚠️ QS non disponible, fallback vers RDS\n")
     use_qs <<- FALSE
   })
   
@@ -34,7 +34,7 @@ suppressPackageStartupMessages({
 })
 
 # ---------------------------------------------------------------------
-# 1. ── PARAMETERS (configurable via environment variables) -----------
+# 1. ── PARAMÈTRES (adaptables via variables d'environnement) ----------
 # ---------------------------------------------------------------------
 job_id        <- Sys.getenv("SLURM_JOB_ID",        unset = format(Sys.time(), "%Y%m%d%H%M%S"))
 input_pattern <- Sys.getenv("AIS_INPUT_PATTERN",   unset = "~/scratch/AIS_data/*.csv")
@@ -43,33 +43,33 @@ core_config_path <- Sys.getenv("CORE_CONFIG_PATH", unset = "~/scratch/output_V6/
 
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
-cat("  INPUT  : ", input_pattern, "\n")
-cat("  OUTPUT : ", output_dir,     "\n")
-cat("  CONFIG : ", core_config_path, "\n\n")
+cat("📁  INPUT  : ", input_pattern, "\n")
+cat("📁  OUTPUT : ", output_dir,     "\n")
+cat("📋  CONFIG : ", core_config_path, "\n\n")
 
 # ---------------------------------------------------------------------
-# 1.b ── READ STEP 0 CONFIGURATION  ------------------------------------
+# 1.b ── LECTURE CONFIGURATION STEP 0  ----------------------------------
 # ---------------------------------------------------------------------
 if (file.exists(core_config_path)) {
-  cat("  Reading step 0 configuration...\n")
+  cat("🔍  Lecture configuration step 0...\n")
   core_config <- read_yaml(core_config_path)
-
+  
   start_year <- core_config$start_year
   end_year   <- core_config$end_year
   core_ships <- core_config$core_ships
-
-  cat("  Time window :", start_year, "-", end_year, "\n")
-  cat("  Vessels selected :", length(core_ships), "\n")
-  cat("   -", paste(core_ships, collapse = ", "), "\n\n")
-
-  # Validate parameters
+  
+  cat("📅  Fenêtre temporelle :", start_year, "-", end_year, "\n")
+  cat("🚢  Navires sélectionnés :", length(core_ships), "\n")
+  cat("   •", paste(core_ships, collapse = ", "), "\n\n")
+  
+  # Validation des paramètres
   if (is.null(start_year) || is.null(end_year) || is.null(core_ships)) {
-    stop("Incomplete step 0 configuration in", core_config_path)
+    stop("❌  Configuration step 0 incomplète dans", core_config_path)
   }
-
+  
   use_core_filter <- TRUE
 } else {
-  cat("Step 0 configuration not found, processing all data\n")
+  cat("⚠️  Configuration step 0 non trouvée, traitement complet des données\n")
   use_core_filter <- FALSE
   start_year <- NULL
   end_year <- NULL
@@ -77,11 +77,11 @@ if (file.exists(core_config_path)) {
 }
 
 # ---------------------------------------------------------------------
-# 2. ── MMSI → VESSEL NAME MAPPING  -----------------------------------
+# 2. ── MAPPING MMSI → NOM NAVIRE  ------------------------------------
 # ---------------------------------------------------------------------
-# Note: Vasco Da Gama had two MMSIs: 253193000 (Luxembourg, 2013-2019) and 205744000 (Belgium, 2018-2024)
-# Merged to the most recent MMSI: 205744000
-# Note: Goryo 6 Ho (312062000) excluded - corrupted data
+# Note: Vasco Da Gama a eu deux MMSI : 253193000 (Luxembourg, 2013-2019) et 205744000 (Belgique, 2018-2024)
+# On fusionne vers le MMSI le plus récent : 205744000
+# Note: Goryo 6 Ho (312062000) exclu - données corrompues
 mmsi_map <- data.table(
   ssvid = as.character(c(209469000, 210138000, 245508000, 246351000,
             253193000, 205744000, 253373000, 253403000, 253422000,
@@ -90,21 +90,21 @@ mmsi_map <- data.table(
              "Vox Maxima", "Vasco Da Gama", "Vasco Da Gama", "Cristobal Colon",
              "Leiv Eiriksson", "Charles Darwin", "Congo River",
              "Inai Kenanga"),
-  # Reference MMSI (most recent for Vasco Da Gama)
+  # MMSI de référence (le plus récent pour Vasco Da Gama)
   ssvid_ref = as.character(c(209469000, 210138000, 245508000, 246351000,
                 205744000, 205744000, 253373000, 253403000, 253422000,
                 253688000, 533180137))
 )
 setkey(mmsi_map, ssvid)
 
-# Type verification
+# Vérification des types
 stopifnot(is.character(mmsi_map$ssvid))
 stopifnot(is.character(mmsi_map$ssvid_ref))
 
 # ---------------------------------------------------------------------
-# 2.b ── ALIAS → CANONICAL NAME MAPPING  -------------------------------
+# 2.b ── MAPPING ALIAS → NOM CANONIQUE  --------------------------------
 # ---------------------------------------------------------------------
-# Handle name differences between CSV and step 0 configuration
+# Gestion des différences de noms entre CSV et configuration step 0
 alias_map <- data.table(
   alias = c("Ham 318 Sleephopperzuiger", "HAM318",
             "Queen of the netherlands", "Queen Of The Netherlands",
@@ -126,161 +126,161 @@ alias_map <- data.table(
 setkey(alias_map, alias)
 
 # ---------------------------------------------------------------------
-# 3. ── READ DATA (CSV or RDS)  ----------------------------------------
+# 3. ── LECTURE DES DONNÉES (CSV ou RDS)  ------------------------------
 # ---------------------------------------------------------------------
-# Priority: single input file (RDS/CSV) via AIS_INPUT_FILE env var.
-# Fallback: CSV glob pattern.
+# Priorité à un fichier d'entrée unique (RDS/CSV) via la variable d'environnement
+# AIS_INPUT_FILE. Sinon, fallback vers le pattern de CSV.
 
 input_file <- Sys.getenv("AIS_INPUT_FILE", unset = "")
 
 t_read <- system.time({
   if (input_file != "" && file.exists(input_file)) {
-    cat("  Reading input file via AIS_INPUT_FILE:", input_file, "\n")
-
-    # Detect extension to choose the correct reader
+    cat("🔍  Lecture du fichier d'entrée via AIS_INPUT_FILE:", input_file, "\n")
+    
+    # Détection de l'extension pour choisir la bonne fonction de lecture
     file_ext <- tolower(tools::file_ext(input_file))
-
+    
     if (file_ext == "rds") {
       ais_dt <- as.data.table(readRDS(input_file))
     } else if (file_ext == "csv") {
       ais_dt <- fread(input_file, showProgress = FALSE)
     } else {
-      stop("Unsupported file format for AIS_INPUT_FILE: ", file_ext)
+      stop("❌ Format de fichier non supporté pour AIS_INPUT_FILE : ", file_ext)
     }
-
+    
   } else {
-    cat("  AIS_INPUT_FILE not provided or not found. Using CSV pattern:", input_pattern, "\n")
+    cat("🔍  AIS_INPUT_FILE non fourni ou non trouvé. Utilisation du pattern CSV :", input_pattern, "\n")
     csv_files <- Sys.glob(input_pattern)
-
-    if (length(csv_files) == 0) stop("No CSV file found for pattern: ", input_pattern)
-    if (length(csv_files) > 1) cat("  Multiple CSV files detected. Processing first only:", basename(csv_files[1]), "\n")
-
-    cat("   - Reading:", basename(csv_files[1]), "\n")
+    
+    if (length(csv_files) == 0) stop("❌ Aucun fichier CSV trouvé pour le pattern : ", input_pattern)
+    if (length(csv_files) > 1) cat("⚠️  Plusieurs fichiers CSV détectés. Traitement du premier uniquement :", basename(csv_files[1]), "\n")
+    
+    cat("   • Lecture de :", basename(csv_files[1]), "\n")
     ais_dt <- fread(csv_files[1], showProgress = FALSE)
   }
 })
-cat(sprintf("  Read complete: %s rows  |  %.1f s\n",
+cat(sprintf("✅  Lecture terminée : %s lignes  |  %.1f s\n",
             format(nrow(ais_dt), big.mark = " "), t_read[3]))
 
 # ---------------------------------------------------------------------
-# 4. ── COLUMN NORMALISATION  -----------------------------------------
+# 4. ── NORMALISATION COLONNES  ---------------------------------------
 # ---------------------------------------------------------------------
-# a) lowercase names
+# a) noms minuscules
 setnames(ais_dt, tolower(names(ais_dt)))
 
-# b) minimal rename dictionary
+# b) dictionnaire de renommage minimal
 rename_map <- c(lon="Lon", lat="Lat", course="Course", timestamp="Timestamp",
                 speed="Speed", speed_knots="Speed", seg_id="Seg_id",
                 trip_id="Seg_id", navire="Navire")
 common <- intersect(names(rename_map), names(ais_dt))
 setnames(ais_dt, common, rename_map[common])
 
-# c) essential type coercions
+# c) coercions vitales
 num_cols <- c("Lon","Lat","Speed")
 for (cl in intersect(num_cols, names(ais_dt))) set(ais_dt, j = cl, value = as.numeric(ais_dt[[cl]]))
 if ("Timestamp" %chin% names(ais_dt))
   ais_dt[, Timestamp := as.POSIXct(Timestamp, tz = "UTC")]
 
 # ---------------------------------------------------------------------
-# 5. ── CREATE / VALIDATE VESSEL NAME COLUMN  --------------------------
+# 5. ── CRÉATION / VALIDATION DE LA COLONNE NAVIRE  --------------------
 # ---------------------------------------------------------------------
 if (!"Navire" %in% names(ais_dt)) ais_dt[, Navire := NA_character_]
 
-# If ssvid is present, fill in missing names
+# Si des ssvid sont présents, on complète les noms manquants
 if ("ssvid" %chin% names(ais_dt)) {
-  # Convert ssvid type for compatibility
+  # Conversion du type ssvid pour compatibilité
   ais_dt[, ssvid := as.character(ssvid)]
   ais_dt <- merge(ais_dt, mmsi_map, by = "ssvid", all.x = TRUE, suffixes = c("", ".map"))
-
-  # Merge multiple MMSIs to reference MMSI (Vasco Da Gama case)
+  
+  # Fusion des MMSI multiples vers le MMSI de référence (cas Vasco Da Gama)
   ais_dt[!is.na(ssvid_ref), ssvid := ssvid_ref]
-  ais_dt[, ssvid_ref := NULL]  # clean up temporary column
-
+  ais_dt[, ssvid_ref := NULL]  # nettoyer la colonne temporaire
+  
   ais_dt[is.na(Navire), Navire := Navire.map]
   ais_dt[, Navire.map := NULL]
 }
 
-# Last-resort fallback: generic name
+# fallback ultime : nom générique
 ais_dt[is.na(Navire) | Navire == "", Navire := paste0("unknown_", .I)]
 
 # ---------------------------------------------------------------------
-# 5.a ── ALIAS-BASED NAME NORMALISATION  ------------------------------
+# 5.a ── NORMALISATION DES NOMS VIA ALIAS  ----------------------------
 # ---------------------------------------------------------------------
-# Apply alias mapping to harmonise vessel names with step 0
+# Application du mapping d'alias pour harmoniser les noms avec step 0
 if (use_core_filter) {
-  cat("  Normalising vessel names...\n")
-
+  cat("🔍  Normalisation des noms de navires...\n")
+  
   tryCatch({
-    # Count before normalisation
+    # Comptage avant normalisation
     noms_avant <- unique(ais_dt$Navire)
-    cat("   - Names before normalisation:", paste(noms_avant, collapse = ", "), "\n")
-
-    # Apply alias mapping (safe merge version)
+    cat("   • Noms avant normalisation :", paste(noms_avant, collapse = ", "), "\n")
+    
+    # Application du mapping d'alias (version sécurisée)
     ais_dt <- merge(ais_dt, alias_map, by.x = "Navire", by.y = "alias", all.x = TRUE)
-
-    # Replace names that have a canonical alias
+    
+    # Remplacer les noms qui ont un alias canonique
     ais_dt[!is.na(canonical), Navire := canonical]
-
-    # Drop the temporary column
+    
+    # Supprimer la colonne temporaire
     if ("canonical" %in% names(ais_dt)) {
       ais_dt[, canonical := NULL]
     }
-
-    # Count after normalisation
+    
+    # Comptage après normalisation
     noms_apres <- unique(ais_dt$Navire)
-    cat("   - Names after normalisation:", paste(noms_apres, collapse = ", "), "\n")
-
+    cat("   • Noms après normalisation :", paste(noms_apres, collapse = ", "), "\n")
+    
     if (length(noms_avant) != length(noms_apres)) {
-      cat("  Normalised:", length(noms_avant), "->", length(noms_apres), "unique names\n")
+      cat("✅  Normalisation :", length(noms_avant), "→", length(noms_apres), "noms uniques\n")
     } else {
-      cat("  No name changes required\n")
+      cat("ℹ️  Aucun changement de noms nécessaire\n")
     }
   }, error = function(e) {
-    cat("  Normalisation error:", e$message, "\n")
-    cat("   - Available columns:", paste(names(ais_dt), collapse = ", "), "\n")
-    cat("   - alias_map size:", nrow(alias_map), "rows\n")
+    cat("❌  Erreur lors de la normalisation :", e$message, "\n")
+    cat("   • Colonnes disponibles :", paste(names(ais_dt), collapse = ", "), "\n")
+    cat("   • Taille alias_map :", nrow(alias_map), "lignes\n")
     stop(e)
   })
 }
 
 # ---------------------------------------------------------------------
-# 5.b ── FILTER ACCORDING TO STEP 0 CONFIGURATION  --------------------
+# 5.b ── FILTRAGE SELON CONFIGURATION STEP 0  ---------------------------
 # ---------------------------------------------------------------------
 if (use_core_filter) {
-  cat("  Applying step 0 filters...\n")
-
-  # Add year column for temporal filtering
+  cat("🔍  Application des filtres step 0...\n")
+  
+  # Ajout de la colonne année pour le filtrage temporel
   ais_dt[, Annee := year(Timestamp)]
-
-  # Filter: vessels AND time period
+  
+  # Filtrage : navires ET période
   n_before <- nrow(ais_dt)
   ais_dt <- ais_dt[Navire %in% core_ships & Annee >= start_year & Annee <= end_year]
   n_after <- nrow(ais_dt)
-
-  cat(sprintf("  Filter: %s -> %s rows (%.1f%% retained)\n",
+  
+  cat(sprintf("📊  Filtrage : %s → %s lignes (%.1f%% conservées)\n",
               format(n_before, big.mark = " "),
               format(n_after, big.mark = " "),
               round(100 * n_after / n_before, 1)))
-
-  # Verify that all requested vessels are present
+  
+  # Vérification que tous les navires demandés sont présents
   navires_presents <- unique(ais_dt$Navire)
   navires_manquants <- setdiff(core_ships, navires_presents)
-
+  
   if (length(navires_manquants) > 0) {
-    cat("  Missing vessels in window:", paste(navires_manquants, collapse = ", "), "\n")
+    cat("⚠️  Navires manquants dans la fenêtre :", paste(navires_manquants, collapse = ", "), "\n")
   }
-
-  cat("  Filter complete\n\n")
+  
+  cat("✅  Filtrage terminé\n\n")
 } else {
-  cat("  No filters applied (processing all data)\n\n")
+  cat("ℹ️  Aucun filtre appliqué (traitement complet)\n\n")
 }
 
 # ---------------------------------------------------------------------
-# 6. ── SPLIT BY VESSEL  -----------------------------------------------
+# 6. ── FRACTIONNEMENT PAR NAVIRE  ------------------------------------
 # ---------------------------------------------------------------------
-# Stable order: descending size to monitor progress
+# ordre stable : size desc pour visualiser la progression
 navires <- ais_dt[, .N, by = Navire][order(-N)]
-cat("  Vessels detected:", navires[,.N], "\n\n")
+cat("🚢  Navires détectés :", navires[,.N], "\n\n")
 
 meta <- navires[, `:=`(file_path = character(.N), split_time = Sys.time())]
 
@@ -294,12 +294,12 @@ for (nav in navires$Navire) {
   safe_name <- gsub("[^A-Za-z0-9_-]", "_", nav)
   
   if (use_qs) {
-    # QS format (optimal)
+    # Format QS (optimal)
     out_file  <- file.path(output_dir,
                            sprintf("navire_%02d_%s.qs", i, safe_name))
     qs::qsave(dt_nav, out_file, preset = "custom",
-              algorithm = "zstd",         # fast & good ratio
-              compress_level = 6)         # ~equivalent to fst compress=85
+              algorithm = "zstd",         # rapide & bon ratio
+              preset_compression = 6)     # ~ équiv. fst compress=85
   } else {
     # Format RDS fallback
   out_file  <- file.path(output_dir,
@@ -315,24 +315,24 @@ for (nav in navires$Navire) {
 close(pb)
 
 # ---------------------------------------------------------------------
-# 7. ── EXPORT METADATA & INTEGRITY CHECK  ----------------------------
+# 7. ── EXPORT MÉTADONNÉES & CONTRÔLE INTÉGRITÉ  ----------------------
 # ---------------------------------------------------------------------
 meta_file <- file.path(output_dir, "navires_metadata.csv")
 fwrite(meta, meta_file)
 
 if (sum(meta$n_observations) != nrow(ais_dt))
-  stop("Integrity check FAILED: row count mismatch after split!")
-cat("\n  Integrity OK:", sum(meta$n_observations), "rows verified.\n")
+  stop("❌  Intégrité KO : nombre de lignes différent après split !")
+cat("\n✅  Intégrité OK : ", sum(meta$n_observations), " lignes vérifiées.\n")
 
 # ---------------------------------------------------------------------
-# 8. ── SUMMARY --------------------------------------------------------
+# 8. ── RÉCAPITULATIF --------------------------------------------------
 # ---------------------------------------------------------------------
-cat("\n  SUMMARY -----------------------------------------------------------\n")
+cat("\n📊  RÉCAP ---------------------------------------------------------\n")
 print(meta[, .(Navire, n_observations, file_path)])
 
 total_size <- sum(file.info(meta$file_path)$size) / 1024^2
 format_used <- if(use_qs) "qs" else "rds"
-cat(sprintf("\n  %d .%s files (%.1f MB total) written to: %s\n",
+cat(sprintf("\n💾  %d fichiers .%s (%.1f MB cumulés) écrits dans : %s\n",
             nrow(meta), format_used, total_size, output_dir))
 
-cat("\n  STEP-1 completed successfully:", format(Sys.time()), "\n")
+cat("\n🏁  STEP-1 terminé avec succès :", format(Sys.time()), "\n")

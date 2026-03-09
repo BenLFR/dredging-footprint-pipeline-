@@ -1,85 +1,85 @@
 #!/usr/bin/env Rscript
 # ============================================================================
-# STEP-3  ─  MERGE  +  CLEAN  +  GMM / GRID-SEARCH   (pipeline  V6)
-#   • Runs on a large node (>= 8 CPU, 32 GB RAM)
-#   • Reassembles all *_clean.rds files produced by Step-2
-#   • Completes the pipeline: isolated spikes, context percentiles, DBSCAN,
-#     stop-GMM, smoothing, HMM, grid-search, final save.
+# STEP-3  ─  FUSION  +  NETTOYAGE  +  GMM / GRID-SEARCH   (pipeline  V6)
+#   • S'exécute sur un gros nœud (≥ 8 CPU, 32 Go RAM)
+#   • Ré-assemble tous les *_clean.rds produits à Step-2
+#   • Termine le pipeline : pics isolés, context percentiles, DBSCAN,
+#     stop-GMM, lissage, HMM, grid-search, sauvegarde finale.
 # ============================================================================
 
 # =============================================================================
-# STEP 3: MERGE AND GRID SEARCH - WITH CHECK-POINTING SYSTEM
+# STEP 3: FUSION ET GRID SEARCH - AVEC SYSTÈME DE CHECK-POINTING
 # =============================================================================
 
-# Read environment variables
+# Récupération des variables d'environnement
 split_job_id <- Sys.getenv("SPLIT_JOB_ID")
 results_dir <- Sys.getenv("RESULTS_DIR")
 cores <- as.integer(Sys.getenv("SLURM_CPUS_PER_TASK", "4"))
 
-# DRY-RUN MODE DETECTION
+# DÉTECTION DU MODE DRY-RUN
 is_dry <- Sys.getenv("DRY_RUN", "0") == "1"
 if (is_dry) {
-  cat(" === MODE DRY-RUN ACTIVÉ ===\n")
-  cat(" Test sur échantillon réduit - Garde-fous assouplis\n")
+  cat("⚡ === MODE DRY-RUN ACTIVÉ ===\n")
+  cat("📝 Test sur échantillon réduit - Garde-fous assouplis\n")
 }
 
-cat(" === ÉTAPE 3: FUSION ET GRID SEARCH (AVEC CHECK-POINTING) ===\n")
-cat(" Job fractionnement:", split_job_id, "\n")
-cat(" Dossier résultats:", results_dir, "\n")
-cat("  Cores:", cores, "\n")
-cat("  Début:", format(Sys.time()), "\n\n")
+cat("🚀 === ÉTAPE 3: FUSION ET GRID SEARCH (AVEC CHECK-POINTING) ===\n")
+cat("📦 Job fractionnement:", split_job_id, "\n")
+cat("📁 Dossier résultats:", results_dir, "\n")
+cat("🖥️  Cores:", cores, "\n")
+cat("⏱️  Début:", format(Sys.time()), "\n\n")
 
-# Path configuration (dynamic based on home directory)
+# Configuration des chemins (dynamique selon l'utilisateur)
 home_dir <- path.expand("~")
 output_dir <- file.path(home_dir, "scratch/output_V6")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
-# Check-pointing system for fast restarts
+# Système de check-pointing pour reprise rapide
 chk_dir <- file.path(output_dir, "checkpoints")
 dir.create(chk_dir, showWarnings = FALSE, recursive = TRUE)
 
-# Safety: remove corrupted merge checkpoint to force clean remerge
+# SÉCURISATION : suppression du checkpoint pollué pour forcer la refusion propre
 unlink(file.path(chk_dir, "stage3A_fusion.rds"))
 
-# Remove stale checkpoints to force recomputation
+# SUPPRESSION DES CHECKPOINTS FAUTIFS POUR FORCER LE RECALCUL
 gmm_checkpoint <- file.path(chk_dir, "stage3C_gmm.rds")
 dbscan_checkpoint <- file.path(chk_dir, "stage3B_dbscan.rds")
 
 if (file.exists(gmm_checkpoint)) {
-  cat("  Suppression du checkpoint GMM fautif pour forcer le recalcul\n")
+  cat("🗑️  Suppression du checkpoint GMM fautif pour forcer le recalcul\n")
   unlink(gmm_checkpoint)
 }
 
 if (file.exists(dbscan_checkpoint)) {
-  cat("  Suppression du checkpoint DBSCAN fautif pour forcer le recalcul\n")
+  cat("🗑️  Suppression du checkpoint DBSCAN fautif pour forcer le recalcul\n")
   unlink(dbscan_checkpoint)
 }
 
 checkpoint <- function(file, expr, force_recompute = FALSE) {
   file <- file.path(chk_dir, file)
   if (!force_recompute && file.exists(file)) {
-    cat("  Reload checkpoint:", basename(file), "\n")
+    cat("🔄  Reload checkpoint:", basename(file), "\n")
     obj <- readRDS(file)
-    # Memory cleanup after reload
+    # Nettoyage mémoire après rechargement
     gc()
     obj
   } else {
-    cat("Compute & save checkpoint:", basename(file), "\n")
+    cat("⚙️  Compute & save checkpoint:", basename(file), "\n")
     obj <- force(expr)
     saveRDS(obj, file, compress = "xz")
-    cat("Checkpoint saved:", basename(file), "\n")
-    # Memory cleanup after save
+    cat("✅ Checkpoint sauvegardé:", basename(file), "\n")
+    # Nettoyage mémoire après sauvegarde
     gc()
     obj
   }
 }
 
-# Determine results directory
+# Détermination du dossier de résultats
 if (results_dir != "" && dir.exists(results_dir)) {
   expected_dir <- results_dir
-  cat(" Utilisation du dossier spécifié:", expected_dir, "\n")
+  cat("✅ Utilisation du dossier spécifié:", expected_dir, "\n")
 } else {
-  cat(" Auto-détection du dossier de résultats...\n")
+  cat("🔍 Auto-détection du dossier de résultats...\n")
   
   possible_paths <- c(
     file.path(home_dir, "scratch", paste0("ais_results_", split_job_id)),
@@ -91,70 +91,70 @@ if (results_dir != "" && dir.exists(results_dir)) {
   for (path in possible_paths) {
     if (dir.exists(path)) {
       expected_dir <- path
-      cat(" Dossier trouvé:", expected_dir, "\n")
+      cat("✅ Dossier trouvé:", expected_dir, "\n")
       break
     } else {
-      cat("    Non trouvé:", path, "\n")
+      cat("   ❌ Non trouvé:", path, "\n")
     }
   }
   
   if (is.null(expected_dir)) {
-    stop(" ERREUR: Aucun dossier de résultats trouvé")
+    stop("❌ ERREUR: Aucun dossier de résultats trouvé")
   }
 }
 
-# Input file verification
+# Vérification des fichiers d'entrée
 clean_files <- list.files(expected_dir, pattern = ".*_clean\\.rds$", full.names = TRUE)
 if (length(clean_files) == 0) {
-  stop(" ERREUR: Aucun fichier *_clean.rds trouvé dans ", expected_dir)
+  stop("❌ ERREUR: Aucun fichier *_clean.rds trouvé dans ", expected_dir)
 }
 
-cat(" Fichiers d'entrée vérifiés:", length(clean_files), "fichiers *_clean.rds trouvés\n\n")
+cat("✅ Fichiers d'entrée vérifiés:", length(clean_files), "fichiers *_clean.rds trouvés\n\n")
 
-cat("\n  STEP-3  |  Fusion & Modélisation  |  début :", format(Sys.time()), "\n\n")
+cat("\n🏁  STEP-3  |  Fusion & Modélisation  |  début :", format(Sys.time()), "\n\n")
 
-# CRITICAL R CONFIGURATION - BEFORE LOADING PACKAGES
-# Prepend user library path without overwriting bash config
+# CONFIGURATION R CRITIQUE - AVANT CHARGEMENT PACKAGES
+# CORRECTION: Ajouter les chemins sans écraser la config du bash
 user_libs <- c("~/R/library")
 .libPaths(unique(c(user_libs, .libPaths())))
-cat(" R cherchera les packages dans :", paste(.libPaths(), collapse = " | "), "\n")
+cat("✅ R cherchera les packages dans :", paste(.libPaths(), collapse = " | "), "\n")
 
-# DIAGNOSTIC DES PACKAGES - Check that all required packages are available
-cat("\n DIAGNOSTIC DES PACKAGES REQUIS:\n")
+# DIAGNOSTIC DES PACKAGES - Vérification que tous les packages nécessaires sont disponibles
+cat("\n🔍 DIAGNOSTIC DES PACKAGES REQUIS:\n")
 needed <- c("glmnet", "doParallel", "pROC", "data.table", "dbscan", "mclust", "yaml", "geosphere", "lubridate", "zoo", "solitude", "depmixS4")
 for (p in needed) {
-  status <- if(requireNamespace(p, quietly=TRUE)) " OK" else " MANQUANT"
+  status <- if(requireNamespace(p, quietly=TRUE)) "✅ OK" else "❌ MANQUANT"
   cat(sprintf("   %-12s : %s\n", p, status))
 }
 cat("\n")
 
 # --------------------------------------------------------------------------
-# 1. ── SLURM / ENV PARAMETERS --------------------------------------------
+# 1. ── PARAMÈTRES SLURM / ENV --------------------------------------------
 # --------------------------------------------------------------------------
-split_id    <- split_job_id  # same ID as Step-1
+split_id    <- split_job_id  # même ID que la Step-1
 
-# Use detection logic already defined above
+# Utilisation de la logique de détection déjà définie plus haut
 split_dir <- expected_dir
 
-# FIX: Explicit file verification before continuing
+# CORRECTION: Vérification explicite des fichiers avant de continuer
 clean_files_check <- list.files(split_dir, pattern = "_clean\\.rds$", full.names = TRUE)
 if (!length(clean_files_check)) {
-  stop(" Aucun fichier *_clean.rds trouvé dans ", split_dir, "\n",
+  stop("❌ Aucun fichier *_clean.rds trouvé dans ", split_dir, "\n",
        "   Fichiers présents dans le répertoire:\n",
        paste("   -", list.files(split_dir, pattern = "\\.rds$"), collapse = "\n"),
        "\n   Vérifiez que l'étape 2 s'est bien terminée.")
 }
 
-cat(" Fichiers *_clean.rds trouvés:", length(clean_files_check), "\n")
+cat("✅ Fichiers *_clean.rds trouvés:", length(clean_files_check), "\n")
 for (f in head(clean_files_check, 3)) cat("   •", basename(f), "\n")
 if (length(clean_files_check) > 3) cat("   ... et", length(clean_files_check) - 3, "autres\n")
 
-# Create output directory (output_dir already defined above)
+# Création du répertoire de sortie (output_dir déjà défini plus haut)
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
-cat("  Source :", split_dir, "\n")
-cat("  Sortie :", output_dir, "\n")
-cat("  Checkpoints :", chk_dir, "\n\n")
+cat("💾  Source :", split_dir, "\n")
+cat("💾  Sortie :", output_dir, "\n")
+cat("💾  Checkpoints :", chk_dir, "\n\n")
 
 # --------------------------------------------------------------------------
 # 2. ── CHARGEMENT PACKAGES  +  CONFIG CPU ----------------------------------
@@ -162,7 +162,7 @@ cat("  Checkpoints :", chk_dir, "\n\n")
 suppressPackageStartupMessages({
   library(data.table)
   library(lubridate)
-  library(solitude)    # already loaded but required to re-read config
+  library(solitude)    # déjà utilisé mais requis pour re-charger config
   library(zoo)         # rolling
   library(dbscan)
   library(mclust)
@@ -179,12 +179,12 @@ options(mc.cores = cores)
 Sys.setenv(OMP_NUM_THREADS      = cores,
            OPENBLAS_NUM_THREADS = cores)
 
-cat("  Packages chargés |", cores, "threads data.table\n")
+cat("✅  Packages chargés |", cores, "threads data.table\n")
 
 # --------------------------------------------------------------------------
-# STRICT FILTER CONTROL FUNCTION - RELAXED IN DRY-RUN
+# FONCTION DE CONTRÔLE STRICT DES FILTRES - ASSOUPLIE EN DRY-RUN
 # --------------------------------------------------------------------------
-# Harmonised constants to prevent inconsistencies
+# Constantes harmonisées pour éviter les incohérences
 MIN_LEFT_DRY <- 1000
 MIN_LEFT_PROD <- 20000
 
@@ -222,9 +222,9 @@ check_filter <- function(step_name, n_before, n_after,
 # --------------------------------------------------------------------------
 # 3. ── CONFIGURATION  ------------------------------------------------------
 # --------------------------------------------------------------------------
-cat("  YAML chargé\n")
+cat("✅  YAML chargé\n")
 
-# Default values if YAML is incomplete
+# Valeurs par défaut si le YAML est incomplet
 default_config <- list(
   contamination_rate = 0.02,
   if_num_trees = 25,
@@ -239,11 +239,11 @@ default_config <- list(
   max_dredging_speed = 4
 )
 
-# Lecture du YAML avec gestion des errors
+# Lecture du YAML avec gestion des erreurs
 tryCatch({
   cfg <- yaml::read_yaml("~/R_scripts/configuration/outlier_config_V6.yaml")
   
-  # Extract parameters from nested sections
+  # Extraction des paramètres depuis les sections imbriquées
   if (!is.null(cfg$isolation_forest)) {
     cfg$contamination_rate <- cfg$isolation_forest$contamination_rate
     cfg$if_num_trees <- cfg$isolation_forest$num_trees
@@ -267,71 +267,71 @@ tryCatch({
     cfg$max_dredging_speed <- cfg$physics$max_dredging_speed
   }
   
-  # Check and fill missing parameters
+  # Vérification et complétion des paramètres manquants
   for (param in names(default_config)) {
     if (is.null(cfg[[param]])) {
       cfg[[param]] <- default_config[[param]]
-      cat("  Paramètre manquant dans YAML:", param, "- Utilisation valeur par défaut:", default_config[[param]], "\n")
+      cat("⚠️  Paramètre manquant dans YAML:", param, "- Utilisation valeur par défaut:", default_config[[param]], "\n")
     }
   }
 }, error = function(e) {
-  cat("  Erreur lecture YAML - Utilisation valeurs par défaut\n")
+  cat("⚠️  Erreur lecture YAML - Utilisation valeurs par défaut\n")
   cfg <<- default_config
 })
 
 # --------------------------------------------------------------------------
-# 4. ── DATA MERGE  -------------------------------------------------
+# 4. ── FUSION DES DONNÉES  -------------------------------------------------
 # --------------------------------------------------------------------------
-# CHECKPOINT 1: Merge data
+# CHECK-POINT 1: Fusion des données
 ais <- checkpoint("stage3A_fusion.rds", {
-cat("  Fichiers trouvés :", length(clean_files), "\n")
+cat("🔍  Fichiers trouvés :", length(clean_files), "\n")
 for (f in head(clean_files, 5)) cat("   •", basename(f), "\n")
 if (length(clean_files) > 5) cat("   …\n")
 
 t_read <- system.time({
-  # parallel read (capped at 4 workers - IO-safe)
+  # lecture en parallèle (limite 4 workers → suffisamment IO-safe)
   ais_list <- mclapply(clean_files, readRDS, mc.cores = min(cores, 4))
   ais      <- rbindlist(ais_list, fill = TRUE)
 })
 rm(ais_list); gc()
-cat(sprintf("  Fusion : %s lignes | %.1f s\n\n",
+cat(sprintf("✅  Fusion : %s lignes | %.1f s\n\n",
             format(nrow(ais), big.mark = " "), t_read[3]))
   
   ais
 })
 
-# FIX: Define n_total immediately after merge
+# CORRECTIF : Définir n_total juste après la fusion
 n_total <- nrow(ais)
 
-# CRITICAL CHECK: abort if rows without Annee are present after merge
+# CONTRÔLE CRITIQUE : arrêt immédiat si des lignes sans Annee sont présentes après la fusion
 nb_na_year <- ais[is.na(Annee), .N]
 if (nb_na_year > 0) {
   stop(nb_na_year, " lignes sans Annee après fusion – checkpoint non sauvegardé.")
 }
 
 # --------------------------------------------------------------------------
-# CONFIGURABLE DRY-RUN: DRY_RUN enables it, DRYRUN_N sets sample size
+# DRY-RUN PARAMÉTRABLE : DRY_RUN active, DRYRUN_N fixe la taille
 # --------------------------------------------------------------------------
 DRYRUN_N <- as.integer(Sys.getenv("DRYRUN_N", "0"))
 if (is_dry && DRYRUN_N > 0 && nrow(ais) > DRYRUN_N) {
   set.seed(42)  # reproductible
   
-  # Stratified sample by vessel to preserve representation
+  # Échantillonnage stratifié par navire pour garder la représentation
   ais <- ais[, .SD[sample(.N, min(.N, ceiling(DRYRUN_N * .N / n_total)))], by = Navire]
   
   cat(sprintf("🧪 Dry-run : subset de %d lignes (%.1f %% du total initial)\n",
               nrow(ais), 100 * nrow(ais) / n_total))
   
-  # Update total count for diagnostics
+  # Mise à jour du total pour les diagnostics
   n_total <- nrow(ais)
 }
 
 # --------------------------------------------------------------------------
-# 4b. ── COLUMN TYPE VERIFICATION AND CORRECTION ---------------------------
+# 4 bis. ── VÉRIFICATION ET CORRECTION DES TYPES DE COLONNES ----------------
 # --------------------------------------------------------------------------
-cat("  Vérification des types de colonnes...\n")
+cat("🔧  Vérification des types de colonnes...\n")
 
-# Critical type verification
+# Vérification des types critiques
 cat(" Types des colonnes critiques:\n")
 for (col in c("Navire", "ssvid", "Seg_id", "Annee")) {
   if (col %in% names(ais)) {
@@ -339,11 +339,11 @@ for (col in c("Navire", "ssvid", "Seg_id", "Annee")) {
   }
 }
 
-# FIX: Harmonise types to prevent join errors
+# CORRECTION: Harmonisation des types pour éviter les erreurs de jointure
 if ("Navire" %in% names(ais)) {
-  # Ensure Vessel is character type
+  # S'assurer que Navire est de type caractère
   if (!is.character(ais$Navire)) {
-    cat("  Conversion de Navire en caractère\n")
+    cat("⚠️  Conversion de Navire en caractère\n")
     ais[, Navire := as.character(Navire)]
   }
 }
@@ -351,15 +351,15 @@ if ("Navire" %in% names(ais)) {
 if ("ssvid" %in% names(ais)) {
   # S'assurer que ssvid est de type entier
   if (!is.integer(ais$ssvid) && !is.numeric(ais$ssvid)) {
-    cat("  Conversion de ssvid en entier\n")
+    cat("⚠️  Conversion de ssvid en entier\n")
     ais[, ssvid := as.integer(ssvid)]
   }
 }
 
 if ("Seg_id" %in% names(ais)) {
-  # Ensure Seg_id is character type
+  # S'assurer que Seg_id est de type caractère
   if (!is.character(ais$Seg_id)) {
-    cat("  Conversion de Seg_id en caractère\n")
+    cat("⚠️  Conversion de Seg_id en caractère\n")
     ais[, Seg_id := as.character(Seg_id)]
   }
 }
@@ -367,57 +367,57 @@ if ("Seg_id" %in% names(ais)) {
 if ("Annee" %in% names(ais)) {
   # S'assurer que Annee est de type entier
   if (!is.integer(ais$Annee) && !is.numeric(ais$Annee)) {
-    cat("  Conversion de Annee en entier\n")
+    cat("⚠️  Conversion de Annee en entier\n")
     ais[, Annee := as.integer(Annee)]
   }
 }
 
-# ADDITIONAL CRITICAL CHECKS
-cat(" Vérifications supplémentaires critiques...\n")
+# VÉRIFICATIONS SUPPLÉMENTAIRES CRITIQUES
+cat("🔍 Vérifications supplémentaires critiques...\n")
 
-# 1. Verify is_stop column (required by DBSCAN)
+# 1. Vérification de la colonne is_stop (utilisée dans DBSCAN)
 if (!"is_stop" %chin% names(ais)) {
-  stop(" Colonne 'is_stop' manquante - Vérifier que la Step-2 s'est bien terminée")
+  stop("❌ Colonne 'is_stop' manquante - Vérifier que la Step-2 s'est bien terminée")
 } else {
-  cat(" Colonne 'is_stop' présente\n")
+  cat("✅ Colonne 'is_stop' présente\n")
 }
 
-# 2. Verify geographic columns (required by DBSCAN)
+# 2. Vérification des colonnes géographiques (utilisées dans DBSCAN)
 geo_cols <- c("Lon", "Lat", "Course", "Speed")
 missing_geo <- geo_cols[!geo_cols %chin% names(ais)]
 if (length(missing_geo) > 0) {
-  stop(" Colonnes géographiques manquantes: ", paste(missing_geo, collapse = ", "))
+  stop("❌ Colonnes géographiques manquantes: ", paste(missing_geo, collapse = ", "))
 } else {
-  cat(" Colonnes géographiques présentes\n")
-  # Convert to numeric to avoid type errors
+  cat("✅ Colonnes géographiques présentes\n")
+  # Conversion en numeric pour éviter les problèmes
   ais[, c("Lon", "Lat", "Course", "Speed") := lapply(.SD, as.numeric), .SDcols = c("Lon", "Lat", "Course", "Speed")]
-  cat(" Colonnes géographiques converties en numeric\n")
+  cat("✅ Colonnes géographiques converties en numeric\n")
 }
 
-# 3. Check for duplicate (Seg_id, Timestamp)
+# 3. Vérification des doublons (Seg_id, Timestamp)
 if (anyDuplicated(ais, by = c("Seg_id", "Timestamp"))) {
-  warning("  Doublons détectés dans (Seg_id, Timestamp) - Suppression...")
+  warning("⚠️  Doublons détectés dans (Seg_id, Timestamp) - Suppression...")
   ais <- unique(ais, by = c("Seg_id", "Timestamp"))
-  cat(" Doublons supprimés\n")
+  cat("✅ Doublons supprimés\n")
 } else {
-  cat(" Aucun doublon détecté\n")
+  cat("✅ Aucun doublon détecté\n")
 }
 
-# 4. Check available memory
+# 4. Vérification de la mémoire disponible
 mem_usage <- object.size(ais) / 1024^3  # GB
-cat(sprintf(" Utilisation mémoire: %.2f GB\n", mem_usage))
+cat(sprintf("📊 Utilisation mémoire: %.2f GB\n", mem_usage))
 
 if (mem_usage > 50) {
-  warning("  Utilisation mémoire élevée: ", round(mem_usage, 1), " GB")
+  warning("⚠️  Utilisation mémoire élevée: ", round(mem_usage, 1), " GB")
 }
 
-cat(" Types de colonnes vérifiés et corrigés\n\n")
+cat("✅ Types de colonnes vérifiés et corrigés\n\n")
 
 # --------------------------------------------------------------------------
-# STRICT ROW-COUNT CONTROL - ABORT ON MISMATCH
+# CONTRÔLE STRICT DES EFFECTIFS - ARRÊT EN CAS DE PROBLÈME
 # --------------------------------------------------------------------------
 n_total <- nrow(ais)  # Effectif initial
-cat(" === CONTRÔLE STRICT DES EFFECTIFS ===\n")
+cat("📊 === CONTRÔLE STRICT DES EFFECTIFS ===\n")
 cat(sprintf("📈 Nombre de points au début: %d\n", n_total))
 
 # --------------------------------------------------------------------------
@@ -434,7 +434,7 @@ if ("outlier_IF" %chin% names(ais)) {
 # --------------------------------------------------------------------------
 # 6. ── FONCTIONS UTILITAIRES (reprise du V6 complet) -----------------------
 # --------------------------------------------------------------------------
-roll_MAD5 <- function(x) {                # rolling median & MAD, window 5
+roll_MAD5 <- function(x) {                # médians & MAD fenêtrées 5
   med <- zoo::rollapplyr(x, 5, median, fill = NA, align = "center")
   q25 <- zoo::rollapplyr(x, 5, quantile, probs = .25, fill = NA, align = "center")
   q75 <- zoo::rollapplyr(x, 5, quantile, probs = .75, fill = NA, align = "center")
@@ -455,9 +455,9 @@ detect_spikes <- function(speed, spike_factor = 5, min_iso = 2) {
   cand              # retour implicite (plus de `return()`)
 }
 
-# DBSCAN helpers - FIX P0.2: Projection in metres + kNNdist (avoids O(n^2))
+# DBSCAN helpers - FIX P0.2: Projection en mètres + kNNdist (évite O(n²))
 to_xy_m <- function(lon, lat) {
-  # Simple projection: (lon, lat) -> (x, y) in metres
+  # Projection simple: coordonnées (lon, lat) → (x, y) en mètres
   lat0 <- mean(lat, na.rm = TRUE) * pi / 180
   x <- lon * 111320 * cos(lat0)
   y <- lat * 110574
@@ -465,12 +465,12 @@ to_xy_m <- function(lon, lat) {
 }
 
 auto_eps_m <- function(xy, k = 4) {
-  # Compute eps in metres via kNNdist (O(n log n) instead of O(n^2))
-  # FIX: k_eff to avoid crash if n <= k
+  # Calcul eps en mètres via kNNdist (O(n log n) au lieu de O(n²))
+  # FIX: k_eff pour éviter crash si n <= k
   n <- nrow(xy)
   k_eff <- min(k, max(1, n - 1))
   d <- dbscan::kNNdist(xy, k = k_eff)
-  # Minimum threshold 200 m, else 1% of median
+  # Seuil minimum de 200m, sinon 1% de la médiane
   pmax(200, 0.01 * median(d, na.rm = TRUE))
 }
 
@@ -496,7 +496,7 @@ smooth_transition <- function(lbl, spd, cost, thr = 3,
 # --------------------------------------------------------------------------
 # 7. ── PICS TEMPORELS  (Step-4 du pipeline) -------------------------------
 # --------------------------------------------------------------------------
-cat("  Détection pics temporels isolés…\n")
+cat("⏱️  Détection pics temporels isolés…\n")
 n_before_spike <- nrow(ais)
 ais[, outlier_spike := detect_spikes(Speed,
                         spike_factor = cfg$spike_factor,
@@ -507,52 +507,52 @@ check_filter("Filtre Spikes", n_before_spike, nrow(ais))
 ais[, outlier_spike := NULL]
 
 # --------------------------------------------------------------------------
-# 8. ── CONTEXTUAL PERCENTILES - REMOVED ------------------------
+# 8. ── PERCENTILES CONTEXTUELS  (Step-5) - SUPPRIMÉ ------------------------
 # --------------------------------------------------------------------------
-# Section removed to simplify the pipeline
-# Contextual percentiles are not used in subsequent steps
-# (DBSCAN, GMM, Grid-search) and can be removed without impact
+# Section supprimée pour simplifier le pipeline
+# Les percentiles contextuels ne sont pas utilisés dans les étapes suivantes
+# (DBSCAN, GMM, Grid-search) et peuvent être retirés sans impact
 
 # --------------------------------------------------------------------------
-# 9. ── SPATIAL STOP DETECTION (DBSCAN) ------------------------------
+# 9. ── DÉTECTION DES ARRÊTS SPATIAUX (DBSCAN) ------------------------------
 # --------------------------------------------------------------------------
-# CHECKPOINT 2: DBSCAN complete
+# CHECK-POINT 2: DBSCAN terminé
 ais <- checkpoint("stage3B_dbscan.rds", {
-cat("  Détection des arrêts spatiaux par DBSCAN...\n")
+cat("🔍  Détection des arrêts spatiaux par DBSCAN...\n")
 
-# OPTIMISATION: Protection contre les petits vessels et approche plus robuste
+# OPTIMISATION: Protection contre les petits navires et approche plus robuste
 ais[, stop_cluster := NA_integer_]
 
-# FIX: Count with Lon AND Lat filter (avoids skipping whole vessel for 1 NA)
+# FIX: Comptage avec filtre Lon ET Lat (évite de skip tout un navire pour 1 NA)
 stop_counts <- ais[is_stop == TRUE & !is.na(Lon) & !is.na(Lat), .N, by = .(Navire, Annee)]
 stop_counts <- stop_counts[N >= 4]  # Seulement les navires avec suffisamment de points
 
 if (nrow(stop_counts) > 0) {
-  cat(" Traitement DBSCAN pour", nrow(stop_counts), "combinaisons navire/année\n")
+  cat("📊 Traitement DBSCAN pour", nrow(stop_counts), "combinaisons navire/année\n")
 
   for (i in 1:nrow(stop_counts)) {
     navire <- stop_counts$Navire[i]
     annee <- stop_counts$Annee[i]
 
-    # FIX: Selection via .I for bulletproof assignment (guaranteed alignment)
+    # FIX: Sélection via .I pour assignation bulletproof (alignement garanti)
     idx <- ais[Navire == navire & Annee == annee & is_stop == TRUE &
                !is.na(Lon) & !is.na(Lat), which = TRUE]
     arr <- ais[idx]
 
     if (length(idx) >= 4) {
-      # PROTECTION: Check de la variance des coordata
+      # PROTECTION: Vérification de la variance des coordonnées
       if (var(arr$Lon, na.rm = TRUE) < 1e-8 || var(arr$Lat, na.rm = TRUE) < 1e-8) {
-        cat("  Variance insuffisante pour", navire, annee, "- Skipping\n")
+        cat("⚠️  Variance insuffisante pour", navire, annee, "- Skipping\n")
         next
       }
 
       tryCatch({
-        # FIX P0.2: Projection in metres (metric consistency + stable eps)
+        # FIX P0.2: Projection en mètres (cohérence métrique + eps stable)
         xy <- to_xy_m(arr$Lon, arr$Lat)
 
-        # Protection against large stop clusters (sampling for eps)
+        # Protection contre les gros arrêts (échantillonnage pour eps)
         if (nrow(xy) > 5000) {
-          cat("  Gros arrêt détecté pour", navire, annee, "(", nrow(xy), "points) - Échantillonnage pour eps\n")
+          cat("⚠️  Gros arrêt détecté pour", navire, annee, "(", nrow(xy), "points) - Échantillonnage pour eps\n")
           set.seed(123)
           samp_idx <- sample(nrow(xy), 5000)
           eps <- auto_eps_m(xy[samp_idx, , drop = FALSE])
@@ -560,132 +560,131 @@ if (nrow(stop_counts) > 0) {
           eps <- auto_eps_m(xy)
         }
 
-        # DBSCAN on metric coordinates (xy in metres)
+        # DBSCAN en coordonnées métriques (xy en mètres)
         cl <- dbscan(xy, eps = eps, minPts = 4)$cluster
 
         # Protection contre les clusters vides
         if (sum(cl > 0) == 0) {
-          cat("  Aucun cluster trouvé pour", navire, annee, "- Élargissement du rayon eps\n")
+          cat("⚠️  Aucun cluster trouvé pour", navire, annee, "- Élargissement du rayon eps\n")
           eps <- eps * 1.5
           cl <- dbscan(xy, eps = eps, minPts = 4)$cluster
         }
 
-        # FIX: Assignation via idx (bulletproof, arowment garanti)
+        # FIX: Assignation via idx (bulletproof, alignement garanti)
         ais[idx, stop_cluster := cl]
       }, error = function(e) {
-        cat("  Erreur DBSCAN pour", navire, annee, ":", e$message, "\n")
+        cat("⚠️  Erreur DBSCAN pour", navire, annee, ":", e$message, "\n")
       })
     }
   }
 } else {
-  cat("  Aucun navire avec suffisamment de points d'arrêt pour DBSCAN\n")
+  cat("⚠️  Aucun navire avec suffisamment de points d'arrêt pour DBSCAN\n")
 }
 
 ais[, is_stop_spatial := is_stop & !is.na(stop_cluster) & stop_cluster > 0]
   
-  cat(" DBSCAN terminé - Checkpoint sauvegardé\n")
+  cat("✅ DBSCAN terminé - Checkpoint sauvegardé\n")
   
-  # CHECK: Row counts after DBSCAN
+  # CONTRÔLE: Effectifs après DBSCAN
   n_stop_spatial <- sum(ais$is_stop_spatial, na.rm = TRUE)
   cat(sprintf("[DIAGNOSTIC] Après DBSCAN (is_stop_spatial TRUE): %d points (%.2f%% du total)\n", 
               n_stop_spatial, 100 * n_stop_spatial / nrow(ais)))
   
-  # Check that DBSCAN did not remove too many points
+  # Vérification que DBSCAN n'a pas supprimé trop de points
   if (n_stop_spatial < 1000) {
     warning("[ALERTE] Très peu de points d'arrêt spatiaux détectés par DBSCAN (< 1000)")
   }
   
-  # CRITICAL CHECK: Verify that is_stop_spatial column was created
+  # VÉRIFICATION CRITIQUE: S'assurer que is_stop_spatial est bien créée
   if (!"is_stop_spatial" %in% names(ais)) {
-    stop(" ERREUR CRITIQUE: Colonne 'is_stop_spatial' manquante après DBSCAN")
+    stop("❌ ERREUR CRITIQUE: Colonne 'is_stop_spatial' manquante après DBSCAN")
   }
-  cat(" Vérification: Colonne 'is_stop_spatial' présente\n")
+  cat("✅ Vérification: Colonne 'is_stop_spatial' présente\n")
   
   ais
 })
 
 # --------------------------------------------------------------------------
-# 10 bis. ── Calcule la cadence AIS & thresholds adaptives  -------------------
+# 10 bis. ── Calcule la cadence AIS & seuils adaptatifs  -------------------
 # --------------------------------------------------------------------------
-#  (to be placed after DBSCAN step and BEFORE section "GMM stop + 4")
+#  (à placer après l'étape DBSCAN et AVANT la section "GMM stop + 4")
 
-# 1) Sort by segment and timestamp to avoid negative dt_sec
+# 1) Tri par segment et timestamp pour éviter les dt_sec négatifs
 setorder(ais, Seg_id, Timestamp)
 
 # 2) Δt inter-messages en secondes
 ais[, dt_sec := c(NA_real_, diff(as.numeric(Timestamp))), by = Seg_id]
 
-# FIX 1: Compute Course_change only (Accel will be computed after filtering)
-# FIX P0.3: Add by = Seg_id to avoid cross-segment diffs
+# CORRECTION 1: Calcul de Course_change seulement (Accel sera calculé après filtrage)
+# FIX P0.3: Ajout by = Seg_id pour éviter les diffs inter-segments
 ais[, Course_change := c(NA, abs(diff(Course))), by = Seg_id]
 # Gestion du wrap-around pour Course_change
 ais[Course_change > 180, Course_change := 360 - Course_change]
-# Save robuste si trop de NA
+# Sauvegarde robuste si trop de NA
 ais[is.na(Course_change), Course_change := 0]
 
-# 3) Calcul des statistiques de cadence par vessel
+# 3) Calcul des statistiques de cadence par navire
 cadence <- ais[!is.na(dt_sec), .(
-    p50_dt = median(dt_sec, na.rm = TRUE),      # median
+    p50_dt = median(dt_sec, na.rm = TRUE),      # médiane
     p95_dt = quantile(dt_sec, 0.95, na.rm = TRUE),  # 95e percentile
     n_obs = .N
 ), by = Navire]
 
-# 4) Truncate median to avoid extreme values
-cadence[, p50_dt := pmin(p50_dt, 600)]  # truncate median at 10 min
+# 4) Troncature de la médiane pour éviter les cas extrêmes
+cadence[, p50_dt := pmin(p50_dt, 600)]  # on tronque la médiane à 10 min
 
-# 5) Calcul des thresholds adaptives
-#    - Threshold de base : 3 × median (captures true stops)
-#    - Floor: 3 min for highly active vessels
-#    - Plafond : 900 s (15 min) pour les vessels normaux
-#    - Special threshold for slow vessels (>50% intervals > 5 min)
+# 5) Calcul des seuils adaptatifs
+#    - Seuil de base : 3 × médiane (capture les vraies pauses)
+#    - Plancher : 180 s (3 min) pour les navires très actifs
+#    - Plafond : 900 s (15 min) pour les navires normaux
+#    - Seuil spécial pour navires très lents (> 50% d'intervalles > 5 min)
 
 cadence[, seuil_adaptatif := pmin(900, pmax(180, 3 * p50_dt))]
 
-# 6) Detect slow vessels (>50% of intervals > 5 min)
+# 6) Détection des navires très lents (plus de 50% d'intervalles > 5 min)
 intervalles_long <- ais[dt_sec >= 300, .N, by = Navire]
 intervalles_tot <- ais[!is.na(dt_sec), .N, by = Navire]
 prop_long <- merge(intervalles_long, intervalles_tot, by = "Navire", suffixes = c("_long", "_total"))
 prop_long[, prop_long := N_long / N_total]
 
-# 7) Adjust threshold for slow vessels
+# 7) Ajustement du seuil pour les navires très lents
 cadence <- merge(cadence, prop_long[, .(Navire, prop_long)], by = "Navire", all.x = TRUE)
 cadence[is.na(prop_long), prop_long := 0]
 
-# For vessels with >50% long intervals, use a higher threshold
-cadence[prop_long > 0.5, threshold_adaptive := pmin(1200, 5 * p50_dt)]  # 5 x median, max 20 min
+# Pour les navires avec > 50% d'intervalles longs, utiliser un seuil plus élevé
+cadence[prop_long > 0.5, seuil_adaptatif := pmin(1200, 5 * p50_dt)]  # 5 × médiane, max 20 min
 
-# 8) Calcul du n_min adaptive pour le lissage run-length
-#    t_threshold = 30 s ~ max duration of a micro-glitch
-t_threshold   <- 30                     # 30 s ~ max duration of a micro-glitch
-t_seuil <- t_threshold                  # alias conserve pour compatibilite historique
+# 8) Calcul du n_min adaptatif pour le lissage run-length
+#    t_seuil = 30 s ≈ durée max d'un micro-glitch
+t_seuil   <- 30                     # 30 s ≈ durée max d'un micro-glitch
 n_max_cap <- 8                      # plafond pour rester rapide
-cadence[, n_min := pmin(n_max_cap, pmax(3, ceiling(t_seuil / p50_dt)))]
+cadence[, n_min := pmin(n_max_cap, pmax(3, ceiling(p50_dt / t_seuil)))]
 
 # 9) Join avec l'ensemble principal
 ais <- merge(ais, cadence[, .(Navire, n_min, seuil_adaptatif, p50_dt, prop_long)], by = "Navire", all.x = TRUE)
 
-# 10) Filter with adaptive threshold (parentheses for clarity)
-cat("  Cadence AIS & seuils adaptatifs par navire\n")
+# 10) Filtrage avec seuil adaptatif (parenthèses pour clarifier la logique)
+cat("🔧  Cadence AIS & seuils adaptatifs par navire\n")
 print(cadence[order(p50_dt), .(Navire, p50_dt, seuil_adaptatif, n_min, prop_long)])
 
-# Filtrage des intervalles trop longs selon le threshold adaptive de chaque vessel
+# Filtrage des intervalles trop longs selon le seuil adaptatif de chaque navire
 n_before_cadence <- nrow(ais)
 ais <- ais[(dt_sec > 0 & dt_sec < seuil_adaptatif) | is.na(dt_sec)]
 check_filter("Filtrage intervalles longs", n_before_cadence, nrow(ais))
 
-# FIX: Recompute dt_sec AFTER filtering to avoid temporal shift
+# CORRECTION: Recalcul de dt_sec APRÈS le filtrage pour éviter le décalage temporel
 ais[, dt_sec := c(NA_real_, diff(as.numeric(Timestamp))), by = Seg_id]
 
-# FIX: Recompute Course_change AFTER filtering to avoid bias
+# CORRECTION: Recalcul de Course_change APRÈS le filtrage pour éviter le biais
 ais[, Course_change := c(NA, abs(diff(Course))), by = Seg_id]
 # Gestion du wrap-around pour Course_change
 ais[Course_change > 180, Course_change := 360 - Course_change]
-# Save robuste si trop de NA
+# Sauvegarde robuste si trop de NA
 ais[is.na(Course_change), Course_change := 0]
 
-# FIX: Compute Accel AFTER filtering large temporal gaps
+# CORRECTION: Calcul de Accel APRÈS le filtrage des grands trous temporels
 # Conversion Speed en m/s pour calculer Accel en m/s²
-# FIX 2: Garde-fou contre les vecteurs vides
+# CORRECTION 2: Garde-fou contre les vecteurs vides
 ais[, Accel := {
   dt <- dt_sec[-1L]
   if (length(dt) == 0) {
@@ -696,16 +695,16 @@ ais[, Accel := {
 }, by = Seg_id]
 ais[is.na(Accel), Accel := 0]
 
-# -- Guard n_min against NA values ----------------------------------------
+# -- Sécurise n_min pour les cas NA ----------------------------------------
 ais[is.na(n_min), n_min := 3]  # fallback plancher
 
-# FINAL CHECK BEFORE GMM
+# CONTRÔLE FINAL AVANT GMM
 cat(sprintf("[DIAGNOSTIC] Nombre de points conservés avant GMM: %d (%.2f%% du total initial)\n", 
             nrow(ais), 100 * nrow(ais) / n_total))
 
-# Check finale critique - ASSOUPLIE EN DRY-RUN
+# Vérification finale critique - ASSOUPLIE EN DRY-RUN
 if (is_dry) {
-  # In dry-run mode, a smaller dataset is acceptable
+  # En dry-run, on tolère un dataset plus petit
   if (nrow(ais) < 5000) {
     stop(sprintf("ERREUR FATALE : Il ne reste que %d points avant GMM (< 5000), échantillon trop petit pour le dry-run.", nrow(ais)))
   }
@@ -724,16 +723,16 @@ cat("Total points restants :", nrow(ais), "\n")
 # --------------------------------------------------------------------------
 ais <- checkpoint("stage3C_gmm.rds", {
 
-  cat("  GMM « stop + K mobiles » – sélection K par BIC (3-5) - ROBUSTE\n")
+  cat("🔧  GMM « stop + K mobiles » – sélection K par BIC (3-5) - ROBUSTE\n")
 
-  ## 0. Preparation ----------------------------------------------------------
+  ## 0. Préparation ----------------------------------------------------------
   idx_mobile <- which(!ais$is_stop_spatial & ais$Speed >= 0.5 & ais$Speed <= 20)
 
-  # FIX: Recompute quantiles after all filters to avoid bias
+  # CORRECTION: Recalcul des quantiles après tous les filtres pour éviter le biais
   q95_acc  <- quantile(abs(ais$Accel),  .95, na.rm = TRUE);  if (!is.finite(q95_acc)  || q95_acc  == 0) q95_acc  <- 1e-6
   q95_turn <- quantile(ais$Course_change, .95, na.rm = TRUE); if (!is.finite(q95_turn) || q95_turn == 0) q95_turn <- 1e-6
   
-  cat("    Quantiles recalculés après filtres - Accel 95%:", round(q95_acc, 4), "| Course 95%:", round(q95_turn, 2), "°\n")
+  cat("   📊 Quantiles recalculés après filtres - Accel 95%:", round(q95_acc, 4), "| Course 95%:", round(q95_turn, 2), "°\n")
 
   mobi <- ais[idx_mobile, .(
       Speed,
@@ -745,17 +744,17 @@ ais <- checkpoint("stage3C_gmm.rds", {
   X          <- as.matrix(mobi[keep])
   idx_train  <- idx_mobile[keep]
 
-  # Threshold adaptive selon le mode (dry-run vs production)
+  # Seuil adaptatif selon le mode (dry-run vs production)
   min_mobile <- if (is_dry) 50 else 200
   if (nrow(X) < min_mobile)
-    stop("  Pas assez de points mobiles complets pour ajuster le GMM (", nrow(X), " < ", min_mobile, ")")
+    stop("❌  Pas assez de points mobiles complets pour ajuster le GMM (", nrow(X), " < ", min_mobile, ")")
 
   ## 1. Recherche du meilleur K (BIC) - ROBUSTE ------------------------------
-  # CORRECTION 5: Protection contre l'overflow memory Mclust
+  # CORRECTION 5: Protection contre l'overflow mémoire Mclust
   samp <- if (nrow(X) > 1e6) X[sample(nrow(X), 1e6), ] else X
   cat("   Échantillon pour BIC:", nrow(samp), "points (sur", nrow(X), ")\n")
   
-  G_choices <- 3:5                                   # 3 to 5 mobile components
+  G_choices <- 3:5                                   # 3 à 5 composantes mobiles
   
   # CORRECTION CRITIQUE: Fonction helper pour extraire un scalaire BIC
   get_bic_scalar <- function(x) {
@@ -763,7 +762,7 @@ ais <- checkpoint("stage3C_gmm.rds", {
     max(as.numeric(x), na.rm = TRUE)
   }
   
-  # FIX 1: Use vapply() which enforces numeric scalar return type
+  # CORRECTION 1: Utiliser vapply() qui force un scalaire numérique dès le départ
   bic_vals <- vapply(G_choices, function(g) {
     res <- tryCatch(
       Mclust(samp, G = g, modelNames = "VVV", verbose = FALSE),
@@ -772,78 +771,78 @@ ais <- checkpoint("stage3C_gmm.rds", {
     get_bic_scalar(res$bic)
   }, numeric(1))
   
-  # FIX 2: Guard against Mclust failures
+  # CORRECTION 2: Protection contre les échecs Mclust
   if (all(is.infinite(bic_vals)))
-    stop("  Mclust a échoué pour toutes les valeurs de K - X trop grand ou mal conditionné")
+    stop("❌  Mclust a échoué pour toutes les valeurs de K - X trop grand ou mal conditionné")
   
   K <- G_choices[which.max(bic_vals)]
   
-  # FIX 4: Check de la borne basse K >= 3
-  if (K < 3) stop(" Le GMM doit avoir au moins 3 composantes mobiles (dredge/transit)")
+  # CORRECTION 4: Vérification de la borne basse K >= 3
+  if (K < 3) stop("❌ Le GMM doit avoir au moins 3 composantes mobiles (dredge/transit)")
   
   cat("   ➜  K retenu par BIC :", K, "composantes mobiles\n")
 
-  ## 2. Ajustement definedtif -------------------------------------------------
-  # FIX 3: Protection memory pour l'ajustement final
+  ## 2. Ajustement définitif -------------------------------------------------
+  # CORRECTION 3: Protection mémoire pour l'ajustement final
   X_fit <- if (nrow(X) > 2e6) X[sample(nrow(X), 2e6), ] else X
   cat("   Échantillon pour ajustement final:", nrow(X_fit), "points (sur", nrow(X), ")\n")
   
   gmm <- Mclust(X_fit, G = K, modelNames = "VVV", verbose = FALSE)
 
-  ## 3. Posterior probabilities -------------------------------------------
+  ## 3. Probabilités a posteriori -------------------------------------------
   z <- predict(gmm, X)$z                       # nrow(X) × K
   
-  # FIX 3: Safe re-initialisation of p columns
-  ais[, paste0("p", 1:(K+1)) := 0]             # initialise p1..p{K+1} to zero
+  # CORRECTION 3: Ré-initialisation sûre des colonnes p
+  ais[, paste0("p", 1:(K+1)) := 0]             # crée p1…p{K+1} et remet à zéro
   ais[is_stop_spatial == TRUE, p1 := 1]
 
   for (j in seq_len(K))
     ais[idx_train, paste0("p", j + 1) := z[, j]]
 
-  ## 4. Sort by speed ------------------------------------------------------
+  ## 4. Réordonnance par vitesse --------------------------------------------
   ord  <- order(gmm$parameters$mean[1, ])      # tri croissant de Speed
   mu   <- gmm$parameters$mean[1, ord]
   cat("   μ mobiles triés :", paste(round(mu, 2), collapse = " / "), "kn\n")
 
   Zord <- z[, ord, drop = FALSE]
 
-  # FIX 3: Full re-initialisation before re-insertion
-  ais[, paste0("p", 1:(K+1)) := 0]             # reset everything to zero
-  ais[is_stop_spatial == TRUE, p1 := 1]        # restore stops
+  # CORRECTION 3: Ré-initialisation complète avant ré-insertion
+  ais[, paste0("p", 1:(K+1)) := 0]             # remet tout à zéro
+  ais[is_stop_spatial == TRUE, p1 := 1]        # remet les stops
   for (j in seq_len(K))
     ais[idx_train, paste0("p", j + 1) := Zord[, j]]
 
-  ## 5. Raw labels - OPTION A: Robust multi-component slow-speed mapping
-  # FIX P0: Correct alignment of mobi_keep / Zord for stability score
-  # FIX P1: Separate idle (μ<1) / slow (1≤μ<6) / transit (μ≥6)
+  ## 5. Étiquettes brutes - OPTION A: Mapping robuste multi-composantes lentes
+  # FIX P0: Alignement correct mobi_keep / Zord pour le score de stabilité
+  # FIX P1: Séparation idle (μ<1) / slow (1≤μ<6) / transit (μ≥6)
   # Garantit que AUCUN transit n'a μ < 6 kn
 
-  ## --- FIX P0: Arowr mobi avec Zord (mobi_keep) + max.col() rapide --- ##
+  ## --- FIX P0: Aligner mobi avec Zord (mobi_keep) + max.col() rapide --- ##
   mobi_keep <- mobi[keep]  # aligne exactement les lignes avec X / Zord
-  comp_hat  <- max.col(Zord, ties.method = "first")  # 1..K, consistent with mu / ord
+  comp_hat  <- max.col(Zord, ties.method = "first")  # 1..K, cohérent avec mu / ord
 
-  ## --- Robust component mapping (Option A corrected) -------------------- ##
-  # General parameters
-  dredge_range <- c(1, 3.5)           # speed window (kn) considered as dredging
+  ## --- Mapping robuste des composantes (Option A corrigé) --------------- ##
+  # Paramètres généraux
+  dredge_range <- c(1, 3.5)           # fenêtre (kn) considérée comme dragage
   slow_ceiling <- 6                    # μ < 6 kn = jamais transit
 
-  # 1) Identifier les composantes par plage de speed (FIX P1)
+  # 1) Identifier les composantes par plage de vitesse (FIX P1)
   idle_candidates   <- which(mu < 1)                                    # μ < 1 kn → other
 
   slow_candidates   <- which(mu >= 1 & mu < slow_ceiling)               # μ ∈ [1, 6) kn
   dredge_candidates <- which(mu >= dredge_range[1] & mu <= dredge_range[2])  # μ ∈ [1, 3.5] kn
 
-  cat("    Composantes idle (μ < 1 kn):", paste(idle_candidates, collapse=", "), "\n")
-  cat("    Composantes lentes (1 ≤ μ < 6 kn):", paste(slow_candidates, collapse=", "), "\n")
-  cat("    Candidats dragage [1-3.5 kn]:", paste(dredge_candidates, collapse=", "), "\n")
+  cat("   📊 Composantes idle (μ < 1 kn):", paste(idle_candidates, collapse=", "), "\n")
+  cat("   📊 Composantes lentes (1 ≤ μ < 6 kn):", paste(slow_candidates, collapse=", "), "\n")
+  cat("   📊 Candidats dragage [1-3.5 kn]:", paste(dredge_candidates, collapse=", "), "\n")
 
-  # 2) Robust dredging component selection (FIX P0: mobi_keep + comp_hat)
+  # 2) Sélection robuste de la composante dragage (FIX P0: mobi_keep + comp_hat)
   if (length(dredge_candidates) > 0) {
     if (length(dredge_candidates) == 1) {
       dredge_comp <- dredge_candidates
     } else {
-      # Multiple candidates: stability score = mean(norm_course) - mean(norm_acc)
-      # Dredging has a stable course (high norm_course) and low acceleration
+      # Plusieurs candidats: score de stabilité = mean(norm_course) - mean(norm_acc)
+      # Le dragage a une route stable (norm_course élevé) et accélération faible
       stability_scores <- vapply(dredge_candidates, function(j) {
         m <- (comp_hat == j)
         if (sum(m) < 10) return(-Inf)
@@ -851,17 +850,17 @@ ais <- checkpoint("stage3C_gmm.rds", {
           mean(mobi_keep$norm_acc[m], na.rm = TRUE)
       }, numeric(1))
 
-      # Selection by stability score, tie-breaker = closest to 2 kn
+      # Sélection par score de stabilité, tie-breaker = plus proche de 2 kn
       best_score <- max(stability_scores, na.rm = TRUE)
       top_candidates <- dredge_candidates[stability_scores >= best_score - 0.05]
       dredge_comp <- top_candidates[which.min(abs(mu[top_candidates] - 2))]
 
-      cat("    Scores stabilité:", paste(round(stability_scores, 3), collapse=", "), "\n")
+      cat("   📊 Scores stabilité:", paste(round(stability_scores, 3), collapse=", "), "\n")
     }
   } else {
     # Fallback: plus proche de 2 kn parmi toutes les composantes
     dredge_comp <- which.min(abs(mu - 2))
-    cat("     Aucun candidat dans [1-3.5 kn], fallback vers μ =", round(mu[dredge_comp], 2), "kn\n")
+    cat("   ⚠️  Aucun candidat dans [1-3.5 kn], fallback vers μ =", round(mu[dredge_comp], 2), "kn\n")
   }
 
   # 3) Les autres composantes lentes (hors dredge) → slow_maneuvers (FIX P1)
@@ -870,7 +869,7 @@ ais <- checkpoint("stage3C_gmm.rds", {
   # 4) Composantes transit: UNIQUEMENT μ >= 6 kn
   transit_pool <- which(mu >= slow_ceiling)
 
-  cat("    Pool transit (μ >= 6 kn):", paste(transit_pool, collapse=", "), "\n")
+  cat("   📊 Pool transit (μ >= 6 kn):", paste(transit_pool, collapse=", "), "\n")
 
   # 5) Construction des labels
   mobile_labels <- character(K)
@@ -892,7 +891,7 @@ ais <- checkpoint("stage3C_gmm.rds", {
     unloaded_idx <- transit_pool[length(transit_pool)]
     mobile_labels[loaded_idx] <- "loaded_transit"
     mobile_labels[unloaded_idx] <- "unloaded_transit"
-    # Intermediate speeds = other
+    # Intermédiaires = other
     middle_transit <- setdiff(transit_pool, c(loaded_idx, unloaded_idx))
     if (length(middle_transit) > 0) mobile_labels[middle_transit] <- "other"
   } else if (length(transit_pool) == 1) {
@@ -905,7 +904,7 @@ ais <- checkpoint("stage3C_gmm.rds", {
   mobile_labels[mobile_labels == ""] <- "other"
 
   ## --- Post-mapping assertions ------------------------------------------ ##
-  # ASSERTION 0 (BONUS): dredge_comp must be unique and defined
+  # ASSERTION 0 (BONUS): dredge_comp doit être unique et défini
   if (length(dredge_comp) != 1) {
     stop(sprintf("ERREUR MAPPING: dredging non-unique ou absent (dredge_comp = %s)",
                  paste(dredge_comp, collapse=", ")))
@@ -923,7 +922,7 @@ ais <- checkpoint("stage3C_gmm.rds", {
     }
   }
 
-  # ASSERTION 2: Systematic diagnostic dump
+  # ASSERTION 2: Diagnostic dump systématique
   cat("\n   === MAPPING DIAGNOSTIC ===\n")
   mapping_dt <- data.table(comp = 1:K, mu_kn = round(mu, 2), label = mobile_labels)
   print(mapping_dt)
@@ -931,31 +930,31 @@ ais <- checkpoint("stage3C_gmm.rds", {
 
   map <- c("stops", mobile_labels)             # longueur = K+1 (p1…p{K+1})
 
-  cat("   🏷  Labels attribués:", paste(mobile_labels, collapse=" → "), "\n")
-  cat("    Vitesses correspondantes:", paste(round(mu, 2), "kn", collapse=" → "), "\n")
-  cat("    Composante dragage: μ =", round(mu[dredge_comp], 2), "kn (index", dredge_comp, ")\n")
+  cat("   🏷️  Labels attribués:", paste(mobile_labels, collapse=" → "), "\n")
+  cat("   📊 Vitesses correspondantes:", paste(round(mu, 2), "kn", collapse=" → "), "\n")
+  cat("   🎯 Composante dragage: μ =", round(mu[dredge_comp], 2), "kn (index", dredge_comp, ")\n")
 
   ais[, comp     := apply(.SD, 1, which.max), .SDcols = paste0("p", 1:(K + 1))]
   ais[, behavior := map[comp]]
 
   ## 6. Lissage run-length - ROBUSTE -----------------------------------------
-  # FIX: Cost matrix adapted to dynamic mapping
-  # Dynamic construction based on available labels
+  # CORRECTION: Matrice de coût adaptée au mapping dynamique
+  # Construction dynamique selon les labels disponibles
   all_labels <- c("stops", mobile_labels)
   n_labels <- length(all_labels)
   
-  # Base cost matrix (high cost for improbable transitions)
+  # Matrice de coût de base (coût élevé pour transitions improbables)
   cost_matrix <- matrix(5, n_labels, n_labels, 
                        dimnames = list(all_labels, all_labels))
   
-  # Specific costs
-  diag(cost_matrix) <- 0  # same state = cost 0
-
-  # Costs between mobile states (natural transitions)
-  # FIX P1: Use dredge_state to avoid shadowing dredge_comp
+  # Coûts spécifiques
+  diag(cost_matrix) <- 0  # même état = coût 0
+  
+  # Coûts entre états mobiles (transitions naturelles)
+  # FIX P1: Utilise dredge_state pour éviter le shadowing de dredge_comp
   if ("dredging" %in% all_labels) {
     dredge_state <- which(all_labels == "dredging")  # index dans all_labels (1..n_labels)
-    # Dredging ↔ transit = moderate cost
+    # Dredging ↔ transit = coût modéré
     transit_labels_cost <- setdiff(all_labels, c("stops", "dredging"))
     for (tl in transit_labels_cost) {
       tl_idx <- which(all_labels == tl)
@@ -964,20 +963,20 @@ ais <- checkpoint("stage3C_gmm.rds", {
     }
   }
 
-  # Costs to/from stops (rare transitions)
+  # Coûts vers/depuis stops (transitions rares)
   stops_state <- which(all_labels == "stops")
   cost_matrix[stops_state, ] <- 4
   cost_matrix[, stops_state] <- 4
   cost_matrix[stops_state, stops_state] <- 0
 
-  # FIX: Reduced cost for dredging ↔ stops (more natural)
+  # CORRECTION: Coût réduit pour dredging ↔ stops (plus naturel)
   if ("dredging" %in% all_labels) {
     dredge_state <- which(all_labels == "dredging")
     cost_matrix[dredge_state, stops_state] <- 3
     cost_matrix[stops_state, dredge_state] <- 3
   }
 
-  # FIX 4: Safe cost function for missing labels
+  # CORRECTION 4: Fonction de coût sécurisée pour les labels manquants
   safe_cost <- function(a, b) {
     if (!a %in% rownames(cost_matrix) || !b %in% colnames(cost_matrix)) return(Inf)
     cost_matrix[a, b]
@@ -1001,9 +1000,9 @@ ais <- checkpoint("stage3C_gmm.rds", {
     inverse.rle(rle_lbl)
   }
 
-  # FIX: Threshold plus stable pour le lissage (75e percentile au lieu de median)
+  # CORRECTION: Seuil plus stable pour le lissage (75e percentile au lieu de médiane)
   lissage_threshold <- quantile(ais$n_min, 0.75, na.rm = TRUE)
-  cat("    Seuil de lissage (75e percentile n_min):", round(lissage_threshold, 1), "\n")
+  cat("   🎯 Seuil de lissage (75e percentile n_min):", round(lissage_threshold, 1), "\n")
   
   ais[, behavior_smooth :=
         smooth_transition_robust(behavior, Speed,
@@ -1013,24 +1012,24 @@ ais <- checkpoint("stage3C_gmm.rds", {
 
   ais[, dredge_lisse := as.integer(behavior_smooth == "dredging")]
 
-  ## 7. Normalised for dredging score ----------------------------------------
+  ## 7. Normalisés pour le score dragage -------------------------------------
   ais[, norm_course := pmax(0, pmin(1, 1 - Course_change / q95_turn))]
   ais[, norm_acc    := pmax(0, pmin(1, abs(Accel) / q95_acc))]
 
-  cat("  GMM ROBUSTE terminé –", table(ais$behavior_smooth), "états après lissage\n")
+  cat("✅  GMM ROBUSTE terminé –", table(ais$behavior_smooth), "états après lissage\n")
   
-  # CLASS VERIFICATION AFTER GMM (for dry-run)
+  # VÉRIFICATION DES CLASSES APRÈS GMM (pour dry-run)
   if (is_dry) {
     n_classes <- length(unique(ais$behavior_smooth))
     if (n_classes < 2) {
       stop(sprintf("ERREUR FATALE : Échantillon DRY-RUN mono-classe après GMM (%d classe) – reprenez un autre sous-ensemble", n_classes))
     }
-    cat("    Dry-run: ", n_classes, "classes détectées après GMM\n")
+    cat("   ✅ Dry-run: ", n_classes, "classes détectées après GMM\n")
   }
   
-  # FIX: Save mapping info for downstream steps (optimised)
-  # Using attributes to avoid RAM duplication
-  # BONUS: Uses dredge_comp (already validated unique) instead of recomputing
+  # CORRECTION: Sauvegarder les informations de mapping pour la suite (optimisé)
+  # Utilisation d'attributs pour éviter la duplication en RAM
+  # BONUS: Utilise dredge_comp (déjà validé unique) au lieu de recalculer
   attr(ais, "gmm_info") <- list(
     K = K,
     dredge_idx = dredge_comp,          # 1..K (index dans mobile_labels)
@@ -1041,19 +1040,19 @@ ais <- checkpoint("stage3C_gmm.rds", {
   
   ## ═══════════════════════════════════════════════════════════════════════
   ## QA REFACTORED: QA1 (pre-smooth, hard) + QA2 (post-smooth, soft)
-  ## FIX P1: Uses dredge_comp (already validated) instead of recomputing
+  ## FIX P1: Utilise dredge_comp (déjà validé) au lieu de recalculer
   ## ═══════════════════════════════════════════════════════════════════════
 
   dredge_col <- paste0("p", dredge_comp + 1)  # +1 car p1 = stops
   ais[, p_dredge_qa := get(dredge_col)]
 
   ## ─────────────────  SANITY-CHECK  ─────────────────
-  # 1) Replace any NA with 'unknown'
+  # 1) Remplacer tout NA par 'unknown'
   ais[is.na(behavior_smooth), behavior_smooth := "unknown"]
   ## ───────────────────────────────────────────────────
 
   ## --- QA1: PRE-SMOOTH (hard check on argmax) ---
-  # On behavior (pre-smoothing), 'dredging' points MUST have p_dredge as argmax
+  # Sur behavior (pré-lissage), les points "dredging" DOIVENT avoir p_dredge comme argmax
   raw_dredge_mask <- ais$behavior == "dredging"
   n_raw_dredge <- sum(raw_dredge_mask, na.rm = TRUE)
 
@@ -1066,20 +1065,20 @@ ais <- checkpoint("stage3C_gmm.rds", {
     qa1_rate <- n_correct / n_raw_dredge
 
     if (qa1_rate >= 0.99) {
-      cat(sprintf("    QA1 (pre-smooth): %.1f%% des points dredging ont p_dredge=argmax\n", 100*qa1_rate))
+      cat(sprintf("   ✅ QA1 (pre-smooth): %.1f%% des points dredging ont p_dredge=argmax\n", 100*qa1_rate))
     } else if (qa1_rate >= 0.90) {
-      cat(sprintf("     QA1 (pre-smooth): %.1f%% seulement (attendu ≥99%%) - vérifier le mapping\n", 100*qa1_rate))
+      cat(sprintf("   ⚠️  QA1 (pre-smooth): %.1f%% seulement (attendu ≥99%%) - vérifier le mapping\n", 100*qa1_rate))
     } else {
-      cat(sprintf("    QA1 (pre-smooth): ÉCHEC - seulement %.1f%% (attendu ≥90%%)\n", 100*qa1_rate))
+      cat(sprintf("   ❌ QA1 (pre-smooth): ÉCHEC - seulement %.1f%% (attendu ≥90%%)\n", 100*qa1_rate))
       cat("      Diagnostic: argmax distribution =", paste(names(table(max_proba_col)), table(max_proba_col), sep=":", collapse=", "), "\n")
     }
   } else {
-    cat("     QA1: Aucun point 'dredging' pré-lissage\n")
+    cat("   ⚠️  QA1: Aucun point 'dredging' pré-lissage\n")
   }
 
   ## --- QA2: POST-SMOOTH (soft check on p_dredge distribution) ---
-  # On behavior_smooth, 'dredging' points should have high p_dredge (median >= 0.5)
-  # But smoothing may re-label segments, so this is only a warning
+  # Sur behavior_smooth, les points "dredging" devraient avoir p_dredge élevé (médiane ≥ 0.5)
+  # Mais le lissage peut re-labeler des segments, donc ce n'est qu'un warning
   smooth_dredge_mask <- ais$behavior_smooth == "dredging"
   n_smooth_dredge <- sum(smooth_dredge_mask, na.rm = TRUE)
 
@@ -1088,129 +1087,129 @@ ais <- checkpoint("stage3C_gmm.rds", {
     q <- quantile(p_dredge_smooth, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), na.rm = TRUE)
 
     if (q["50%"] >= 0.5) {
-      cat(sprintf("    QA2 (post-smooth): médiane p_dredge = %.3f (≥0.5)\n", q["50%"]))
+      cat(sprintf("   ✅ QA2 (post-smooth): médiane p_dredge = %.3f (≥0.5)\n", q["50%"]))
     } else if (q["50%"] >= 0.3) {
-      cat(sprintf("     QA2 (post-smooth): médiane p_dredge = %.3f (faible, attendu ≥0.5)\n", q["50%"]))
+      cat(sprintf("   ⚠️  QA2 (post-smooth): médiane p_dredge = %.3f (faible, attendu ≥0.5)\n", q["50%"]))
       cat(sprintf("      Quantiles: 10%%=%.3f, 25%%=%.3f, 50%%=%.3f, 75%%=%.3f, 90%%=%.3f\n",
                   q["10%"], q["25%"], q["50%"], q["75%"], q["90%"]))
     } else {
-      cat(sprintf("    QA2 (post-smooth): médiane p_dredge = %.3f (très faible!)\n", q["50%"]))
+      cat(sprintf("   ❌ QA2 (post-smooth): médiane p_dredge = %.3f (très faible!)\n", q["50%"]))
       cat(sprintf("      Quantiles: 10%%=%.3f, 25%%=%.3f, 50%%=%.3f, 75%%=%.3f, 90%%=%.3f\n",
                   q["10%"], q["25%"], q["50%"], q["75%"], q["90%"]))
-      cat("        Le lissage a peut-être trop étendu les segments dredging\n")
+      cat("      ⚠️  Le lissage a peut-être trop étendu les segments dredging\n")
     }
   } else {
-    cat("     QA2: Aucun point 'dredging' post-lissage\n")
+    cat("   ⚠️  QA2: Aucun point 'dredging' post-lissage\n")
   }
   
   ais
 })
 
 # --------------------------------------------------------------------------
-# 13. ── GRID-SEARCH (dredging score weights) - FIXED TO PREVENT DATA LEAKAGE
+# 13. ── GRID-SEARCH (poids score dragage) - CORRIGÉ POUR ÉVITER DATA LEAKAGE
 # --------------------------------------------------------------------------
-# CHECK-POINT 4: Grid-search complete
+# CHECK-POINT 4: Grid-search terminé
 resGS <- checkpoint(
   "stage3D_gridsearch.rds",
   {
-    cat("  Grid-search (poids score dragage) - CORRIGÉ POUR ÉVITER DATA LEAKAGE\n")
+    cat("🔍  Grid-search (poids score dragage) - CORRIGÉ POUR ÉVITER DATA LEAKAGE\n")
     
-    # MAJOR FIX: Prevent data leakage
-    # 1) Define CV blocks (leave-one-year-out) - STRICT LOYO GUARANTEE
-    # === LOYO: 1 year = 1 fold (compliant with section 2.6) ===
-    cv_folds <- length(unique(ais$Annee))  # Enforce exactly 1 year = 1 fold
+    # CORRECTION MAJEURE: Éviter le data leakage
+    # 1) Définir les blocs CV (leave-one-year-out) - GARANTIE LOYO STRICTE
+    # === LOYO: 1 année = 1 fold (conformité section 2.6) ===
+    cv_folds <- length(unique(ais$Annee))  # Force exactement 1 année = 1 fold
     ais[, fold := frank(Annee, ties.method="dense")]
     
     cat("   Validation croisée LOYO stricte:", cv_folds, "folds (1 année = 1 fold)\n")
     
-    # 2) Remove derived label from predictors (PREVENTS DATA LEAKAGE)
-    # Instead of dredge_lisse, use p_dredge (GMM probability) + kinematic signals
+    # 2) Retirer le label dérivé des prédicteurs (ÉVITE DATA LEAKAGE)
+    # Au lieu de dredge_lisse, utiliser p_dredge (probabilité GMM) + signaux cinématiques
     # === COMPOSITE DREDGING SCORE: 5 signaux → cv.glmnet (ridge) → LOYO → Youden J ===
     ais[, speed_bin := as.integer(Speed >= 1 & Speed <= 3.5)]
     ais[, speed_norm := exp(-(Speed - 2.25)^2 / (2 * 1^2))]
     
-    # FIX: Replace remaining NAs in speed_bin and speed_norm
+    # CORRECTIF : Remplacer les NA restants dans speed_bin et speed_norm
     ais[is.na(speed_bin),  speed_bin  := 0L]
     ais[is.na(speed_norm), speed_norm := 0]
-
-    # FIX: Guard speed_norm against division by zero
+    
+    # CORRECTION: Sécurisation de speed_norm contre les divisions par zéro
     ais[!is.finite(speed_norm), speed_norm := 0]
     
-    # CRITICAL FIX: Build dynamic dredging probability
-    # Retrieve mapping info from GMM attributes
+    # CORRECTION CRITIQUE: Création de la probabilité de dragage dynamique
+    # Récupérer les informations de mapping depuis les attributs GMM
     gmm_info <- attr(ais, "gmm_info")
     if (is.null(gmm_info)) {
-      stop(" ERREUR: Informations de mapping GMM manquantes (attribut gmm_info)")
+      stop("❌ ERREUR: Informations de mapping GMM manquantes (attribut gmm_info)")
     }
     
     dredge_idx <- gmm_info$dredge_idx
     dredge_speed <- gmm_info$dredge_speed
     gmm_k <- gmm_info$K
     
-    # Create p_dredge column with the correct probability
-    dredge_col <- paste0("p", dredge_idx + 1)  # +1 because p1 = stops
+    # Créer la colonne p_dredge avec la bonne probabilité
+    dredge_col <- paste0("p", dredge_idx + 1)  # +1 car p1 = stops
     if (!dredge_col %in% names(ais)) {
-      stop(sprintf(" ERREUR: Colonne %s manquante (dredge_idx=%d)", dredge_col, dredge_idx))
+      stop(sprintf("❌ ERREUR: Colonne %s manquante (dredge_idx=%d)", dredge_col, dredge_idx))
     }
     
     ais[, p_dredge := get(dredge_col)]
-    cat(sprintf("    Probabilité dragage: %s (composante %d, vitesse %.2f kn, K=%d)\n", 
+    cat(sprintf("   ✅ Probabilité dragage: %s (composante %d, vitesse %.2f kn, K=%d)\n", 
                 dredge_col, dredge_idx, dredge_speed, gmm_k))
     
-    # Predictors independent of the final label
+    # Prédicteurs indépendants du label final
     predictors <- ais[, .(p_dredge, norm_course, norm_acc, speed_bin, speed_norm)]
     target <- ais$behavior_smooth == "dredging"
     
-    # === SAFETY: Verify exactly 5 signals (compliant with section 2.6) ===
+    # === SÉCURITÉ: Vérification exactement 5 signaux (conformité section 2.6) ===
     stopifnot(identical(colnames(predictors), 
                         c("p_dredge", "norm_course", "norm_acc", "speed_bin", "speed_norm")))
-    cat("    Vérification: Exactement 5 signaux requis pour le composite score\n")
+    cat("   ✅ Vérification: Exactement 5 signaux requis pour le composite score\n")
     
-    # FIX: Replace remaining NAs in speed_bin and speed_norm before conversion
+    # CORRECTIF : Remplacer les NA restants dans speed_bin et speed_norm avant conversion
     ais[is.na(speed_bin),  speed_bin  := 0L]
     ais[is.na(speed_norm), speed_norm := 0]
-
-    # FIX: Verify all predictors are numeric
+    
+    # CORRECTIF : Vérification que tous les prédicteurs sont numériques
     stopifnot(all(sapply(predictors, is.numeric)))
     
-    # DIAGNOSTIC: Check for non-finite values in predictors
+    # DIAGNOSTIC: Vérification des valeurs non-finies dans les prédicteurs
     msg <- colSums(!is.finite(as.matrix(predictors)))
     cat("⛔ Non-finis par colonne :", paste(names(msg), msg, sep=":", collapse=", "), "\n")
     
-    # FIX: Replace non-finite values with 0
+    # CORRECTION: Remplacement des valeurs non-finies par 0
     predictors <- predictors[, lapply(.SD, function(v) replace(v, !is.finite(v), 0))]
-    cat(" Valeurs non-finies remplacées par 0\n")
+    cat("✅ Valeurs non-finies remplacées par 0\n")
     
-    # CRITICAL FIX: Remove NAs from target (DATA PRESERVATION)
-    cat("    Nettoyage des NA dans la variable cible...\n")
+    # CORRECTION CRITIQUE: Nettoyage des NA dans target (PRÉSERVATION DES DONNÉES)
+    cat("   🔍 Nettoyage des NA dans la variable cible...\n")
     keep_lbl <- !is.na(target)
     n_before <- nrow(ais)
     n_filtered <- sum(!keep_lbl)
     
-    cat(sprintf("    Points avec NA dans target: %d (%.2f%%)\n", 
+    cat(sprintf("   📊 Points avec NA dans target: %d (%.2f%%)\n", 
                 n_filtered, 100 * n_filtered / n_before))
     
-    # STRICT CHECK: Verify no NAs remain
+    # CONTRÔLE STRICT: Vérification qu'il ne reste plus de NA
     if (any(is.na(target[keep_lbl]))) {
       stop("ERREUR FATALE : NA détectés dans target après filtrage !")
     }
     
-    # Convert to 0/1 integer (glmnet prefers numeric) - for training only
+    # Conversion en entier 0/1 (glmnet préfère numérique) - SEULEMENT pour l'entraînement
     target_train <- as.integer(target[keep_lbl])  # 1 = dredging, 0 = non-dredging
     
-    # PRESERVATION: Keep indices to re-insert predictions
+    # PRÉSERVATION: Garder les indices pour réinsérer les prédictions
     train_indices <- which(keep_lbl)
-    # FIX P2.3: cat() does not interpret %d → use sprintf()
-    cat(sprintf("    Données préservées: %d points pour entraînement, %d points pour prédiction complète\n",
+    # FIX P2.3: cat() n'interprète pas %d → utiliser sprintf()
+    cat(sprintf("   ✅ Données préservées: %d points pour entraînement, %d points pour prédiction complète\n",
                 length(train_indices), n_before))
     
-    # FIX: Handle NA values in predictors
-    # glmnet does not accept NA values
+    # CORRECTION: Gestion des valeurs NA dans les prédicteurs
+    # glmnet n'accepte pas les valeurs NA
     cat("   Vérification des valeurs manquantes dans les prédicteurs...\n")
     na_counts <- colSums(is.na(predictors))
     cat("   Valeurs NA par prédicteur:", paste(names(na_counts), na_counts, sep=":", collapse=", "), "\n")
     
-    # DIAGNOSTIC: Verify p_dredge mapping
+    # DIAGNOSTIC: Vérification du mapping p_dredge
     cat("   Vérification du mapping p_dredge:\n")
     cat("   Colonnes p disponibles:", paste(intersect(paste0("p",1:5), names(ais)), collapse=", "), "\n")
     cat("   Colonne p_dredge créée:", if("p_dredge" %in% names(ais)) "OUI" else "NON", "\n")
@@ -1218,32 +1217,32 @@ resGS <- checkpoint(
       cat("   Valeurs p_dredge:", paste(head(ais$p_dredge, 5), collapse=", "), "\n")
     }
     
-    # Option 1: Replace NAs with 0 (more conservative)
+    # Option 1: Remplacer les NA par 0 (plus conservateur)
     predictors[is.na(predictors)] <- 0
     cat("   Valeurs NA remplacées par 0\n")
     
-    # Option 2: Filter rows with missing values (stricter)
+    # Option 2: Filtrer les lignes avec des valeurs manquantes (plus strict)
     # complete_cases <- complete.cases(predictors, target)
     # predictors <- predictors[complete_cases]
     # target <- target[complete_cases]
-    # cat("   Rows with missing values filtered:", sum(!complete_cases), "\n")
+    # cat("   Lignes avec valeurs manquantes filtrées:", sum(!complete_cases), "\n")
     
     cat("   Prédicteurs utilisés:", paste(names(predictors), collapse = ", "), "\n")
     cat("   Classes cibles:", table(target), "\n")
     
-    # STRICT CHECK: Class distribution
+    # CONTRÔLE STRICT DE LA DISTRIBUTION DES CLASSES
     cat("\n[DIAGNOSTIC] Effectifs par behavior_smooth :\n")
     print(table(ais$behavior_smooth, useNA = "ifany"))
     cat("Effectifs par année :\n")
     print(table(ais$Annee))
     
-    # Critical check of class distribution (on training data)
+    # Vérification critique de la distribution des classes (sur les données d'entraînement)
     dredging_count <- sum(target_train)
     non_dredging_count <- sum(!target_train)
     
-    # Adaptive thresholds based on mode (dry-run vs production)
+    # Seuils adaptatifs selon le mode (dry-run vs production)
     if (is_dry) {
-      # In dry-run, accept less data but require at least 2 classes
+      # En dry-run, on tolère moins de données mais il faut au moins 2 classes
       if (dredging_count < 10) {
         stop(sprintf("ERREUR FATALE : Seulement %d points 'dredging' détectés (< 10), échantillon trop déséquilibré pour le dry-run !", dredging_count))
       }
@@ -1259,72 +1258,72 @@ resGS <- checkpoint(
       }
     }
     
-    # FIX P2.1: Long-format summary instead of 3D table (avoids memory explosion)
-    cat("    Distribution des classes par année/navire (top 20):\n")
+    # FIX P2.1: Résumé long-format au lieu de table 3D (évite explosion mémoire)
+    cat("   📊 Distribution des classes par année/navire (top 20):\n")
     ais_train <- ais[keep_lbl]
     ais_train[, target_tmp := target_train]
     class_summary <- ais_train[, .N, by = .(Annee, Navire, target_tmp)][order(Annee, -N)]
     print(head(class_summary, 20))
-    ais_train[, target_tmp := NULL]  # cleanup
+    ais_train[, target_tmp := NULL]  # nettoyage
     
-    # Critical class check before CV (on training data)
+    # Vérification critique des classes avant CV (sur les données d'entraînement)
     if (length(unique(target_train)) < 2) {
-      stop(sprintf("ERREUR FATALE : Dataset mono-classe ! Seulement %d classe(s) détectée(s), impossible de faire une CV valide.\n    Distribution: %s", 
+      stop(sprintf("ERREUR FATALE : Dataset mono-classe ! Seulement %d classe(s) détectée(s), impossible de faire une CV valide.\n   📊 Distribution: %s", 
                    length(unique(target_train)), paste(table(target_train), collapse=", ")))
     } else {
-      # FIX 1: Check des packages offline before CV
+      # CORRECTION 1: Vérification des packages offline avant CV
       cat("   Vérification des packages requis...\n")
       if (!requireNamespace("glmnet", quietly = TRUE)) {
-        stop(" Package 'glmnet' absent - charge-le via module ou $R_LIBS_USER")
+        stop("❌ Package 'glmnet' absent - charge-le via module ou $R_LIBS_USER")
       }
       if (!requireNamespace("doParallel", quietly = TRUE)) {
-        stop(" Package 'doParallel' absent - charge-le via module ou $R_LIBS_USER")
+        stop("❌ Package 'doParallel' absent - charge-le via module ou $R_LIBS_USER")
       }
         library(glmnet)
       library(doParallel)
       
-      # FIX 6: glmnet parallelism without data.table conflict
+      # CORRECTION 6: Parallélisme glmnet sans conflit data.table
       cat("   Configuration du parallélisme glmnet...\n")
-      setDTthreads(1)  # Disable data.table parallelism
-      Sys.setenv(OMP_NUM_THREADS = 1)  # Disable OpenMP
+      setDTthreads(1)  # Désactive le parallélisme data.table
+      Sys.setenv(OMP_NUM_THREADS = 1)  # Désactive OpenMP
       registerDoParallel(cores = min(12, parallel::detectCores() - 2))
       cat("   Parallélisme configuré pour glmnet (", min(12, parallel::detectCores() - 2), " cœurs)\n")
       
-      # FIX 10: on.exit() moved outside CV loop
+      # CORRECTIF 10 : on.exit() déplacé hors de la boucle CV
 on.exit({
   stopImplicitCluster()
-  setDTthreads(0)  # Restore data.table auto-threading
+  setDTthreads(0)  # Remet data.table en mode auto
   Sys.unsetenv("OMP_NUM_THREADS")
 }, add = TRUE)
 
-# TRAINING DATA PREPARATION
+# PRÉPARATION DES DONNÉES D'ENTRAÎNEMENT
 predictors_train <- predictors[keep_lbl, ]
 ais_train <- ais[keep_lbl]
 
-# FIX 8: Create missing columns BEFORE CV
-# Reliable option: matrix computation with exact name matching
+# CORRECTIF 8 : Création des colonnes manquantes AVANT la CV
+# Option fiable : calcul matriciel avec correspondance exacte des noms
 missing <- setdiff(c("p_dredge", "norm_course", "norm_acc", "speed_bin", "speed_norm"), names(predictors_train))
 if (length(missing) > 0) {
   cat("   Ajout des colonnes manquantes:", paste(missing, collapse=", "), "\n")
   predictors_train[, (missing) := 0]
 }
 
-# FIX 9: Convert to sparse matrix to save memory
+# CORRECTIF 9 : Conversion en matrice creuse pour économiser la mémoire
 cat("   Conversion en matrice creuse pour économiser la mémoire...\n")
 if (!requireNamespace("Matrix", quietly = TRUE)) {
-  stop(" Package 'Matrix' absent - charge-le via module ou $R_LIBS_USER")
+  stop("❌ Package 'Matrix' absent - charge-le via module ou $R_LIBS_USER")
 }
 library(Matrix)
 
-# FIX: Sparse matrix for all rows (not just keep_lbl)
+# CORRECTIF : Matrice creuse pour toutes les lignes (pas seulement keep_lbl)
 predictors_all <- Matrix::Matrix(as.matrix(predictors), sparse = TRUE)
-predictors_all <- Matrix::drop0(predictors_all)   # remove explicit zeros
+predictors_all <- Matrix::drop0(predictors_all)   # supprime les zéros explicites
 cat(sprintf("   Matrice creuse globale créée: %.1f MB\n", 
             object.size(predictors_all)/1024^2))
 
-# Sparse matrix for training data only
+# Matrice creuse pour les données d'entraînement seulement
 predictors_matrix <- predictors_all[keep_lbl, ]
-predictors_matrix <- Matrix::drop0(predictors_matrix)   # remove explicit zeros
+predictors_matrix <- Matrix::drop0(predictors_matrix)   # supprime les zéros explicites
 cat(sprintf("   Matrice creuse d'entraînement: %.1f MB (vs %.1f MB dense)\n", 
             object.size(predictors_matrix)/1024^2, 
             object.size(as.matrix(predictors_train))/1024^2))
@@ -1332,8 +1331,8 @@ cat(sprintf("   Matrice creuse d'entraînement: %.1f MB (vs %.1f MB dense)\n",
 auc_fold <- numeric(max(ais_train$fold))
       best_models <- list()
       
-      # DIAGNOSTIC: Class distribution per fold (training data)
-      cat("    Distribution des classes par fold (données d'entraînement):\n")
+      # DIAGNOSTIC: Affichage de la distribution des classes par fold (données d'entraînement)
+      cat("   📊 Distribution des classes par fold (données d'entraînement):\n")
       fold_table <- table(target_train, ais_train$fold)
       print(fold_table)
       
@@ -1343,17 +1342,17 @@ auc_fold <- numeric(max(ais_train$fold))
         train <- ais_train$fold != k
         test <- ais_train$fold == k
         
-        # FULL TRAIN/TEST FILTER - PROTECTION AGAINST NAs AND NON-FINITE VALUES
+        # FILTRAGE COMPLET POUR TRAIN/TEST - PROTECTION CONTRE LES NA ET NON-FINIS
         Xtrain <- predictors_matrix[train, ]
         Ytrain <- target_train[train]
         Xtest <- predictors_matrix[test, ]
         Ytest <- target_train[test]
         
-        # FIX: Local computation, no borrowing from previous iteration
+        # CORRECTIF : Calcul local, aucun emprunt à l'itération précédente
         complete_train <- !is.na(Ytrain)
         complete_test <- !is.na(Ytest)
         
-        # STRICT CHECK: Size after NA filtering - RELAXED IN DRY-RUN
+        # CONTRÔLE STRICT: Vérification de la taille après filtrage NA - ASSOUPLI EN DRY-RUN
         min_train <- if (is_dry) 20 else 100
         min_test <- if (is_dry) 5 else 10
         if (sum(complete_train, na.rm = TRUE) < min_train || sum(complete_test, na.rm = TRUE) < min_test) {
@@ -1362,8 +1361,8 @@ auc_fold <- numeric(max(ais_train$fold))
         }
         
         # FIX P0.4: LOYO mono-class check
-        # Train MUST have 2 classes (otherwise fitting is impossible)
-        # Test may be single-class → AUC = NA (no stop)
+        # Train DOIT avoir 2 classes (sinon impossible de fitter)
+        # Test peut être mono-classe → AUC = NA (pas stop)
         train_has_2 <- length(unique(Ytrain[complete_train])) >= 2
         test_has_2 <- length(unique(Ytest[complete_test])) >= 2
 
@@ -1371,18 +1370,18 @@ auc_fold <- numeric(max(ais_train$fold))
           stop(sprintf("ERREUR FATALE : Fold LOYO %d - train mono-classe (impossible de fitter)", k))
         }
 
-        # DIAGNOSTIC: Class counts per fold
+        # DIAGNOSTIC: Affichage des effectifs par classe dans ce fold
         cat(sprintf("       Dredging (train/test): %d/%d, Non-dredging (train/test): %d/%d\n",
           sum(Ytrain[complete_train], na.rm = TRUE), sum(Ytest[complete_test], na.rm = TRUE),
           sum(!Ytrain[complete_train], na.rm = TRUE), sum(!Ytest[complete_test], na.rm = TRUE)))
 
         if (!test_has_2) {
-          cat("         Test mono-classe → AUC = NA pour ce fold\n")
+          cat("       ⚠️  Test mono-classe → AUC = NA pour ce fold\n")
         }
 
-        # Penalised logistic regression (Ridge) - fit without NAs, stratified folds
+        # Régression logistique pénalisée (Ridge) - FIT SANS NA AVEC FOLDS STRATIFIÉS
         tryCatch({
-          # FIX: Create stratified folds to avoid single-class internal folds
+          # CORRECTION: Création de folds stratifiés pour éviter les folds mono-classe internes
           set.seed(1)
 
           # FIX P2.4: Fonction de stratification qui stratifie vraiment
@@ -1390,7 +1389,7 @@ auc_fold <- numeric(max(ais_train$fold))
             set.seed(seed)
             y <- as.integer(y)
             n1 <- sum(y == 1); n0 <- sum(y == 0)
-            k_eff <- min(k, n1, n0)  # avoid empty folds
+            k_eff <- min(k, n1, n0)  # évite folds vides
             if (k_eff < 2) k_eff <- 2  # minimum 2 folds
             foldid <- integer(length(y))
             foldid[y == 1] <- sample(rep(1:k_eff, length.out = n1))
@@ -1398,25 +1397,25 @@ auc_fold <- numeric(max(ais_train$fold))
             foldid
           }
           
-          # FIX P2.4: Use true stratification
+          # FIX P2.4: Utilisation de la vraie stratification
           foldid <- make_stratified_foldid(Ytrain[complete_train], k = 5, seed = k)
 
-          # FIX: Guard - if some internal folds are single-class, fall back to deviance
+          # FIX: Garde-fou - si certains folds internes sont mono-classe, fallback deviance
           folds_ok <- all(tapply(Ytrain[complete_train], foldid,
                                  function(z) length(unique(z)) >= 2))
           measure_type <- if (folds_ok) "auc" else "deviance"
-          if (!folds_ok) cat("         Folds internes déséquilibrés → fallback deviance\n")
+          if (!folds_ok) cat("       ⚠️  Folds internes déséquilibrés → fallback deviance\n")
 
-          # FIX: foldid already has the correct length since it was created on Ytrain[complete_train]
+          # CORRECTIF : foldid est déjà de la bonne longueur car créé sur Ytrain[complete_train]
           fit <- cv.glmnet(Xtrain[complete_train, ], Ytrain[complete_train],
                           family = "binomial", alpha = 0,  # Ridge
                           foldid = foldid, type.measure = measure_type,
-                          parallel = FALSE)  # Avoid nested parallelism
+                          parallel = FALSE)  # Évite le parallélisme imbriqué
 
-          # Prediction on test fold WITHOUT NAs
+          # Prédiction sur le fold de test SANS NA
           prob <- predict(fit, Xtest[complete_test, ], s = "lambda.min", type = "response")
 
-          # FIX P0.4: Compute AUC - use test_has_2 already computed
+          # FIX P0.4: Calcul AUC - utilise test_has_2 déjà calculé
           if (!test_has_2) {
             auc_fold[k] <- NA_real_
           } else {
@@ -1433,10 +1432,10 @@ auc_fold <- numeric(max(ais_train$fold))
         })
       }
       
-      # Cross-validation results - PROTECTION AGAINST EMPTY FOLDS
+      # Résultats de la validation croisée - PROTECTION CONTRE FOLDS VIDES
       valid_auc <- auc_fold[!is.na(auc_fold)]
       
-      # FIX: Guard against all folds failing
+      # CORRECTION: Protection contre l'échec de tous les folds
       if (all(is.na(auc_fold))) {
         stop("Tous les folds ont échoué : vérifiez la présence de valeurs non finies dans les prédicteurs.")
       }
@@ -1446,46 +1445,46 @@ auc_fold <- numeric(max(ais_train$fold))
         sd_auc <- sd(valid_auc)
         cat(sprintf("   AUC moyen CV: %.4f ± %.4f (n=%d folds)\n", mean_auc, sd_auc, length(valid_auc)))
         
-        # FIX: Safe best-fold selection
+        # CORRECTIF : Sécurisation de la sélection du meilleur fold
         best_fold <- which.min(abs(replace(auc_fold, is.na(auc_fold), Inf) - mean_auc))
         best_model <- best_models[[as.character(best_fold)]]
         
-        # Extract coefficients for the final score
+        # Extraction des coefficients pour le score final
         coefs <- coef(best_model, s = "lambda.min")
         coefs_named <- as.numeric(coefs)
         names(coefs_named) <- rownames(coefs)
         
-        # Normalise coefficients to obtain weights
-        feature_coefs <- coefs_named[-1]  # Exclude intercept
+        # Normalisation des coefficients pour obtenir des poids
+        feature_coefs <- coefs_named[-1]  # Exclure l'intercept
         total_weight <- sum(abs(feature_coefs))
         
-        # FIX 8: More robust check for non-zero coefficients
+        # CORRECTIF 8 : Vérification plus robuste des coefficients non nuls
         if (total_weight == 0 || length(feature_coefs) == 0) {
           stop("ERREUR FATALE : Régression sans poids non nuls - Vérifiez les prédicteurs")
         }
         
         weights <- abs(feature_coefs) / total_weight
         
-        # === WEIGHT EXPORT: Save normalised coefficients ===
+        # === EXPORT DES POIDS: Sauvegarde des coefficients normalisés ===
         fwrite(data.table(feature = names(weights), weight = weights),
                file.path(output_dir, "drag_score_weights.csv"))
-        cat("    Poids du composite score sauvegardés dans drag_score_weights.csv\n")
+        cat("   💾 Poids du composite score sauvegardés dans drag_score_weights.csv\n")
         
-        # Build the final score
-        # FIX 8: Missing columns already added before CV
-        # Prediction on **all** rows (including unlabelled ones)
+        # Création du score final
+        # CORRECTIF 8 : Les colonnes manquantes ont déjà été ajoutées avant la CV
+        # Prédiction sur **toutes** les lignes (y compris celles sans label)
         full_prob <- as.vector(predict(best_model, predictors_all, s = "lambda.min", type = "response"))
         ais[, drag_score := full_prob]
         
-        # FIX: Guard for NA values in drag_score
+        # CORRECTION: Garde-fou pour les valeurs NA dans drag_score
         ais[is.na(drag_score), drag_score := 0]
         
-        # Compute optimal threshold from CV (on labelled data)
+        # Calcul du seuil optimal depuis la CV (sur les données labellisées)
         cat("   Calcul du seuil optimal...\n")
-        # FIX: Probabilities restricted to calibrate threshold (labelled only)
+        # CORRECTIF : Probas restreintes pour calibrer le seuil (labellisées seulement)
         prob_cv <- full_prob[keep_lbl]   # garde l'indexation correcte
         roc_full <- pROC::roc(target_train, prob_cv, quiet = TRUE)
-        optimal_threshold <- pROC::coords(roc_full, "best", ret = "threshold")
+        optimal_threshold <- as.numeric(pROC::coords(roc_full, "best", ret = "threshold")[["threshold"]])
         best <- list(
           weights = weights,
           features = names(weights),
@@ -1498,34 +1497,34 @@ auc_fold <- numeric(max(ais_train$fold))
         )
         cat(sprintf("   Seuil optimal: %.3f\n", optimal_threshold))
         
-        # Application du threshold optimal sur toutes les rows
+        # Application du seuil optimal sur toutes les lignes
         ais[, Dragage_flag := as.integer(drag_score >= optimal_threshold)]
         
-        # Clean memory after CV
+        # Nettoyage de la mémoire après CV
         rm(best_models, predictors_train, auc_fold, valid_auc, prob_cv, roc_full)
         gc()
         cat("   Mémoire nettoyée après CV\n")
       } else {
-        stop(sprintf("ERREUR FATALE : Aucun fold valide pour la CV !\n    Diagnostic: Aucun fold valide trouvé\n    Résumé des AUC par fold: %s\n    Nombre de modèles stockés: %d\n    Vérifiez la distribution des classes par année.", 
+        stop(sprintf("ERREUR FATALE : Aucun fold valide pour la CV !\n   🔍 Diagnostic: Aucun fold valide trouvé\n   📊 Résumé des AUC par fold: %s\n   📊 Nombre de modèles stockés: %d\n   📊 Vérifiez la distribution des classes par année.", 
                      paste(sprintf("%.3f", auc_fold), collapse=", "), length(best_models)))
       }
     }
     
-    cat(" Grid-search terminé - AUC honnête calculé\n")
+    cat("✅ Grid-search terminé - AUC honnête calculé\n")
     list(ais = ais, best = best, auc = if(exists("valid_auc")) valid_auc else NA_real_)
   },
   force_recompute = TRUE
 )
 
-# Extract checkpoint results
+# Extraction des résultats du check-point
 ais <- resGS$ais
 best <- resGS$best
 auc <- resGS$auc
 
-# FIX: Save GMM probabilities for QA before cleanup
-cat(" Sauvegarde des probabilités GMM pour vérification qualité...\n")
+# CORRECTION: Sauvegarde des probabilités GMM pour QA avant nettoyage
+cat("💾 Sauvegarde des probabilités GMM pour vérification qualité...\n")
 
-# FIX: Gestion de la column ssvid vs MMSI
+# CORRECTION: Gestion de la colonne ssvid vs MMSI
 if ("ssvid" %in% names(ais)) {
   id_col <- "ssvid"
 } else if ("MMSI" %in% names(ais)) {
@@ -1533,11 +1532,11 @@ if ("ssvid" %in% names(ais)) {
 } else if ("Navire" %in% names(ais)) {
   id_col <- "Navire"
 } else {
-  warning("  Aucune colonne d'identifiant trouvée (ssvid/MMSI/Navire) - utilisation de la première colonne")
+  warning("⚠️  Aucune colonne d'identifiant trouvée (ssvid/MMSI/Navire) - utilisation de la première colonne")
   id_col <- names(ais)[1]
 }
 
-# FIX 2: QA robuste - ne garder que les p* existantes (dynamique selon K)
+# CORRECTION 2: QA robuste - ne garder que les p* existantes (dynamique selon K)
 gmm_info <- attr(ais, "gmm_info")
 if (!is.null(gmm_info)) {
   qa_p <- intersect(paste0("p", 1:(gmm_info$K + 1)), names(ais))
@@ -1551,29 +1550,29 @@ setnames(gmm_qa_data, id_col, "id")
 saveRDS(gmm_qa_data, file.path(output_dir, "GMM_probabilities_QA.rds"), compress = "xz")
 cat("   Probabilités GMM sauvegardées dans GMM_probabilities_QA.rds (colonnes p:", paste(qa_p, collapse=", "), ")\n")
 
-  # FIX 1: Safe purge of temporary columns - DYNAMIC BASED ON GMM MAPPING
-# PATCH: Keep dredge_lisse, norm_course, norm_acc, Course_change and Accel for QC
-  # FIX: Remove p_dredge from tmp_cols to retain it in the final dataset
-
-  # Retrieve GMM mapping info to identify which column to keep
+  # CORRECTION 1: Purge sécurisée des colonnes temporaires - DYNAMIQUE SELON LE MAPPING GMM
+# PATCH: Conserve dredge_lisse, norm_course, norm_acc, Course_change et Accel pour QC
+  # CORRECTION: Retire p_dredge de tmp_cols pour le conserver dans le dataset final
+  
+  # Récupérer les informations de mapping GMM pour identifier la colonne à conserver
   gmm_info <- attr(ais, "gmm_info")
   if (!is.null(gmm_info)) {
     dredge_idx <- gmm_info$dredge_idx
-    dredge_col <- paste0("p", dredge_idx + 1)  # +1 because p1 = stops
-    cat("    Conservation de la colonne dragage:", dredge_col, "\n")
-
-    # Remove all p* columns EXCEPT p_dredge and p1 (stops)
+    dredge_col <- paste0("p", dredge_idx + 1)  # +1 car p1 = stops
+    cat("   🎯 Conservation de la colonne dragage:", dredge_col, "\n")
+    
+    # Supprimer toutes les colonnes p* SAUF p_dredge et p1 (stops)
     all_p_cols <- paste0("p", 1:(gmm_info$K + 1))
     tmp_cols <- setdiff(all_p_cols, c("p1", dredge_col))
   } else {
-    # Fallback if no GMM info
+    # Fallback si pas d'info GMM
     tmp_cols <- c("p2","p4","p5")
   }
   
-  # Add other temporary columns (cleaned of ghost columns)
+  # Ajouter les autres colonnes temporaires (nettoyées des colonnes fantômes)
   tmp_cols <- c(tmp_cols, "speed_norm","speed_bin","comp","behavior","p_dredge_qa")
 
-# FIX 1: Safe purge - only remove columns that actually exist
+# CORRECTION 1: Purge sécurisée - ne supprime que les colonnes existantes
 keep <- intersect(tmp_cols, names(ais))
 if (length(keep)) {
   ais[, (keep) := NULL]
@@ -1582,8 +1581,8 @@ if (length(keep)) {
   cat("   Aucune colonne temporaire à supprimer\n")
 }
 
-# -- Remove superfluous stats columns -------------------------------------
-# FIX: Safe column removal
+# -- Nettoyage des colonnes de stats superflues ----------------------------
+# CORRECTION: Suppression sécurisée des colonnes
 todrop <- intersect(c("dt_sec", "p50_dt", "prop_long"), names(ais))
 if (length(todrop)) {
   ais[, (todrop) := NULL]
@@ -1593,26 +1592,26 @@ if (length(todrop)) {
 }
 
 # --------------------------------------------------------------------------
-# 14. ── SAVE  --------------------------------------------------------------
+# 14. ── SAUVEGARDE  --------------------------------------------------------
 # --------------------------------------------------------------------------
 
 ## ─────────────────  VERROU GLOBAL FINAL  ─────────────────
-# Guarantee no NAs remain in behavior_smooth before export
+# Garantir qu'aucun NA ne subsiste dans behavior_smooth avant l'export
 stopifnot(!anyNA(ais$behavior_smooth))
-cat(" Verrou global: Aucun NA dans behavior_smooth - Pipeline hermétique\n")
+cat("✅ Verrou global: Aucun NA dans behavior_smooth - Pipeline hermétique\n")
 ## ─────────────────────────────────────────────────────────
 
-# FIX: Save AFTER grid-search to include Dragage_flag
+# CORRECTION: Sauvegarde APRÈS la grid-search pour inclure Dragage_flag
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
 saveRDS(ais, file.path(output_dir,
          paste0("AIS_data_core_preprocessed_V6_", timestamp, ".rds")),
        compress = "xz")
 
-# Save results with the new structure
+# Sauvegarde des résultats avec la nouvelle structure
 saveRDS(list(best_weights = best,
              best_auc     = if(!is.null(best$mean_auc)) best$mean_auc else NA_real_,
              auc_sd       = if(!is.null(best$sd_auc)) best$sd_auc else NA_real_,
-             auc_folds    = if(!is.null(best$auc_folds)) best$auc_folds else numeric(0),  # Full AUC per fold
+             auc_folds    = if(!is.null(best$auc_folds)) best$auc_folds else numeric(0),  # CORRECTION: AUC complets par fold
              n_folds      = if(!is.null(best$n_folds)) best$n_folds else 0,
              method       = if(!is.null(best$method)) best$method else "unknown",
              timestamp    = timestamp),
@@ -1620,21 +1619,21 @@ saveRDS(list(best_weights = best,
          paste0("dragage_gridsearch_results_V6_", timestamp, ".rds")),
         compress = "xz")
 
-cat("\n  Fichiers sauvegardés dans", output_dir, "\n")
+cat("\n💾  Fichiers sauvegardés dans", output_dir, "\n")
 
-# QA CLEANUP: Remove QA test column p_dredge_qa
+# NETTOYAGE QA: Suppression de la colonne de test p_dredge_qa
 if ("p_dredge_qa" %in% names(ais)) {
   ais[, p_dredge_qa := NULL]
   cat("✓ Colonne QA p_dredge_qa supprimée\n")
 }
 
-# EARLY EXIT IN DRY-RUN MODE
+# SORTIE ANTICIPÉE EN MODE DRY-RUN
 if (is_dry) {
-  cat("\n === DRY-RUN TERMINÉ AVEC SUCCÈS ===\n")
-  cat(" Test complet jusqu'au grid-search - Aucun fichier lourd sauvegardé\n")
-  cat(" Pipeline prêt pour le lancement complet\n")
-  cat("  Fin dry-run :", format(Sys.time()), "\n")
+  cat("\n✅ === DRY-RUN TERMINÉ AVEC SUCCÈS ===\n")
+  cat("📝 Test complet jusqu'au grid-search - Aucun fichier lourd sauvegardé\n")
+  cat("🎯 Pipeline prêt pour le lancement complet\n")
+  cat("⏱️  Fin dry-run :", format(Sys.time()), "\n")
   quit(save = "no")
 }
 
-cat("  Fin :", format(Sys.time()), "\n")
+cat("⏱️  Fin :", format(Sys.time()), "\n")

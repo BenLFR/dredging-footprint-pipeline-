@@ -3,45 +3,44 @@
 #SBATCH --mem=8G
 #SBATCH --cpus-per-task=4
 #SBATCH --time=00:30:00
-#SBATCH --account=<SLURM_ACCOUNT>
+
 #SBATCH --output=logs/step1_split_%j.out
 #SBATCH --error=logs/step1_split_%j.err
 
-echo "=== STEP 1: AIS SPLIT BY VESSEL ==="
+# Configuration R GRIT
+module load R
+
+echo "🚀 === ÉTAPE 1: FRACTIONNEMENT PAR NAVIRE ==="
 echo "Job ID: $SLURM_JOB_ID"
 echo "Node: $SLURMD_NODENAME"
 echo "Début: $(date)"
 
 # Configuration R Beluga
-module load StdEnv/2020 gcc/9.3.0 r/4.2.1
-export R_LIBS=~/.local/R/4.2.1/
 
-# Environment variables
-export CORE_CONFIG_PATH=${CORE_CONFIG_PATH:-"~/scratch/output_V6/core_window.yaml"}
-export AIS_INPUT_FILE=${AIS_INPUT_FILE:-"~/AIS_data/benjamin3_clean.csv"}
+export R_LIBS_USER=~/R/library
+export AIS_INPUT_FILE=~/scratch/AIS_data/benjamin3_clean.csv
 
-# Create directories
+# Création répertoires
+mkdir -p ~/scratch/ais_split_${SLURM_JOB_ID}
 mkdir -p logs
 
-cd ~/R_scripts/pipeline_V6
+# CORRECTION: Rester dans le bon répertoire
+cd ~/scratch/pipeline_V6
 
-echo "Launching split script..."
-echo "Configuration: $CORE_CONFIG_PATH"
-echo "Input: $AIS_INPUT_FILE"
+echo "✅ Répertoire de travail: $(pwd)"
+echo "✅ Vérification fichier R: $(ls -la step1_split_navires.R 2>/dev/null || echo 'FICHIER MANQUANT')"
 
-Rscript --vanilla step1_split_navires.R
+echo "✅ Lancement script de fractionnement..."
+Rscript --vanilla -e "
+.libPaths('~/.local/R/4.2.1/')
+Sys.setenv(SLURM_JOB_ID = '$SLURM_JOB_ID')
+source('step1_split_navires.R')
+" 2>&1
 
-exit_code=$?
+echo "✅ Étape 1 terminée: $(date)"
+echo "📁 Fichiers sauvés dans: ~/scratch/ais_split_${SLURM_JOB_ID}/"
 
-if [ $exit_code -eq 0 ]; then
-    echo "Step 1 completed successfully: $(date)"
-    echo "Files saved to configured output directory"
-else
-    echo "Step 1 failed (code $exit_code): $(date)"
-    exit $exit_code
-fi
-
-# Display summary
-echo "SPLIT SUMMARY:"
-ls -lh ~/scratch/ais_split_${SLURM_JOB_ID}/ | grep ".rds"
-echo "Nombre de fichiers .rds générés: $(ls ~/scratch/ais_split_${SLURM_JOB_ID}/*.rds 2>/dev/null | wc -l)" 
+# Affichage résumé
+echo "📊 RÉSUMÉ FRACTIONNEMENT:"
+ls -lh ~/scratch/ais_split_${SLURM_JOB_ID}/ | grep ".fst"
+wc -l ~/scratch/ais_split_${SLURM_JOB_ID}/*.fst 2>/dev/null || echo "Erreur: aucun fichier .fst trouvé" 
