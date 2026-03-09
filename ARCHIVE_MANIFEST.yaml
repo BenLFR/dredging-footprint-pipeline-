@@ -1,0 +1,92 @@
+schema_version: "1.0"
+generated_on: "2026-03-09"
+
+repository:
+  name: "Master-thesis-code-"
+  url: "https://github.com/BenLFR/Master-thesis-code-"
+  branch: "pub/v1.0-clean"
+  commit: "8784656aa798cb1db452a8b679130d3bc58769c2"
+
+release:
+  status: "pre-release"
+  target_tag: "v1.0.0"
+  zenodo_concept_doi: "10.5281/zenodo.XXXXXXX"
+  zenodo_version_doi: null
+
+artifacts:
+  - path: "CITATION.cff"
+    category: "metadata"
+    bytes: 1146
+    sha256: "3262f8071c981747d429d760cf497d45341a897aa632549e611b814c8cf6ad27"
+    provenance: "repository source"
+
+  - path: "LICENSE"
+    category: "metadata"
+    bytes: 1074
+    sha256: "863886cf3bcfe9637776764d1ae0c3532255f1e458ea289142de1ee4bae7facb"
+    provenance: "repository source"
+
+  - path: "THIRD_PARTY_NOTICES.md"
+    category: "metadata"
+    bytes: 6755
+    sha256: "11ebdfcf9adbc3303bac805243c357da2ad24785e44aee340c4a457e5cde3eef"
+    provenance: "repository source"
+
+  - path: "renv.lock"
+    category: "runtime"
+    bytes: 21706
+    sha256: "440b6f2b640c6d9d3a4720e90f6fa5028f6933affe5757d7c211352072b736b9"
+    provenance: "generated from local environment via renv::snapshot()"
+
+  - path: "requirements.txt"
+    category: "runtime"
+    bytes: 236
+    sha256: "e17af763a091dee6da3c50ee790355208c8c9df8a9bf8067301db339760314ff"
+    provenance: "curated dependency pins"
+
+  - path: "deploy/apptainer.def"
+    category: "runtime"
+    bytes: 1480
+    sha256: "66be4f10055f65202e2ff618a30a12e4c62fc5f4810469cfd5e2057b4e94f54c"
+    provenance: "repository source"
+
+  - path: "docs/reproducibility.md"
+    category: "documentation"
+    bytes: 2313
+    sha256: "ee1d44e8c76cc54e74853fdd993d929e590158d9260cd6307a40501b90f775a8"
+    provenance: "repository source"
+
+planned_release_outputs:
+  - id: "fi_grid_tif"
+    expected_path: "output_V6/fi_grid.tif"
+    status: "pending_archive"
+    zenodo_doi: "10.5281/zenodo.XXXXXXX"
+    note: "Replace with version DOI after Zenodo release."
+
+  - id: "cri_grid_tif"
+    expected_path: "output_V6/cri_grid.tif"
+    status: "pending_archive"
+    zenodo_doi: "10.5281/zenodo.XXXXXXX"
+    note: "Replace with version DOI after Zenodo release."
+
+  - id: "jdredge_mat"
+    expected_path: "output_V6/Jdredge.mat"
+    status: "pending_archive"
+    zenodo_doi: "10.5281/zenodo.XXXXXXX"
+    note: "Replace with version DOI after Zenodo release."
+
+external_inputs_not_redistributed:
+  - id: "ais_exact_earth"
+    access: "commercial agreement"
+    redistributable: false
+    source: "https://www.exactearth.com"
+
+  - id: "ocim_matlab_solver_code"
+    access: "email request to tdevries@geog.ucsb.edu"
+    redistributable: false
+    source: "co2model/README.md"
+
+  - id: "ocim2_48l_transport_matrix"
+    access: "author-provided package"
+    redistributable: "depends on upstream terms"
+    source: "tdevries@geog.ucsb.edu"

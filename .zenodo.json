@@ -1,0 +1,19 @@
+{
+  "title": "Global dredging footprint pipeline",
+  "description": "AIS-based workflow to estimate global swept-area ratio (SAR), cumulative risk index (CRI), and optional OCIM2-48L CO2 perturbation outputs.",
+  "upload_type": "software",
+  "license": "MIT",
+  "creators": [
+    {
+      "name": "Loeffler, Benjamin"
+    }
+  ],
+  "keywords": [
+    "dredging",
+    "AIS",
+    "swept-area ratio",
+    "cumulative risk index",
+    "OCIM"
+  ],
+  "notes": "Replace DOI placeholders in repository metadata after Zenodo mints the version DOI."
+}

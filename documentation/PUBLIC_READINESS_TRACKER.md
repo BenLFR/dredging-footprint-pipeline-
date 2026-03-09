@@ -57,9 +57,9 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 
 ## Phase 5 - FAIR et archivage
 
-- [ ] Ajouter `ARCHIVE_MANIFEST.yaml`
-- [ ] Completer `configuration/codemeta.json`
-- [ ] Finaliser `documentation/ZENODO_INTEGRATION_GUIDE.md`
+- [x] Ajouter `ARCHIVE_MANIFEST.yaml`
+- [x] Completer `configuration/codemeta.json`
+- [x] Finaliser `documentation/ZENODO_INTEGRATION_GUIDE.md`
 - [ ] Remplacer placeholders DOI quand release publiee
 - [ ] Verifier checksums des outputs archives
 
@@ -94,3 +94,4 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 | 2026-03-08 | Source OCIM precisee (pas de repo GitHub public confirme) | DONE | docs/notices alignees sur acces par demande email a TD (`tdevries@geog.ucsb.edu`) |
 | 2026-03-08 | Phase 3 cloturee sur wrappers Step4-7 | DONE | suppression hard-codes cluster + ajout `OUTPUT_DIR`/`CONFIG_DIR` + templates `config/templates/slurm/` |
 | 2026-03-09 | Phase 4 completee (specs R/Python + conteneur + CI) | DONE | `renv.lock` + `requirements.txt` + `deploy/apptainer.def` + `docs/reproducibility.md`; CI smoke alignee sur R `4.4.1` et cache renv |
+| 2026-03-09 | Phase 5 engagee (manifeste + codemeta + guide Zenodo) | DONE | ajout de `ARCHIVE_MANIFEST.yaml`, `configuration/codemeta.json`, `.zenodo.json`, `documentation/ZENODO_INTEGRATION_GUIDE.md`; placeholders DOI conserves jusqu'a release |
