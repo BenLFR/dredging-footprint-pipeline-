@@ -3,26 +3,25 @@
 ## AIS Vessel Tracking Data
 
 The raw AIS (Automatic Identification System) vessel tracking data used in this
-study are **proprietary and cannot be redistributed**.
+study are restricted-access and cannot be redistributed.
 
-- **Source**: Exact Earth Ltd (satellite AIS), 2019–2021
-- **Access**: Data were obtained under a time-limited academic data use agreement.
-  Researchers wishing to replicate the study should contact Exact Earth Ltd
-  (https://www.exactearth.com) or use Global Fishing Watch data
-  (https://globalfishingwatch.org) as a free alternative.
-- **GDPR / privacy**: Individual vessel positions are commercially sensitive.
-  We do not publish raw tracks. Only aggregated grid-cell statistics (SAR, CRI)
-  are published.
+- Source: Global Fishing Watch (GFW) AIS access via Stanford Center for Ocean
+  Solutions collaboration channel, 2019-2021.
+- Access: Data were obtained under restricted research access conditions.
+  Researchers wishing to replicate the study should contact David Kroodsma
+  (Global Fishing Watch) for data-access guidance.
+- Privacy and sensitivity: We do not publish raw tracks. Only aggregated
+  grid-cell statistics (SAR, CRI) are published.
 
 ## Processed Outputs
 
-The following **derived products** are published open-access and can be used to
-reproduce downstream analyses without the raw AIS data:
+The following derived products are published open-access and can be used to
+reproduce downstream analyses without raw AIS tracks:
 
 | Product | Description | DOI / Location |
 |---------|-------------|----------------|
-| `fi_grid.tif` | Global swept-area ratio raster (0.5°) | Zenodo: 10.5281/zenodo.XXXXXXX |
-| `cri_grid.tif` | Cumulative risk index raster (0.5°) | Zenodo: 10.5281/zenodo.XXXXXXX |
+| `fi_grid.tif` | Global swept-area ratio raster (0.5 deg) | Zenodo: 10.5281/zenodo.XXXXXXX |
+| `cri_grid.tif` | Cumulative risk index raster (0.5 deg) | Zenodo: 10.5281/zenodo.XXXXXXX |
 | `Jdredge.mat` | Dredging disturbance flux for OCIM2 | Zenodo: 10.5281/zenodo.XXXXXXX |
 
 ## Third-Party Data Licences
@@ -31,24 +30,24 @@ reproduce downstream analyses without the raw AIS data:
 |---------|---------|--------|
 | dbSEABED lithology | CC-BY 4.0 | HubOcean STAC |
 | OCIM2-48L transport matrix | Free for research | T. DeVries lab, UCSB |
-| Atwood et al. C₀ raster | CC-BY 4.0 | Zenodo 10.5281/zenodo.3772915 |
+| Atwood et al. C0 raster | CC-BY 4.0 | Zenodo 10.5281/zenodo.3772915 |
 | Longhurst provinces v4 | CC-BY 4.0 | VLIZ Marine Regions |
 | GSHHS land mask | LGPL | NOAA / NGDC |
 
 ## L&O:Methods Data Availability Statement (template)
 
-> The AIS vessel tracking data used in this study were obtained from Exact Earth
-> Ltd under a data use agreement and cannot be shared publicly due to commercial
-> restrictions. Requests may be directed to Exact Earth Ltd
-> (https://www.exactearth.com). The processed swept-area ratio (f_i) and
-> cumulative risk index (C_ri) rasters are deposited on Zenodo
-> (https://doi.org/10.5281/zenodo.XXXXXXX). All pipeline code is available at
-> https://github.com/BenLFR/Master-thesis-code- (MIT licence). Third-party
-> MATLAB CO2 model source code is not redistributed in this repository and must
-> be obtained from the author on request (tdevries@geog.ucsb.edu). The
-> OCIM2-48L ocean circulation matrix is available from T. DeVries
-> (tdevries@geog.ucsb.edu).
-> The organic carbon stock raster (C₀) is available from Atwood et al. (2020,
+> The AIS vessel tracking data used in this study were obtained from Global
+> Fishing Watch (GFW) via Stanford Center for Ocean Solutions access and cannot
+> be shared publicly due to access restrictions. Requests for access guidance
+> should be directed to David Kroodsma (Global Fishing Watch). The processed
+> swept-area ratio (f_i) and cumulative risk index (C_ri) rasters are deposited
+> on Zenodo (https://doi.org/10.5281/zenodo.XXXXXXX). All pipeline code is
+> available at https://github.com/BenLFR/Master-thesis-code- (MIT licence).
+> Third-party MATLAB CO2 model source code is not redistributed in this
+> repository and must be obtained from the author on request
+> (tdevries@geog.ucsb.edu). The OCIM2-48L ocean circulation matrix is available
+> from T. DeVries (tdevries@geog.ucsb.edu). The organic carbon stock raster (C0)
+> is available from Atwood et al. (2020,
 > https://doi.org/10.5281/zenodo.3772915). All other auxiliary datasets
 > (dbSEABED, Longhurst provinces, land mask) are freely available from the
 > sources cited in `data/README.md`.

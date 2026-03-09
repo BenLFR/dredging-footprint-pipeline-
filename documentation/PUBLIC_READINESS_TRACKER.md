@@ -65,10 +65,10 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 
 ## Phase 6 - Methodes, limites, transparence
 
-- [ ] Brancher warnings runtime de limites dans pipeline
-- [ ] Verifier liens vers `documentation/LIMITATIONS.md`
-- [ ] Finaliser protocoles benchmark/validation/uncertainty
-- [ ] Ajouter mapping "resultat -> script -> input -> output"
+- [x] Brancher warnings runtime de limites dans pipeline
+- [x] Verifier liens vers `documentation/LIMITATIONS.md`
+- [x] Finaliser protocoles benchmark/validation/uncertainty
+- [x] Ajouter mapping "resultat -> script -> input -> output"
 
 ## Phase 7 - CI et release decision
 
@@ -95,3 +95,5 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 | 2026-03-08 | Phase 3 cloturee sur wrappers Step4-7 | DONE | suppression hard-codes cluster + ajout `OUTPUT_DIR`/`CONFIG_DIR` + templates `config/templates/slurm/` |
 | 2026-03-09 | Phase 4 completee (specs R/Python + conteneur + CI) | DONE | `renv.lock` + `requirements.txt` + `deploy/apptainer.def` + `docs/reproducibility.md`; CI smoke alignee sur R `4.4.1` et cache renv |
 | 2026-03-09 | Phase 5 engagee (manifeste + codemeta + guide Zenodo) | DONE | ajout de `ARCHIVE_MANIFEST.yaml`, `configuration/codemeta.json`, `.zenodo.json`, `documentation/ZENODO_INTEGRATION_GUIDE.md`; placeholders DOI conserves jusqu'a release |
+| 2026-03-09 | Provenance AIS corrigee (GFW/Stanford) | DONE | `docs/data_policy.md`, `data/README.md`, `documentation/LIMITATIONS.md`, `ARCHIVE_MANIFEST.yaml` alignes sur la source utilisateur et contact David Kroodsma |
+| 2026-03-09 | Phase 6 completee (limites + protocoles + tracabilite) | DONE | warnings runtime Step3-7 + `documentation/LIMITATIONS.md`, `BENCHMARKING_PROTOCOL.md`, `VALIDATION_PROTOCOL.md`, `UNCERTAINTY_BUDGET.md`, `RESULT_TRACEABILITY_MATRIX.md` |

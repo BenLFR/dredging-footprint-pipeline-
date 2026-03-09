@@ -36,6 +36,14 @@ cd "$PIPELINE_DIR" || { echo "Repertoire manquant: $PIPELINE_DIR"; exit 2; }
 
 echo "Repertoire courant: $(pwd)"
 echo "R library path: $R_LIBS_USER"
+echo ""
+LIMITATIONS_DOC="${LIMITATIONS_DOC:-$PIPELINE_DIR/documentation/LIMITATIONS.md}"
+echo "METHODO WARNING: CRI->Jdredge export inherits upstream assumptions."
+if [ -f "$LIMITATIONS_DOC" ]; then
+    echo "See: $LIMITATIONS_DOC"
+else
+    echo "Limitations document not found: $LIMITATIONS_DOC"
+fi
 
 # Pre-flight: ocim_cache.mat
 OCIM_CACHE="${OCIM_CACHE:-$OCIM_DIR/ocim_cache.mat}"

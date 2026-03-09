@@ -25,6 +25,16 @@ mkdir -p ~/scratch/output_V6
 
 cd $PIPELINE_DIR
 
+# Runtime transparency notice (non-blocking)
+LIMITATIONS_DOC=${LIMITATIONS_DOC:-$PIPELINE_DIR/../documentation/LIMITATIONS.md}
+echo ""
+echo "METHODO WARNING: known study limitations apply to merged and classified tracks."
+if [ -f "$LIMITATIONS_DOC" ]; then
+    echo "See: $LIMITATIONS_DOC"
+else
+    echo "Limitations document not found: $LIMITATIONS_DOC"
+fi
+
 # Parameters: SPLIT_JOB_ID and RESULTS_DIR from environment or arguments
 SPLIT_JOB_ID=${SPLIT_JOB_ID:-${1:-"12990"}}
 RESULTS_DIR=${RESULTS_DIR:-~/scratch/ais_results_14542}

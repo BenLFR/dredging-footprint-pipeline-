@@ -36,6 +36,14 @@ cd "$PIPELINE_DIR" || { echo "❌ Repertoire manquant: $PIPELINE_DIR"; exit 2; }
 
 echo "✅ Repertoire courant: $(pwd)"
 echo "✅ R library path: $R_LIBS_USER"
+echo ""
+LIMITATIONS_DOC="${LIMITATIONS_DOC:-$PIPELINE_DIR/documentation/LIMITATIONS.md}"
+echo "METHODO WARNING: known limitations apply to CRI estimates."
+if [ -f "$LIMITATIONS_DOC" ]; then
+    echo "See: $LIMITATIONS_DOC"
+else
+    echo "Limitations document not found: $LIMITATIONS_DOC"
+fi
 
 # Pre-flight: verifier les rasters carbone Atwood
 CARBON_DIR="${CARBON_DIR:-$CONFIG_DIR/atwood_carbon_full}"

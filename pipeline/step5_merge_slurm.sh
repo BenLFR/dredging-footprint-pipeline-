@@ -37,6 +37,16 @@ mkdir -p "$LOGS_DIR"
 
 cd "$PIPELINE_DIR" || { echo "ERREUR: Repertoire pipeline introuvable: $PIPELINE_DIR"; exit 2; }
 
+# Runtime transparency notice (non-blocking)
+LIMITATIONS_DOC="${LIMITATIONS_DOC:-$PIPELINE_DIR/documentation/LIMITATIONS.md}"
+echo ""
+echo "METHODO WARNING: known study limitations apply to fi outputs."
+if [ -f "$LIMITATIONS_DOC" ]; then
+  echo "See: $LIMITATIONS_DOC"
+else
+  echo "Limitations document not found: $LIMITATIONS_DOC"
+fi
+
 # GeoTIFF active par defaut (mettre false pour desactiver)
 export MAKE_TIFF="${MAKE_TIFF:-TRUE}"
 echo "Generation GeoTIFF: $MAKE_TIFF"

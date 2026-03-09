@@ -43,6 +43,16 @@ mkdir -p "$LOGS_DIR"
 
 cd "$PIPELINE_DIR" || { echo "ERREUR: Repertoire pipeline introuvable: $PIPELINE_DIR"; exit 2; }
 
+# Runtime transparency notice (non-blocking)
+LIMITATIONS_DOC="${LIMITATIONS_DOC:-$PIPELINE_DIR/documentation/LIMITATIONS.md}"
+echo ""
+echo "AVERTISSEMENT METHODO: ce run est soumis a des limites connues."
+if [ -f "$LIMITATIONS_DOC" ]; then
+    echo "Consulter: $LIMITATIONS_DOC"
+else
+    echo "Document de limites introuvable: $LIMITATIONS_DOC"
+fi
+
 # Verification pre-requis: cache HubOcean
 CACHE_DIR="$HUBOCEAN_CACHE_DIR"
 if [ ! -d "$CACHE_DIR" ]; then

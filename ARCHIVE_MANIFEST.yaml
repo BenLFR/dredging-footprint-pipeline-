@@ -76,10 +76,10 @@ planned_release_outputs:
     note: "Replace with version DOI after Zenodo release."
 
 external_inputs_not_redistributed:
-  - id: "ais_exact_earth"
-    access: "commercial agreement"
+  - id: "ais_gfw_stanford_access"
+    access: "restricted GFW access via Stanford Center for Ocean Solutions"
     redistributable: false
-    source: "https://www.exactearth.com"
+    source: "Contact David Kroodsma (Global Fishing Watch)"
 
   - id: "ocim_matlab_solver_code"
     access: "email request to tdevries@geog.ucsb.edu"
