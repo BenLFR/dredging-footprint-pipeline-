@@ -1,4 +1,4 @@
-name: Smoke Test (steps 2-5, toy data)
+name: Quality Gate (tests + benchmark + smoke)
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
         run: |
           pkgs <- c(
             "data.table", "arrow", "qs", "mclust", "dbscan",
-            "sf", "terra", "yaml", "dplyr"
+            "sf", "terra", "yaml", "dplyr", "testthat"
           )
           missing <- pkgs[!pkgs %in% installed.packages()[,"Package"]]
           if (length(missing) > 0) {
@@ -42,10 +42,17 @@ jobs:
           }
           cat("All packages installed\n")
 
-      - name: Run smoke test
-        run: |
-          chmod +x tests/smoke_test_steps2_5.sh
-          bash tests/smoke_test_steps2_5.sh
+      - name: Run testthat suite
+        run: Rscript tests/run_testthat.R
+
+      - name: Run benchmark regression guard
+        run: Rscript tests/benchmark_regression_guard.R
+
+      - name: Validate HPC template path
+        run: Rscript tests/hpc_template_path_check.R
+
+      - name: Run smoke test (steps 2-5, toy data)
+        run: Rscript tests/smoke_test_steps2_5.R
 
       - name: Upload toy data artifact (on failure)
         if: failure()

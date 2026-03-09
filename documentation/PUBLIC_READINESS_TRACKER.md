@@ -5,11 +5,11 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 
 ## Statut global
 
-- [ ] Gate G1 (Legal) valide
-- [ ] Gate G2 (Run path) valide
+- [x] Gate G1 (Legal) valide
+- [x] Gate G2 (Run path) valide
 - [x] Gate G3 (Repro env) valide
 - [ ] Gate G4 (FAIR) valide
-- [ ] Gate G5 (Journal) valide
+- [x] Gate G5 (Journal) valide
 
 ## Phase 0 - Baseline et triage
 
@@ -72,11 +72,11 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 
 ## Phase 7 - CI et release decision
 
-- [ ] Etendre CI (testthat + benchmark continu + seuils regression)
-- [ ] Nettoyer doublons/non-canonical (`*(1).md`, legacy ambigu)
-- [ ] Tester clone neuf (quickstart toy)
-- [ ] Tester chemin HPC template (sans donnees proprietaires)
-- [ ] Produire verdict Go/No-Go documente
+- [x] Etendre CI (testthat + benchmark continu + seuils regression)
+- [x] Nettoyer doublons/non-canonical (`*(1).md`, legacy ambigu)
+- [x] Tester clone neuf (quickstart toy)
+- [x] Tester chemin HPC template (sans donnees proprietaires)
+- [x] Produire verdict Go/No-Go documente
 
 ## Journal d'avancement
 
@@ -97,3 +97,6 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 | 2026-03-09 | Phase 5 engagee (manifeste + codemeta + guide Zenodo) | DONE | ajout de `ARCHIVE_MANIFEST.yaml`, `configuration/codemeta.json`, `.zenodo.json`, `documentation/ZENODO_INTEGRATION_GUIDE.md`; placeholders DOI conserves jusqu'a release |
 | 2026-03-09 | Provenance AIS corrigee (GFW/Stanford) | DONE | `docs/data_policy.md`, `data/README.md`, `documentation/LIMITATIONS.md`, `ARCHIVE_MANIFEST.yaml` alignes sur la source utilisateur et contact David Kroodsma |
 | 2026-03-09 | Phase 6 completee (limites + protocoles + tracabilite) | DONE | warnings runtime Step3-7 + `documentation/LIMITATIONS.md`, `BENCHMARKING_PROTOCOL.md`, `VALIDATION_PROTOCOL.md`, `UNCERTAINTY_BUDGET.md`, `RESULT_TRACEABILITY_MATRIX.md` |
+| 2026-03-09 | CI phase 7 etendue | DONE | workflow `smoke_test.yml` etendu avec `testthat`, benchmark guard et test HPC template statique |
+| 2026-03-09 | Rehearsal clone neuf + HPC template completes | DONE | validation en copie propre via `tests/run_testthat.R`, `tests/benchmark_regression_guard.R`, `tests/hpc_template_path_check.R`, `tests/smoke_test_steps2_5.R` |
+| 2026-03-09 | Verdict release rendu | DONE | `documentation/RELEASE_VERDICT_20260309.md`: **NO-GO** tant que DOI/checksums FAIR ne sont pas finalises |

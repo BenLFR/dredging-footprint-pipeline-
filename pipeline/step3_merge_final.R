@@ -657,6 +657,7 @@ cadence[prop_long > 0.5, threshold_adaptive := pmin(1200, 5 * p50_dt)]  # 5 x me
 # 8) Calcul du n_min adaptive pour le lissage run-length
 #    t_threshold = 30 s ~ max duration of a micro-glitch
 t_threshold   <- 30                     # 30 s ~ max duration of a micro-glitch
+t_seuil <- t_threshold                  # alias conserve pour compatibilite historique
 n_max_cap <- 8                      # plafond pour rester rapide
 cadence[, n_min := pmin(n_max_cap, pmax(3, ceiling(t_seuil / p50_dt)))]
 

@@ -84,11 +84,18 @@ while (t < START_TIME + N_DAYS * 86400) {
 df <- do.call(rbind, lapply(records, as.data.frame, stringsAsFactors = FALSE))
 
 # --- Write output -------------------------------------------------------------
-out_dir  <- file.path(dirname(sys.frame(1)$ofile), ".")
-out_file <- file.path(out_dir, "toy_ais.csv")
+script_path <- NA_character_
+cmd_args <- commandArgs(trailingOnly = FALSE)
+file_arg <- grep("^--file=", cmd_args, value = TRUE)
+if (length(file_arg) > 0) {
+  script_path <- sub("^--file=", "", file_arg[[1]])
+}
 
-# Fallback for interactive use
-if (!exists("out_file") || is.null(out_file)) {
+if (!is.na(script_path) && nzchar(script_path)) {
+  out_dir <- dirname(normalizePath(script_path, winslash = "/", mustWork = FALSE))
+  out_file <- file.path(out_dir, "toy_ais.csv")
+} else {
+  # Fallback for interactive use
   out_file <- "data/toy/toy_ais.csv"
 }
 
