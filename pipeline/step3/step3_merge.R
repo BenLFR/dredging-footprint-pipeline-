@@ -241,7 +241,7 @@ default_config <- list(
 
 # Lecture du YAML avec gestion des erreurs
 tryCatch({
-  config_dir <- Sys.getenv("CONFIG_DIR", unset = "~/scratch/configuration")
+  config_dir <- Sys.getenv("CONFIG_DIR", unset = "~/ais-pipeline/configuration")
   cfg <- yaml::read_yaml(file.path(config_dir, "outlier_config_V6.yaml"))
   
   # Extraction des paramètres depuis les sections imbriquées
