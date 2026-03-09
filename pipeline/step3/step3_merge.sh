@@ -1,50 +1,59 @@
 #!/bin/bash
-#SBATCH --job-name=step3_merge
-#SBATCH --mem=32G
-#SBATCH --cpus-per-task=8
-#SBATCH --time=04:00:00
+#SBATCH --job-name=step3_merge_highmem
+#SBATCH --mem=256G
+#SBATCH --cpus-per-task=16
+#SBATCH --time=12:00:00
 #SBATCH --output=logs/step3_merge_%j.out
 #SBATCH --error=logs/step3_merge_%j.err
 
-echo "=== ETAPE 3: FUSION ET GRID SEARCH (GRIT) ==="
+set -euo pipefail
+
+echo "=== STEP 3 OPTIMIZED (256G) ==="
 echo "Job ID: $SLURM_JOB_ID"
 echo "Node: $(hostname)"
 echo "Debut: $(date)"
 
-# Configuration mono-thread pour éviter les conflits
 export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 
-# Répertoires
 PIPELINE_DIR=~/ais-pipeline/pipeline_V6
-mkdir -p $PIPELINE_DIR/logs
-mkdir -p ~/scratch/output_V6
+LOGS_DIR=$PIPELINE_DIR/logs
+mkdir -p $LOGS_DIR ~/scratch/output_V6
 
 cd $PIPELINE_DIR
 
-# Variables d'environnement pour le script R
-export SPLIT_JOB_ID=${SPLIT_JOB_ID:-"12990"}
-export RESULTS_DIR=${RESULTS_DIR:-"$HOME/scratch/ais_results_14542"}
-export SLURM_CPUS_PER_TASK=${SLURM_CPUS_PER_TASK:-8}
+SPLIT_JOB_ID=${SPLIT_JOB_ID:-${1:-"12990"}}
+RESULTS_DIR=${RESULTS_DIR:-~/scratch/ais_results_14542}
 
-echo "SPLIT_JOB_ID: $SPLIT_JOB_ID"
-echo "RESULTS_DIR: $RESULTS_DIR"
-echo "Fichiers *_clean.rds disponibles:"
-ls -lh $RESULTS_DIR/*_clean.rds 2>/dev/null | tail -5
+echo "Split Job: $SPLIT_JOB_ID"
+echo "Results dir: $RESULTS_DIR"
 
-echo "Lancement step3_merge.R..."
-Rscript step3_merge.R 2>&1
+# Checkpoints
+echo "Checkpoints existants:"
+ls -lh ~/scratch/output_V6/checkpoints/*.rds 2>/dev/null || echo "  Aucun"
+
+# Verification fichiers
+CLEAN_COUNT=$(ls $RESULTS_DIR/*_clean.rds 2>/dev/null | wc -l)
+echo "Fichiers clean: $CLEAN_COUNT"
+[ "$CLEAN_COUNT" -eq 0 ] && { echo "ERREUR: aucun fichier *_clean.rds"; exit 1; }
+
+export SPLIT_JOB_ID RESULTS_DIR
+export SLURM_CPUS_PER_TASK=${SLURM_CPUS_PER_TASK:-16}
+export CV_FOLDS=5
+
+echo "Lancement R (256G, 5 folds CV)..."
+Rscript step3_merge.R 2>&1 | tee $LOGS_DIR/step3_merge_${SLURM_JOB_ID}.log
 
 exit_code=$?
 
 if [ $exit_code -eq 0 ]; then
-    echo "Step 3 terminee avec succes: $(date)"
-    echo "Fichiers generes:"
+    echo "Succes: $(date)"
     ls -lh ~/scratch/output_V6/AIS_data_core_preprocessed_V6_*.rds 2>/dev/null | tail -3
 else
-    echo "Erreur Step 3: code $exit_code"
+    echo "ERREUR: code $exit_code"
+    tail -30 $LOGS_DIR/step3_merge_${SLURM_JOB_ID}.log
     exit $exit_code
 fi
 
-echo "=== FIN ETAPE 3 ==="
+echo "=== FIN STEP 3 ==="
