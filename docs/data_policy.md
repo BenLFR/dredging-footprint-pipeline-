@@ -6,7 +6,7 @@ The raw AIS (Automatic Identification System) vessel tracking data used in this
 study are restricted-access and cannot be redistributed.
 
 - Source: Global Fishing Watch (GFW) AIS access via Stanford Center for Ocean
-  Solutions collaboration channel, 2019-2021.
+  Solutions collaboration channel.
 - Access: Data were obtained under restricted research access conditions.
   Researchers wishing to replicate the study should contact David Kroodsma
   (Global Fishing Watch) for data-access guidance.
