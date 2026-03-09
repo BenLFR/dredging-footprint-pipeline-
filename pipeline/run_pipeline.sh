@@ -104,7 +104,7 @@ if [[ $FROM_STEP -le 0 ]]; then
   JOB0=$(sbatch --parsable --partition="$PART" \
     --output="$LOGS/step0_%j.out" \
     --error="$LOGS/step0_%j.err" \
-    "$PIPELINE/step0_window_select.sh")
+    "$PIPELINE/step0/step0_window_select.sh")
   echo "step0=$JOB0" | tee -a "$MANIFEST"
 
   sbatch --parsable --partition="$PART" \
@@ -126,7 +126,7 @@ if [[ $FROM_STEP -le 1 ]]; then
   JOB1=$(sbatch --parsable --partition="$PART" ${DEP1:-} \
     --output="$LOGS/step1_%j.out" \
     --error="$LOGS/step1_%j.err" \
-    "$PIPELINE/step1_split_vessels.sh")
+    "$PIPELINE/step1/step1_split_vessels.sh")
   echo "step1=$JOB1" | tee -a "$MANIFEST"
 
   sbatch --parsable --partition="$PART" \
@@ -234,7 +234,7 @@ if [[ \$FROM_STEP -le 2 ]]; then
     --output=\$LOGS/step2_%A_%a.out \
     --error=\$LOGS/step2_%A_%a.err \
     --export=ALL,SPLIT_JOB_ID=\${JOB1} \
-    \$PIPELINE/step2_process_array.sh)
+    \$PIPELINE/step2/step2_process_array.sh)
 
   echo "step2=\$JOB2" | tee -a \$MANIFEST
   echo \$JOB2 > \$SCRATCH/step2/job_id.txt
@@ -275,7 +275,7 @@ if [[ \$FROM_STEP -le 3 ]]; then
     --output=\$LOGS/step3_%j.out \
     --error=\$LOGS/step3_%j.err \
     --export=ALL,SPLIT_JOB_ID=\${JOB1},RESULTS_DIR=\${RESULTS_DIR} \
-    \$PIPELINE/step3_merge_highmem.sh)
+    \$PIPELINE/step3/step3_merge_highmem.sh)
   echo "step3=\$JOB3" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
@@ -298,7 +298,7 @@ if [[ \$FROM_STEP -le 4 ]]; then
   JOB4=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \${DEP4:-} \
     --output=\$LOGS/step4_%j.out \
     --error=\$LOGS/step4_%j.err \
-    \$PIPELINE/step4_add_lithology.sh)
+    \$PIPELINE/step4/step4_add_lithology.sh)
   echo "step4=\$JOB4" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
@@ -323,11 +323,11 @@ if [[ \$FROM_STEP -le 5 ]]; then
     --mem=8G --cpus-per-task=2 --time=00:20:00 \
     --output=\$LOGS/step5a_%j.out \
     --error=\$LOGS/step5a_%j.err \
-    --wrap="export LD_LIBRARY_PATH=\$HOME/lib:\${LD_LIBRARY_PATH:-}; export R_LIBS_USER=\$HOME/R/library; cd \$PIPELINE && Rscript step5_make_tiles.R")
+    --wrap="export LD_LIBRARY_PATH=\$HOME/lib:\${LD_LIBRARY_PATH:-}; export R_LIBS_USER=\$HOME/R/library; cd \$PIPELINE/step5 && Rscript step5_make_tiles.R")
   echo "step5a=\$JOB5A" | tee -a \$MANIFEST
 
   # ── STEP 5b: SAR tile array ────────────────────────────────────────────────
-  ARRAY_SPEC=\$(grep -E '^#SBATCH[[:space:]]+--array=' "\$PIPELINE/step5_tile_job.sh" | head -1 | sed 's/^.*--array=//')
+  ARRAY_SPEC=\$(grep -E '^#SBATCH[[:space:]]+--array=' "\$PIPELINE/step5/step5_tile_job.sh" | head -1 | sed 's/^.*--array=//')
   ARRAY_SPEC=\${ARRAY_SPEC//[[:space:]]/}
   [[ -z "\$ARRAY_SPEC" ]] && ARRAY_SPEC="1-648%20"
 
@@ -370,7 +370,7 @@ if [[ \$FROM_STEP -le 5 ]]; then
       --array=\${CHUNK_BEGIN}-\${CHUNK_END}%\${ARRAY_PAR} \
       --output=\$LOGS/step5b_\${CHUNK_BEGIN}_\${CHUNK_END}_%A_%a.out \
       --error=\$LOGS/step5b_\${CHUNK_BEGIN}_\${CHUNK_END}_%A_%a.err \
-      \$PIPELINE/step5_tile_job.sh)
+      \$PIPELINE/step5/step5_tile_job.sh)
 
     echo "step5b_chunk_\${CHUNK_IDX}=\$JOB5B_CHUNK range=\${CHUNK_BEGIN}-\${CHUNK_END}%\${ARRAY_PAR}" | tee -a \$MANIFEST
     PREV_CHUNK=\$JOB5B_CHUNK
@@ -384,7 +384,7 @@ if [[ \$FROM_STEP -le 5 ]]; then
     --dependency=afterok:\$JOB5B \
     --output=\$LOGS/step5c_%j.out \
     --error=\$LOGS/step5c_%j.err \
-    \$PIPELINE/step5_merge_tiles.sh)
+    \$PIPELINE/step5/step5_merge_tiles.sh)
   echo "step5c=\$JOB5C" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
@@ -409,7 +409,7 @@ if [[ \$FROM_STEP -le 6 ]]; then
   JOB6=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \${DEP6:-} \
     --output=\$LOGS/step6_%j.out \
     --error=\$LOGS/step6_%j.err \
-    \$PIPELINE/step6_calculate_cri.sh)
+    \$PIPELINE/step6/step6_calculate_cri.sh)
   echo "step6=\$JOB6" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
@@ -431,7 +431,7 @@ if [[ \$FROM_STEP -le 7 ]]; then
   JOB7=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \${DEP7:-} \
     --output=\$LOGS/step7_%j.out \
     --error=\$LOGS/step7_%j.err \
-    \$PIPELINE/step7_export_jdredge.sh)
+    \$PIPELINE/step7/step7_export_jdredge.sh)
   echo "step7=\$JOB7" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
