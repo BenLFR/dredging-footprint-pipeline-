@@ -61,9 +61,3 @@ These checks confirm:
 Phase-7 rehearsal checks pass for code integrity and documentation consistency.
 Final release readiness still depends on FAIR closure items documented in
 `documentation/RELEASE_VERDICT_20260309.md`.
-
-Strict evidence note:
-
-1. This rehearsal is not sufficient to close G2 without GRIT runtime proof.
-2. Use `documentation/GRIT_VERIFICATION_CHECKLIST_20260309.md` as the required
-   closure protocol.

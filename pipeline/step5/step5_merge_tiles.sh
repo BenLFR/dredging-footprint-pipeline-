@@ -9,7 +9,7 @@
 #SBATCH --time=06:00:00
 #SBATCH --mem=128G
 #SBATCH --cpus-per-task=8
-#SBATCH --nodelist=hpc-05.grit.ucsb.edu
+# --nodelist=YOUR_NODE  # uncomment to pin to a specific node if needed
 
 # R packages installes dans ~/R/library
 export R_LIBS_USER=~/R/library
@@ -74,7 +74,7 @@ if [ ! -f "$PIPELINE_DIR/constants.R" ]; then
   exit 1
 fi
 
-SCRIPT_PATH="$PIPELINE_DIR/step5_merge_tiles.R"
+SCRIPT_PATH="$PIPELINE_DIR/step5/step5_merge_tiles.R"
 if [ ! -f "$SCRIPT_PATH" ]; then
   echo "ERREUR: Script R non trouve: $SCRIPT_PATH"
   exit 1

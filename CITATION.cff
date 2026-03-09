@@ -11,7 +11,7 @@ authors:
     given-names: Benjamin
     # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # add before submission
 version: "1.0.0"
-date-released: "2026"
+date-released: "2026-03-09"
 doi: "10.5281/zenodo.XXXXXXX"  # placeholder — reserve DOI on Zenodo before submission
 license: MIT
 repository-code: "https://github.com/BenLFR/Master-thesis-code-"
