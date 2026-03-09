@@ -3,13 +3,13 @@
 #  SLURM – STEP 7 : Export Jtrawl for OCIM2-48L
 #  Version GRIT-adapted
 ###############################################################################
-#SBATCH --job-name=step7_jtrawl
+#SBATCH --job-name=step7_jdredge
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=2
 #SBATCH --time=02:00:00
 #SBATCH --chdir=/home/bloe/ais-pipeline/pipeline_V6
-#SBATCH --output=/home/bloe/logs/step7_jtrawl_%j.out
-#SBATCH --error=/home/bloe/logs/step7_jtrawl_%j.err
+#SBATCH --output=/home/bloe/logs/step7_jdredge_%j.out
+#SBATCH --error=/home/bloe/logs/step7_jdredge_%j.err
 #SBATCH --exclude=hpc-08.grit.ucsb.edu
 
 echo "=== STEP 7 : EXPORT Jtrawl (job $SLURM_JOB_ID) ==="
@@ -62,11 +62,11 @@ if [ $? -ne 0 ]; then
 fi
 
 echo ""
-echo "Lancement step7_export_jtrawl.R ..."
+echo "Lancement step7_export_jdredge.R ..."
 
 Rscript --vanilla -e "
   .libPaths('~/R/library')
-  source('step7_export_jtrawl.R')
+  source('step7_export_jdredge.R')
 "
 
 exit_code=$?

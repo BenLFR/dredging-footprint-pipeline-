@@ -51,7 +51,7 @@ fi
 
 export SLURM_ARRAY_TASK_ID=$SLURM_ARRAY_TASK_ID
 export SPLIT_JOB_ID=$SPLIT_JOB_ID
-Rscript step2_process_navire.R 2>&1
+Rscript step2_process_vessel.R 2>&1
 
 exit_code=$?
 

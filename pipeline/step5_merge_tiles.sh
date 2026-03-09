@@ -74,7 +74,7 @@ if [ ! -f "$PIPELINE_DIR/constants.R" ]; then
   exit 1
 fi
 
-SCRIPT_PATH="$PIPELINE_DIR/step5_merge_tiles_optimized.R"
+SCRIPT_PATH="$PIPELINE_DIR/step5_merge_tiles.R"
 if [ ! -f "$SCRIPT_PATH" ]; then
   echo "ERREUR: Script R non trouve: $SCRIPT_PATH"
   exit 1

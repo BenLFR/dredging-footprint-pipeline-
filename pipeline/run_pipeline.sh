@@ -1,15 +1,15 @@
 #!/bin/bash
 # =============================================================================
-# run_full_pipeline_grit.sh
+# run_pipeline.sh
 # Full autonomous pipeline orchestrator — GRIT cluster (emlab_nodes partition)
 #
 # Usage:
-#   bash run_full_pipeline_grit.sh                   # run from step 0
-#   bash run_full_pipeline_grit.sh --from-step 4     # restart from step 4
-#   bash run_full_pipeline_grit.sh --include-co2model
-#   bash run_full_pipeline_grit.sh --from-step 4 --include-co2model
-#   bash run_full_pipeline_grit.sh --from-step 2 --split-job-id <step1_jobid>
-#   bash run_full_pipeline_grit.sh --from-step 3 --split-job-id <step1_jobid> \
+#   bash run_pipeline.sh                   # run from step 0
+#   bash run_pipeline.sh --from-step 4     # restart from step 4
+#   bash run_pipeline.sh --include-co2model
+#   bash run_pipeline.sh --from-step 4 --include-co2model
+#   bash run_pipeline.sh --from-step 2 --split-job-id <step1_jobid>
+#   bash run_pipeline.sh --from-step 3 --split-job-id <step1_jobid> \
 #                                  --results-dir ~/scratch/ais_results_<step2_array_jobid>
 #
 # Dependency chain:
@@ -17,11 +17,11 @@
 #    └─ JOB1 (step1, 30m)
 #        └─ JOB_RELAY (5m — reads vessel count N, submits everything below)
 #             └─ JOB2 (step2 array 1-N%20, 2h each)
-#                  └─ JOB3 (step3_merge_grit_256G, 12h, 256G)
+#                  └─ JOB3 (step3_merge_highmem, 12h, 256G)
 #                       └─ JOB4 (step4, 2h, 32G)
 #                            └─ JOB5A (step5_make_tiles, 20m, 8G)
 #                                 └─ JOB5B (step5_tile_job array 1-648%20, 12h, 16G)
-#                                      └─ JOB5C (step5_merge_slurm_optimized, 6h, 128G)
+#                                      └─ JOB5C (step5_merge_tiles, 6h, 128G)
 #                                           └─ JOB6 (step6, 8h, 64G)
 #                                                └─ JOB7 (step7, 2h, 32G)
 #                                                     └─ [JOB_CO2] optional
@@ -104,7 +104,7 @@ if [[ $FROM_STEP -le 0 ]]; then
   JOB0=$(sbatch --parsable --partition="$PART" \
     --output="$LOGS/step0_%j.out" \
     --error="$LOGS/step0_%j.err" \
-    "$PIPELINE/step0_window_select_grit.sh")
+    "$PIPELINE/step0_window_select.sh")
   echo "step0=$JOB0" | tee -a "$MANIFEST"
 
   sbatch --parsable --partition="$PART" \
@@ -126,7 +126,7 @@ if [[ $FROM_STEP -le 1 ]]; then
   JOB1=$(sbatch --parsable --partition="$PART" ${DEP1:-} \
     --output="$LOGS/step1_%j.out" \
     --error="$LOGS/step1_%j.err" \
-    "$PIPELINE/step1_split_navires.sh")
+    "$PIPELINE/step1_split_vessels.sh")
   echo "step1=$JOB1" | tee -a "$MANIFEST"
 
   sbatch --parsable --partition="$PART" \
@@ -275,7 +275,7 @@ if [[ \$FROM_STEP -le 3 ]]; then
     --output=\$LOGS/step3_%j.out \
     --error=\$LOGS/step3_%j.err \
     --export=ALL,SPLIT_JOB_ID=\${JOB1},RESULTS_DIR=\${RESULTS_DIR} \
-    \$PIPELINE/step3_merge_grit_256G.sh)
+    \$PIPELINE/step3_merge_highmem.sh)
   echo "step3=\$JOB3" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
@@ -298,7 +298,7 @@ if [[ \$FROM_STEP -le 4 ]]; then
   JOB4=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \${DEP4:-} \
     --output=\$LOGS/step4_%j.out \
     --error=\$LOGS/step4_%j.err \
-    \$PIPELINE/step4_add_lithology_vNext.sh)
+    \$PIPELINE/step4_add_lithology.sh)
   echo "step4=\$JOB4" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
@@ -384,7 +384,7 @@ if [[ \$FROM_STEP -le 5 ]]; then
     --dependency=afterok:\$JOB5B \
     --output=\$LOGS/step5c_%j.out \
     --error=\$LOGS/step5c_%j.err \
-    \$PIPELINE/step5_merge_slurm_optimized.sh)
+    \$PIPELINE/step5_merge_tiles.sh)
   echo "step5c=\$JOB5C" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
@@ -409,7 +409,7 @@ if [[ \$FROM_STEP -le 6 ]]; then
   JOB6=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \${DEP6:-} \
     --output=\$LOGS/step6_%j.out \
     --error=\$LOGS/step6_%j.err \
-    \$PIPELINE/step6_calculate_cri_grit.sh)
+    \$PIPELINE/step6_calculate_cri.sh)
   echo "step6=\$JOB6" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
@@ -431,7 +431,7 @@ if [[ \$FROM_STEP -le 7 ]]; then
   JOB7=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \${DEP7:-} \
     --output=\$LOGS/step7_%j.out \
     --error=\$LOGS/step7_%j.err \
-    \$PIPELINE/step7_export_jtrawl_grit.sh)
+    \$PIPELINE/step7_export_jdredge.sh)
   echo "step7=\$JOB7" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \

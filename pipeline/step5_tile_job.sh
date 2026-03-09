@@ -30,7 +30,7 @@ mkdir -p ~/scratch/output_V6
 cd $PIPELINE_DIR
 
 TILE_ID=${SLURM_ARRAY_TASK_ID}
-SCRIPT="$PIPELINE_DIR/step5_tile_worker_corrected.R"
+SCRIPT="$PIPELINE_DIR/step5_tile_worker.R"
 TILES_FILE="$HOME/scratch/output_V6/tiles_1000km.gpkg"
 
 echo "Lancement tuile $TILE_ID"

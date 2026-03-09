@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=step3_merge_256G
+#SBATCH --job-name=step3_merge_highmem
 #SBATCH --mem=256G
 #SBATCH --cpus-per-task=16
 #SBATCH --time=12:00:00
@@ -43,7 +43,7 @@ export SLURM_CPUS_PER_TASK=${SLURM_CPUS_PER_TASK:-16}
 export CV_FOLDS=5
 
 echo "Lancement R (256G, 5 folds CV)..."
-Rscript step3_merge_final.R 2>&1 | tee $LOGS_DIR/step3_merge_${SLURM_JOB_ID}.log
+Rscript step3_merge.R 2>&1 | tee $LOGS_DIR/step3_merge_${SLURM_JOB_ID}.log
 
 exit_code=$?
 

@@ -24,12 +24,12 @@ cd ~/ais-pipeline/pipeline_V6 || { echo "❌ Répertoire manquant"; exit 2; }
 
 echo "✅  Répertoire courant: $(pwd)"
 echo "✅  R library path: $R_LIBS_USER"
-echo "✅  Lancement step0_core_window_enhanced.R ..."
+echo "✅  Lancement step0_core_window.R ..."
 
 # Appel de l'interpréteur R avec override du .libPaths
 Rscript --vanilla -e "
   .libPaths('~/R/library')
-  source('step0_core_window_enhanced.R')
+  source('step0_core_window.R')
 "
 
 exit_code=$?

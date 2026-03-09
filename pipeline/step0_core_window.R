@@ -336,7 +336,7 @@ report_md <- sprintf(
   format(Sys.time(), "%Y-%m-%d %H:%M:%S")
 )
 
-writeLines(report_md, file.path(output_dir, "core_window_enhanced_report.md"))
+writeLines(report_md, file.path(output_dir, "core_window_report.md"))
 
 # 7. Statistiques par année pour la fenêtre optimale
 yearly_stats <- data.table(
@@ -354,7 +354,7 @@ yearly_stats <- data.table(
 fwrite(yearly_stats, file.path(output_dir, "yearly_coverage_stats.csv"))
 
 # ---- RÉSUMÉ FINAL ----
-cat("\n📄  Résumé markdown : core_window_enhanced_report.md\n")
+cat("\n📄  Résumé markdown : core_window_report.md\n")
 cat("📋  Configuration YAML : core_window.yaml\n")
 cat("🚢  Liste navires : core_ships.csv\n")
 cat("📊  Toutes les fenêtres : all_candidate_windows.csv\n")
@@ -364,4 +364,4 @@ cat("💾  Fichiers dans", output_dir, "\n")
 cat("⏱️  Fin :", format(Sys.time()), "\n")
 
 cat("\n✅ STEP-0 ENHANCED terminé avec succès :", format(Sys.time()), "\n")
-cat("📄  Fichier de sélection :", file.path(output_dir, "core_window_enhanced_report.md"), "\n") 
+cat("📄  Fichier de sélection :", file.path(output_dir, "core_window_report.md"), "\n") 

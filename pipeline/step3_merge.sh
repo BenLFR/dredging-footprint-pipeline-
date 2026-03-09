@@ -33,8 +33,8 @@ echo "RESULTS_DIR: $RESULTS_DIR"
 echo "Fichiers *_clean.rds disponibles:"
 ls -lh $RESULTS_DIR/*_clean.rds 2>/dev/null | tail -5
 
-echo "Lancement step3_merge_final.R..."
-Rscript step3_merge_final.R 2>&1
+echo "Lancement step3_merge.R..."
+Rscript step3_merge.R 2>&1
 
 exit_code=$?
 

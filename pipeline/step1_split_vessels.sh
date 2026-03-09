@@ -28,13 +28,13 @@ mkdir -p logs
 cd ~/scratch/pipeline_V6
 
 echo "✅ Répertoire de travail: $(pwd)"
-echo "✅ Vérification fichier R: $(ls -la step1_split_navires.R 2>/dev/null || echo 'FICHIER MANQUANT')"
+echo "✅ Vérification fichier R: $(ls -la step1_split_vessels.R 2>/dev/null || echo 'FICHIER MANQUANT')"
 
 echo "✅ Lancement script de fractionnement..."
 Rscript --vanilla -e "
 .libPaths('~/.local/R/4.2.1/')
 Sys.setenv(SLURM_JOB_ID = '$SLURM_JOB_ID')
-source('step1_split_navires.R')
+source('step1_split_vessels.R')
 " 2>&1
 
 echo "✅ Étape 1 terminée: $(date)"

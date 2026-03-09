@@ -56,11 +56,11 @@ fi
 echo "✅ constants.R present"
 
 echo ""
-echo "🔄 Lancement step6_calculate_cri_corrected.R ..."
+echo "🔄 Lancement step6_calculate_cri.R ..."
 
 Rscript --vanilla -e "
   .libPaths('~/R/library')
-  source('step6_calculate_cri_corrected.R')
+  source('step6_calculate_cri.R')
 "
 
 exit_code=$?

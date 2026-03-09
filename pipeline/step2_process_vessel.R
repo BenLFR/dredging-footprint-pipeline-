@@ -11,7 +11,7 @@
 # ====================================================================
 
 cat("=== TRAITEMENT NAVIRE INDIVIDUEL (OPTIMISÉ V8 - TILED) ===\n")
-cat("SCRIPT_VERSION: step2_process_navire.R 2026-01-27 tiled-v8\n")
+cat("SCRIPT_VERSION: step2_process_vessel.R 2026-01-27 tiled-v8\n")
 cat("Début:", format(Sys.time()), "\n")
 
 # CONFIGURATION R CRITIQUE - AVANT CHARGEMENT PACKAGES

@@ -4,10 +4,10 @@
 #
 # FIX #1: Le dossier logs/ doit exister AVANT sbatch
 # Usage:
-#   mkdir -p ~/ais-pipeline/pipeline_V6/logs && sbatch step4_add_lithology_vNext.sh
+#   mkdir -p ~/ais-pipeline/pipeline_V6/logs && sbatch step4_add_lithology.sh
 # ============================================================================
 
-#SBATCH --job-name=step4_litho_vNext
+#SBATCH --job-name=step4_lithology
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=4
 #SBATCH --time=02:00:00
@@ -17,7 +17,7 @@
 # Note: output/error dans le repertoire courant, puis deplace dans logs/
 # Ceci evite l'erreur si logs/ n'existe pas au moment du sbatch
 
-echo "=== ETAPE 4 vNext: AJOUT LITHOLOGIE (HubOcean/dbSEABED) ==="
+echo "=== ETAPE 4: AJOUT LITHOLOGIE (HubOcean/dbSEABED) ==="
 echo "Job ID: $SLURM_JOB_ID"
 echo "Node: $(hostname)"
 echo "Debut: $(date)"
@@ -65,9 +65,9 @@ echo "Espace disque disponible:"
 df -h ~/scratch
 
 echo ""
-echo "Lancement Step 4 vNext..."
+echo "Lancement Step 4..."
 
-Rscript step4_add_lithology_vNext.R 2>&1
+Rscript step4_add_lithology.R 2>&1
 
 exit_code=$?
 
@@ -81,7 +81,7 @@ fi
 
 if [ $exit_code -eq 0 ]; then
     echo ""
-    echo "Step 4 vNext terminee avec succes: $(date)"
+    echo "Step 4 terminee avec succes: $(date)"
 
     echo ""
     echo "=== RESUME FINAL ==="
@@ -96,9 +96,9 @@ if [ $exit_code -eq 0 ]; then
     fi
 else
     echo ""
-    echo "ERREUR Step 4 vNext: code $exit_code"
+    echo "ERREUR Step 4: code $exit_code"
     exit $exit_code
 fi
 
 echo ""
-echo "=== ETAPE 4 vNext TERMINEE ==="
+echo "=== ETAPE 4 TERMINEE ==="
