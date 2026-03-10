@@ -27,7 +27,7 @@ Current source policy:
   with Atwood data-availability wording ("OCIM code is available upon email request").
 
 Implementation:
-- `deploy/upload_step7_to_cluster.sh --co2model-src <dir>`: uploads fetched files.
+- `deploy/upload_step7_assets.sh --co2model-src <dir>`: uploads fetched files.
 
 ## B) Third-party code dependencies (external, not bundled)
 
@@ -57,8 +57,8 @@ Additional source evidence:
 | TP-DATA-003 | dbSEABED via HubOcean STAC | Section `2.7` | `docs/data_policy.md` lists dbSEABED via HubOcean | CONFIRMED | Keep attribution and upstream URL/DOI in release metadata. |
 | TP-DATA-004 | Longhurst provinces | Section `2.8` footnote | `docs/data_policy.md`, `data/README.md` | CONFIRMED | Keep attribution to VLIZ Marine Regions and version used. |
 | TP-DATA-005 | Atwood sediment carbon stock dataset | Sections `2.6`, `2.9` | `docs/data_policy.md`, `data/README.md` | PENDING_VERIFY | Confirm exact DOI/version cited in manuscript and archive manifest. |
-| TP-DATA-006 | OCIM2-48L transport model assets | Section `2.9` | `data/README.md`, `configuration/ocim/*` | PENDING_VERIFY | Confirm redistribution permission for any bundled `.mat` assets, or keep external-download-only workflow. |
-| TP-DATA-007 | Vessel technical specs (IDD 2021) | Section `2.2` | Manuscript citation only | REFERENCE_ONLY | Keep bibliographic citation in manuscript references. |
+| TP-DATA-006 | OCIM2-48L transport model assets | Section `2.9` | `data/README.md` (section 6); placed in `data/external/ocim/` (gitignored) on cluster | PENDING_VERIFY | Confirm redistribution permission for any bundled `.mat` assets, or keep external-download-only workflow. |
+| TP-DATA-007 | Vessel technical specs (IDD 2021) | Section `2.2` | `config/ship_specs.yaml`; IHS Markit, *International Dredging Directory 2021*, p. 33 (https://cdn.ihsmarkit.com/www/pdf/1220/International-Dredging-Directory-2021.pdf) | CONFIRMED — Numerical technical specs (beam width, depth, capacity) are factual data, not copyrightable per se; bibliographic attribution retained. | Keep citation in manuscript and `config/README.md`. Do not redistribute the PDF. |
 | TP-STD-001 | ITU-R M.1371-6 AIS standard | Section `2.2` | Manuscript citation only | REFERENCE_ONLY | Keep standard citation in manuscript references. |
 
 ## D) Third-party software dependencies explicitly mentioned

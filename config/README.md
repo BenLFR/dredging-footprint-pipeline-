@@ -22,8 +22,15 @@ These parameters feed directly into the SAR formula (step 5):
 SAR_i = (dredge_width_m × distance_dredging_m) / cell_area_m2
 ```
 
-All values were sourced from publicly available vessel registry data
-and technical specifications (Boskalis, DEME fleet data; IMO GISIS).
+All values were extracted from:
+
+> IHS Markit, *International Dredging Directory 2021*, p. 33.
+> URL: https://cdn.ihsmarkit.com/www/pdf/1220/International-Dredging-Directory-2021.pdf
+
+Vessel technical specifications (beam width, dredging depth, hopper capacity,
+installed power) are factual data and are not copyrightable as such.
+The IDD 2021 is cited as the bibliographic source per TP-DATA-007 in
+`THIRD_PARTY_NOTICES.md`.
 
 Used by: step 1 (vessel filtering), step 2 (speed calibration), step 5b (SAR computation).
 
