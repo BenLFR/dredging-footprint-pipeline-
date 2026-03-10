@@ -9,8 +9,18 @@ abstract: >
 authors:
   - family-names: Loeffler
     given-names: Benjamin
-    orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # replace before release
-    affiliation: "Université du Québec à Rimouski"   # replace if needed
+    # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # register at orcid.org then add here
+  - family-names: Wabnitz
+    given-names: Colette
+    orcid: "https://orcid.org/0000-0002-5076-9163"
+    affiliation: "Center for Ocean Solutions, Stanford University; Institute for the Oceans and Fisheries, University of British Columbia"
+  - family-names: Jouffray
+    given-names: Jean-Baptiste
+    orcid: "https://orcid.org/0000-0002-4105-6372"
+    affiliation: "Center for Ocean Solutions, Stanford University"
+  - family-names: Mangin
+    given-names: Tracey
+    affiliation: "Environmental Markets Lab (emLab), UC Santa Barbara"
 version: "1.0.0"
 date-released: "2026-03-09"
 license: MIT
@@ -35,7 +45,13 @@ preferred-citation:
   authors:
     - family-names: Loeffler
       given-names: Benjamin
-  title: "Global estimation of trailing-suction hopper dredger footprint from AIS vessel tracking"
+    - family-names: Wabnitz
+      given-names: Colette
+    - family-names: Jouffray
+      given-names: Jean-Baptiste
+    - family-names: Mangin
+      given-names: Tracey
+  title: "Assessing the impact of dredging on sediment carbon stocks and associated CO2 emissions"
   journal: "Limnology and Oceanography: Methods"
   year: 2026
   doi: "10.1002/lom3.XXXXX"   # replace after acceptance
