@@ -8,17 +8,14 @@ This document explains how to obtain each input.
 
 ## Required inputs per step
 
-| Step | Input file(s) | Format | Size |
-|------|---------------|--------|------|
-| step0 | AIS track data | CSV / Parquet | ~50 GB/year |
-| step1-3 | AIS track data | CSV / Parquet | variable |
-| step4 | dbSEABED lithology grid | GeoTIFF | ~2 GB |
-| step5 | Land mask shapefile | SHP | ~200 MB |
-| step5 | Longhurst provinces | SHP | ~5 MB |
-| step5 | C0 carbon stock raster (Atwood et al.) | GeoTIFF | ~500 MB |
-| step6 | C0 raster (same as above) | GeoTIFF | variable |
-| step7/co2model (external) | OCIM2-48L transport matrix | .mat | ~8 GB |
-| step7/co2model (external) | WOA09 nutrients | .mat | ~500 MB |
+| Step | Input file(s) | Format | Size (approx.) |
+|------|---------------|--------|----------------|
+| step0–3 | AIS vessel tracking data | CSV / Parquet | ~50 GB/year |
+| step2 | Land mask shapefile | SHP | ~500 MB |
+| step4 | dbSEABED lithology grid | via HubOcean STAC API | variable |
+| step5 | Longhurst provinces shapefile | SHP | ~5 MB |
+| step6 | Atwood et al. sediment carbon stock rasters | GeoTIFF (multi-band) | ~1 GB |
+| step7/co2model | OCIM2-48L transport matrix + WOA09 nutrients | .mat | ~8 GB total |
 
 Place all real data in `data/external/` (gitignored).
 
@@ -26,138 +23,134 @@ Place all real data in `data/external/` (gitignored).
 
 ## 1. AIS vessel tracking data
 
-Source used in this project:
-
-- Global Fishing Watch (GFW) AIS access via Stanford Center for Ocean Solutions
-  collaboration channel.
-
-Access guidance:
+Source used in this project: Global Fishing Watch (GFW) AIS data, accessed via
+the Stanford Center for Ocean Solutions collaboration channel.
 
 - Data are restricted access and cannot be redistributed from this repository.
-- For replication access requests, contact David Kroodsma (Global Fishing
-  Watch).
-- General GFW data portal: https://globalfishingwatch.org/data-download/
+- For replication access, contact Global Fishing Watch via:
+  https://globalfishingwatch.org/data-download/
 
-Expected schema (minimum columns):
+Expected column schema (GFW standard):
 
 ```
-MMSI, timestamp (ISO 8601), latitude, longitude, speed_knots, vessel_type
+ssvid          — vessel identifier (GFW format, equivalent to MMSI)
+timestamp      — ISO 8601 UTC string (e.g. "2020-06-01T12:00:00Z")
+lat            — WGS84 latitude (decimal degrees)
+lon            — WGS84 longitude (decimal degrees)
+speed          — speed over ground (knots)
+course         — course over ground (degrees)
+seg_id         — GFW segment identifier
 ```
 
 ---
 
-## 2. dbSEABED seafloor lithology
+## 2. Land mask shapefile
+
+Source: OpenStreetMap land polygons
+(https://osmdata.openstreetmap.de/data/land-polygons.html)
+
+Download the "split" version for large-area processing:
+```
+land-polygons-split-4326.zip
+```
+
+Extract `land_polygons.shp` and place in `configuration/land_mask/`.
+
+The pipeline reads it via the `LAND_MASK_FILE` environment variable
+(default: `~/ais-pipeline/configuration/land_mask/land_polygons.shp`).
+
+---
+
+## 3. dbSEABED seafloor lithology
 
 Source: HubOcean STAC API (free, open access).
 
-Use the prefetch script included in this repo:
-
+Use the prefetch script:
 ```bash
-python pipeline_V6/pipeline_V6/prefetch_hubocean_stac.py \
+python pipeline/step4/prefetch_hubocean_stac.py \
   --output data/external/dbseabed_lithology.tif
 ```
 
-Or download manually from: https://hub.ocean.digital/stac
+Or browse manually at: https://hub.ocean.digital/stac
 
 ---
 
-## 3. OCIM2-48L ocean transport matrix
+## 4. Atwood et al. sediment carbon stock rasters (step6 input)
 
-Source: T. DeVries lab, UC Santa Barbara.
+Source: Atwood T.B. et al. (2020) "Global patterns in marine sediment carbon
+stocks." *Frontiers in Marine Science*, doi: 10.3389/fmars.2020.00165
 
-- Zenodo record (if published): https://zenodo.org/record/XXXXXXX
-- Or request directly: tdevries@geog.ucsb.edu
+The pipeline (step6) expects a multi-band GeoTIFF with bands named:
+- `Mean carbon_stock`
+- `global_error_lower_bound`
+- `global_error_upper_bound`
 
-Required files:
-
-- `OCIM2_48L_CTL.mat` (~8 GB), baseline circulation
-- `schmidt_coeff.mat`, Schmidt number coefficients
-- `woa09po4.mat` / `woa09si.mat`, World Ocean Atlas 2009 nutrients
-
-Place in `data/external/ocim/`.
-
----
-
-## 3b. CO2 model source code (external dependency)
-
-The MATLAB OCIM CO2 solver code is third-party material and is not redistributed
-in this repository.
-
-Current acquisition path:
-
-- request the OCIM code package by email to `tdevries@geog.ucsb.edu`
-  (consistent with Atwood data-availability wording).
-
-```bash
-mkdir -p data/external/co2model_vendor
-```
-
-Use `data/external/co2model_vendor/` as `--co2model-src` when running:
-
-```bash
-bash deploy/upload_step7_to_cluster.sh --co2model-src data/external/co2model_vendor
-```
-
----
-
-## 4. C0 carbon stock raster (Atwood et al. 2020)
-
-Source: Zenodo (open access).
-
-```bash
-wget https://zenodo.org/record/3772915/files/Cstocks_Tot_0_30cm_mangroves.tif
-# or use DOI 10.5281/zenodo.3772915
-```
-
-Place as `data/external/C0_carbon_stock.tif`.
+Contact the corresponding authors for data access (see paper SI for details).
+Place in `~/scratch/configuration/atwood_carbon_full/` on the cluster, or set
+the `CARBON_DIR` environment variable to the directory containing the `.tif` files.
 
 ---
 
 ## 5. Longhurst provinces shapefile
 
 Source: VLIZ Marine Regions (free).
-
 Download: https://www.marineregions.org/downloads.php
 File: `longhurst_v4_2010.zip`
 
-Place in `data/external/longhurst_v4_2010/`.
+Place extracted files in `configuration/longhurst_v4_2010/`.
 
 ---
 
-## 6. Land mask shapefile
+## 6. OCIM2-48L ocean transport matrix
 
-Source: GSHHS (Global Self-consistent Hierarchical High-resolution Shorelines)
+Source: T. DeVries lab, UC Santa Barbara.
+Request by email: tdevries@geog.ucsb.edu
+(consistent with Atwood et al. 2020 data availability wording)
 
-Download: https://www.ngdc.noaa.gov/mgg/shorelines/
-Or use the included `configuration/land_mask/` directory if present.
+Required files (place in `data/external/ocim/` or `~/scratch/configuration/ocim/`):
+- `OCIM2_48L_CTL.mat` — baseline circulation matrix
+- `schmidt_coeff.mat` — Schmidt number coefficients
+- `woa09po4.mat` / `woa09si.mat` — World Ocean Atlas 2009 nutrients
+
+## 6b. CO2 model source code (external, not bundled)
+
+Request the MATLAB OCIM CO2 solver package by email from T. DeVries
+(`tdevries@geog.ucsb.edu`), then upload to the cluster:
+
+```bash
+bash deploy/upload_step7_to_cluster.sh --co2model-src /path/to/received/package
+```
 
 ---
 
 ## 7. Toy dataset (`data/toy/`)
 
-A synthetic single-vessel, 30-day AIS dataset (~500 rows) is provided for
-pipeline testing without access to restricted data.
+A synthetic single-vessel 30-day AIS dataset (~500 rows) is provided for
+pipeline smoke testing without access to the restricted GFW data.
 
 Generate with:
-
 ```bash
 Rscript data/toy/generate_toy_data.R
 # output: data/toy/toy_ais.csv
 ```
 
-The toy data uses a realistic TSHD motion profile (alternating dredging passes
-and transit) within the North Sea (51-54N, 2-6E).
+The toy data simulates a realistic TSHD motion profile (alternating dredging
+passes and transit legs) in the North Sea (51.5–53.5°N, 2–6°E).
+
+Note: the toy dataset uses simplified column names for testing only. The real
+GFW pipeline input uses `ssvid` (not `mmsi`) as the vessel identifier.
 
 ---
 
-## Data availability statement (L&O:Methods template)
+## Data availability statement (L&O Methods template)
 
 > The AIS vessel tracking data used in this study were obtained from Global
-> Fishing Watch (GFW) via Stanford Center for Ocean Solutions access and are
-> not publicly available. Requests for access guidance should be directed to
-> David Kroodsma (Global Fishing Watch). The processed swept-area ratio grid
-> (f_i) and cumulative risk index (C_ri) rasters are available on Zenodo
+> Fishing Watch (GFW) via the Stanford Center for Ocean Solutions and are not
+> publicly available. Requests for access should be directed to GFW
+> (globalfishingwatch.org/data-download/). The processed swept-area ratio grid
+> and cumulative risk index rasters are available on Zenodo
 > (DOI: 10.5281/zenodo.XXXXXXX). All analysis code is available at
-> https://github.com/BenLFR/Master-thesis-code- under the MIT licence. All
-> other input datasets (dbSEABED, OCIM2-48L, Atwood C0 raster, Longhurst
-> provinces) are publicly available from the sources listed above.
+> https://github.com/BenLFR/dredging-footprint-pipeline under the MIT licence.
+> All other input datasets (dbSEABED via HubOcean, OCIM2-48L, Atwood et al.
+> sediment carbon stocks, Longhurst provinces, OSM land polygons) are publicly
+> available from the sources listed in `data/README.md`.

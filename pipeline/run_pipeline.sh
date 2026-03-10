@@ -1,15 +1,15 @@
 #!/bin/bash
 # =============================================================================
-# run_full_pipeline_grit.sh
+# run_pipeline.sh
 # Full autonomous pipeline orchestrator — GRIT cluster (emlab_nodes partition)
 #
 # Usage:
-#   bash run_full_pipeline_grit.sh                   # run from step 0
-#   bash run_full_pipeline_grit.sh --from-step 4     # restart from step 4
-#   bash run_full_pipeline_grit.sh --include-co2model
-#   bash run_full_pipeline_grit.sh --from-step 4 --include-co2model
-#   bash run_full_pipeline_grit.sh --from-step 2 --split-job-id <step1_jobid>
-#   bash run_full_pipeline_grit.sh --from-step 3 --split-job-id <step1_jobid> \
+#   bash run_pipeline.sh                   # run from step 0
+#   bash run_pipeline.sh --from-step 4     # restart from step 4
+#   bash run_pipeline.sh --include-co2model
+#   bash run_pipeline.sh --from-step 4 --include-co2model
+#   bash run_pipeline.sh --from-step 2 --split-job-id <step1_jobid>
+#   bash run_pipeline.sh --from-step 3 --split-job-id <step1_jobid> \
 #                                  --results-dir ~/scratch/ais_results_<step2_array_jobid>
 #
 # Dependency chain:
@@ -17,11 +17,11 @@
 #    └─ JOB1 (step1, 30m)
 #        └─ JOB_RELAY (5m — reads vessel count N, submits everything below)
 #             └─ JOB2 (step2 array 1-N%20, 2h each)
-#                  └─ JOB3 (step3_merge_grit_256G, 12h, 256G)
+#                  └─ JOB3 (step3_merge_highmem, 12h, 256G)
 #                       └─ JOB4 (step4, 2h, 32G)
 #                            └─ JOB5A (step5_make_tiles, 20m, 8G)
 #                                 └─ JOB5B (step5_tile_job array 1-648%20, 12h, 16G)
-#                                      └─ JOB5C (step5_merge_slurm_optimized, 6h, 128G)
+#                                      └─ JOB5C (step5_merge_tiles, 6h, 128G)
 #                                           └─ JOB6 (step6, 8h, 64G)
 #                                                └─ JOB7 (step7, 2h, 32G)
 #                                                     └─ [JOB_CO2] optional
@@ -79,7 +79,10 @@ fi
 PIPELINE=~/ais-pipeline/pipeline_V6
 SCRATCH=~/scratch/output_V6
 LOGS=~/logs
-PART=emlab_nodes
+PART=grit_nodes
+STEP5B_CHUNK_SIZE=${STEP5B_CHUNK_SIZE:-80}
+SBATCH_RETRIES=${SBATCH_RETRIES:-30}
+SBATCH_RETRY_SLEEP=${SBATCH_RETRY_SLEEP:-20}
 RUN_ID=$(date +%Y%m%d_%H%M%S)
 MANIFEST=$LOGS/pipeline_run_${RUN_ID}.txt
 
@@ -101,7 +104,7 @@ if [[ $FROM_STEP -le 0 ]]; then
   JOB0=$(sbatch --parsable --partition="$PART" \
     --output="$LOGS/step0_%j.out" \
     --error="$LOGS/step0_%j.err" \
-    "$PIPELINE/step0_window_select_grit.sh")
+    "$PIPELINE/step0/step0_window_select.sh")
   echo "step0=$JOB0" | tee -a "$MANIFEST"
 
   sbatch --parsable --partition="$PART" \
@@ -112,7 +115,7 @@ if [[ $FROM_STEP -le 0 ]]; then
             ls -t *.yaml *.csv *.md 2>/dev/null | head -20 | \
             xargs -I{} cp -n {} step0/ 2>/dev/null || true && \
             echo 'step0 outputs organised'" \
-    > /dev/null
+    > /dev/null || true
 
   PREV=$JOB0
 fi
@@ -123,7 +126,7 @@ if [[ $FROM_STEP -le 1 ]]; then
   JOB1=$(sbatch --parsable --partition="$PART" ${DEP1:-} \
     --output="$LOGS/step1_%j.out" \
     --error="$LOGS/step1_%j.err" \
-    "$PIPELINE/step1_split_navires.sh")
+    "$PIPELINE/step1/step1_split_vessels.sh")
   echo "step1=$JOB1" | tee -a "$MANIFEST"
 
   sbatch --parsable --partition="$PART" \
@@ -134,7 +137,7 @@ if [[ $FROM_STEP -le 1 ]]; then
             cp ${HOME}/scratch/ais_split_${JOB1}/navires_metadata.csv \
                $SCRATCH/step1/ 2>/dev/null || true && \
             echo 'step1 symlinked'" \
-    > /dev/null
+    > /dev/null || true
 
   PREV=$JOB1
 fi
@@ -158,6 +161,36 @@ MANIFEST=${MANIFEST}
 JOB1='${JOB1}'
 SPLIT_JOB_ID_ARG='${SPLIT_JOB_ID_ARG}'
 RESULTS_DIR_ARG='${RESULTS_DIR_ARG}'
+STEP5B_CHUNK_SIZE='${STEP5B_CHUNK_SIZE}'
+SBATCH_RETRIES='${SBATCH_RETRIES}'
+SBATCH_RETRY_SLEEP='${SBATCH_RETRY_SLEEP}'
+
+submit_sbatch_retry() {
+  local attempt=1
+  local output
+  local rc
+
+  while (( attempt <= SBATCH_RETRIES )); do
+    output=\$("\$@" 2>&1) && {
+      echo "\$output"
+      return 0
+    }
+    rc=\$?
+
+    if echo "\$output" | grep -q "QOSMaxSubmitJobPerUserLimit"; then
+      echo "WARN: QOS submit limit reached (attempt \$attempt/\$SBATCH_RETRIES); retry in \$SBATCH_RETRY_SLEEP s." >&2
+      sleep "\$SBATCH_RETRY_SLEEP"
+      attempt=\$((attempt + 1))
+      continue
+    fi
+
+    echo "\$output" >&2
+    return \$rc
+  done
+
+  echo "ERROR: sbatch failed after \$SBATCH_RETRIES retries (QOS limit)." >&2
+  return 1
+}
 
 # ── Locate the split folder ──────────────────────────────────────────────────
 if [[ \$FROM_STEP -le 3 ]]; then
@@ -195,13 +228,13 @@ if [[ \$FROM_STEP -le 2 ]]; then
   fi
   echo "Step 2: submitting array 1-\${N}%20"
 
-  JOB2=\$(sbatch --parsable --partition=\$PART \
+  JOB2=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \
     --job-name=step2_array \
     --array=1-\${N}%20 \
     --output=\$LOGS/step2_%A_%a.out \
     --error=\$LOGS/step2_%A_%a.err \
     --export=ALL,SPLIT_JOB_ID=\${JOB1} \
-    \$PIPELINE/step2_process_array.sh)
+    \$PIPELINE/step2/step2_process_array.sh)
 
   echo "step2=\$JOB2" | tee -a \$MANIFEST
   echo \$JOB2 > \$SCRATCH/step2/job_id.txt
@@ -238,11 +271,11 @@ fi
 # ── STEP 3: Merge + GMM + DBSCAN (256G) ───────────────────────────────────────
 if [[ \$FROM_STEP -le 3 ]]; then
   DEP3=\${PREV:+--dependency=afterok:\$PREV}
-  JOB3=\$(sbatch --parsable --partition=\$PART \${DEP3:-} \
+  JOB3=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \${DEP3:-} \
     --output=\$LOGS/step3_%j.out \
     --error=\$LOGS/step3_%j.err \
     --export=ALL,SPLIT_JOB_ID=\${JOB1},RESULTS_DIR=\${RESULTS_DIR} \
-    \$PIPELINE/step3_merge_grit_256G.sh)
+    \$PIPELINE/step3/step3_merge_highmem.sh)
   echo "step3=\$JOB3" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
@@ -254,7 +287,7 @@ if [[ \$FROM_STEP -le 3 ]]; then
                    dragage_gridsearch_results_V6_*.rds 2>/dev/null | head -6 | \
              xargs -I{} cp -n {} step3/ 2>/dev/null || true && \
              echo 'step3 outputs organised'" \
-    > /dev/null
+    > /dev/null || true
 
   PREV=\$JOB3
 fi
@@ -262,10 +295,10 @@ fi
 # ── STEP 4: Add lithology ──────────────────────────────────────────────────────
 if [[ \$FROM_STEP -le 4 ]]; then
   DEP4=\${PREV:+--dependency=afterok:\$PREV}
-  JOB4=\$(sbatch --parsable --partition=\$PART \${DEP4:-} \
+  JOB4=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \${DEP4:-} \
     --output=\$LOGS/step4_%j.out \
     --error=\$LOGS/step4_%j.err \
-    \$PIPELINE/step4_add_lithology_vNext.sh)
+    \$PIPELINE/step4/step4_add_lithology.sh)
   echo "step4=\$JOB4" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
@@ -277,7 +310,7 @@ if [[ \$FROM_STEP -le 4 ]]; then
                 2>/dev/null | head -4 | \
              xargs -I{} cp -n {} step4/ 2>/dev/null || true && \
              echo 'step4 outputs organised'" \
-    > /dev/null
+    > /dev/null || true
 
   PREV=\$JOB4
 fi
@@ -285,28 +318,73 @@ fi
 # ── STEP 5a: Generate tile grid ────────────────────────────────────────────────
 if [[ \$FROM_STEP -le 5 ]]; then
   DEP5A=\${PREV:+--dependency=afterok:\$PREV}
-  JOB5A=\$(sbatch --parsable --partition=\$PART \${DEP5A:-} \
+  JOB5A=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \${DEP5A:-} \
     --job-name=step5a_maketiles \
     --mem=8G --cpus-per-task=2 --time=00:20:00 \
     --output=\$LOGS/step5a_%j.out \
     --error=\$LOGS/step5a_%j.err \
-    --wrap="cd \$PIPELINE && Rscript step5_make_tiles.R")
+    --wrap="export LD_LIBRARY_PATH=\$HOME/lib:\${LD_LIBRARY_PATH:-}; export R_LIBS_USER=\$HOME/R/library; cd \$PIPELINE/step5 && Rscript step5_make_tiles.R")
   echo "step5a=\$JOB5A" | tee -a \$MANIFEST
 
   # ── STEP 5b: SAR tile array ────────────────────────────────────────────────
-  JOB5B=\$(sbatch --parsable --partition=\$PART \
-    --dependency=afterok:\$JOB5A \
-    --output=\$LOGS/step5b_%A_%a.out \
-    --error=\$LOGS/step5b_%A_%a.err \
-    \$PIPELINE/step5_tile_job.sh)
-  echo "step5b=\$JOB5B" | tee -a \$MANIFEST
+  ARRAY_SPEC=\$(grep -E '^#SBATCH[[:space:]]+--array=' "\$PIPELINE/step5/step5_tile_job.sh" | head -1 | sed 's/^.*--array=//')
+  ARRAY_SPEC=\${ARRAY_SPEC//[[:space:]]/}
+  [[ -z "\$ARRAY_SPEC" ]] && ARRAY_SPEC="1-648%20"
+
+  if [[ "\$ARRAY_SPEC" =~ ^([0-9]+)-([0-9]+)%([0-9]+)$ ]]; then
+    ARRAY_START=\${BASH_REMATCH[1]}
+    ARRAY_END=\${BASH_REMATCH[2]}
+    ARRAY_PAR=\${BASH_REMATCH[3]}
+  elif [[ "\$ARRAY_SPEC" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+    ARRAY_START=\${BASH_REMATCH[1]}
+    ARRAY_END=\${BASH_REMATCH[2]}
+    ARRAY_PAR=20
+  else
+    ARRAY_START=1
+    ARRAY_END=648
+    ARRAY_PAR=20
+  fi
+
+  CHUNK_SIZE=\$STEP5B_CHUNK_SIZE
+  if ! [[ "\$CHUNK_SIZE" =~ ^[0-9]+$ ]] || [[ "\$CHUNK_SIZE" -lt 1 ]]; then
+    CHUNK_SIZE=80
+  fi
+
+  PREV_CHUNK=""
+  CHUNK_IDX=0
+  for (( CHUNK_BEGIN=ARRAY_START; CHUNK_BEGIN<=ARRAY_END; CHUNK_BEGIN+=CHUNK_SIZE )); do
+    CHUNK_END=\$((CHUNK_BEGIN + CHUNK_SIZE - 1))
+    if (( CHUNK_END > ARRAY_END )); then
+      CHUNK_END=\$ARRAY_END
+    fi
+
+    if [[ -n "\$PREV_CHUNK" ]]; then
+      CHUNK_DEP="afterok:\$PREV_CHUNK"
+    else
+      CHUNK_DEP="afterok:\$JOB5A"
+    fi
+
+    CHUNK_IDX=\$((CHUNK_IDX + 1))
+    JOB5B_CHUNK=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \
+      --dependency=\$CHUNK_DEP \
+      --array=\${CHUNK_BEGIN}-\${CHUNK_END}%\${ARRAY_PAR} \
+      --output=\$LOGS/step5b_\${CHUNK_BEGIN}_\${CHUNK_END}_%A_%a.out \
+      --error=\$LOGS/step5b_\${CHUNK_BEGIN}_\${CHUNK_END}_%A_%a.err \
+      \$PIPELINE/step5/step5_tile_job.sh)
+
+    echo "step5b_chunk_\${CHUNK_IDX}=\$JOB5B_CHUNK range=\${CHUNK_BEGIN}-\${CHUNK_END}%\${ARRAY_PAR}" | tee -a \$MANIFEST
+    PREV_CHUNK=\$JOB5B_CHUNK
+  done
+
+  JOB5B=\$PREV_CHUNK
+  echo "step5b=\$JOB5B (last chunk)" | tee -a \$MANIFEST
 
   # ── STEP 5c: Merge tiles → fi_grid ────────────────────────────────────────
-  JOB5C=\$(sbatch --parsable --partition=\$PART \
+  JOB5C=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \
     --dependency=afterok:\$JOB5B \
     --output=\$LOGS/step5c_%j.out \
     --error=\$LOGS/step5c_%j.err \
-    \$PIPELINE/step5_merge_slurm_optimized.sh)
+    \$PIPELINE/step5/step5_merge_tiles.sh)
   echo "step5c=\$JOB5C" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
@@ -320,7 +398,7 @@ if [[ \$FROM_STEP -le 5 ]]; then
              ls -t sar_*.parquet 2>/dev/null | \
                xargs -I{} cp -n {} step5/ 2>/dev/null || true && \
              echo 'step5 outputs organised'" \
-    > /dev/null
+    > /dev/null || true
 
   PREV=\$JOB5C
 fi
@@ -328,10 +406,10 @@ fi
 # ── STEP 6: CRI calculation ────────────────────────────────────────────────────
 if [[ \$FROM_STEP -le 6 ]]; then
   DEP6=\${PREV:+--dependency=afterok:\$PREV}
-  JOB6=\$(sbatch --parsable --partition=\$PART \${DEP6:-} \
+  JOB6=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \${DEP6:-} \
     --output=\$LOGS/step6_%j.out \
     --error=\$LOGS/step6_%j.err \
-    \$PIPELINE/step6_calculate_cri_grit.sh)
+    \$PIPELINE/step6/step6_calculate_cri.sh)
   echo "step6=\$JOB6" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
@@ -342,7 +420,7 @@ if [[ \$FROM_STEP -le 6 ]]; then
              ls -t cri_final_*.parquet cri_final_*.rds 2>/dev/null | head -4 | \
              xargs -I{} cp -n {} step6/ 2>/dev/null || true && \
              echo 'step6 outputs organised'" \
-    > /dev/null
+    > /dev/null || true
 
   PREV=\$JOB6
 fi
@@ -350,10 +428,10 @@ fi
 # ── STEP 7: Export Jdredge for OCIM ───────────────────────────────────────────
 if [[ \$FROM_STEP -le 7 ]]; then
   DEP7=\${PREV:+--dependency=afterok:\$PREV}
-  JOB7=\$(sbatch --parsable --partition=\$PART \${DEP7:-} \
+  JOB7=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \${DEP7:-} \
     --output=\$LOGS/step7_%j.out \
     --error=\$LOGS/step7_%j.err \
-    \$PIPELINE/step7_export_jtrawl_grit.sh)
+    \$PIPELINE/step7/step7_export_jdredge.sh)
   echo "step7=\$JOB7" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
@@ -364,7 +442,7 @@ if [[ \$FROM_STEP -le 7 ]]; then
              ls -t jdredge_ocim2_48l_*.mat 2>/dev/null | head -4 | \
              xargs -I{} cp -n {} step7/ 2>/dev/null || true && \
              echo 'step7 outputs organised'" \
-    > /dev/null
+    > /dev/null || true
 
   PREV=\$JOB7
 fi
@@ -372,7 +450,7 @@ fi
 # ── CO2 MODEL (optional) ───────────────────────────────────────────────────────
 if [[ "\$CO2" == true && \$FROM_STEP -le 8 ]]; then
   DEP_CO2=\${PREV:+--dependency=afterok:\$PREV}
-  JOB_CO2=\$(sbatch --parsable --partition=\$PART \${DEP_CO2:-} \
+  JOB_CO2=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \${DEP_CO2:-} \
     --output=\$LOGS/co2model_%j.out \
     --error=\$LOGS/co2model_%j.err \
     \$PIPELINE/co2model_batch_grit.sh)
@@ -386,7 +464,7 @@ if [[ "\$CO2" == true && \$FROM_STEP -le 8 ]]; then
              ls -t ocim_*.mat 2>/dev/null | head -6 | \
              xargs -I{} cp -n {} co2/ 2>/dev/null || true && \
              echo 'co2 outputs organised'" \
-    > /dev/null
+    > /dev/null || true
 fi
 
 echo "Relay done. All jobs submitted."

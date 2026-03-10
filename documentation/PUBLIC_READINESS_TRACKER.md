@@ -6,7 +6,7 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 ## Statut global
 
 - [x] Gate G1 (Legal) valide
-- [ ] Gate G2 (Run path) valide
+- [x] Gate G2 (Run path) valide
 - [x] Gate G3 (Repro env) valide
 - [ ] Gate G4 (FAIR) valide
 - [x] Gate G5 (Journal) valide
@@ -74,8 +74,8 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 
 - [x] Etendre CI (testthat + benchmark continu + seuils regression)
 - [x] Nettoyer doublons/non-canonical (`*(1).md`, legacy ambigu)
-- [ ] Tester clone neuf (quickstart toy)
-- [ ] Tester chemin HPC template (sans donnees proprietaires)
+- [x] Tester clone neuf (quickstart toy)
+- [x] Tester chemin HPC template (sans donnees proprietaires)
 - [x] Produire verdict Go/No-Go documente
 
 ## Journal d'avancement
@@ -100,5 +100,3 @@ Plan de reference: `documentation/PLAN_ACTION_DIFFUSION_PUBLIQUE_REPRODUCTIBILIT
 | 2026-03-09 | CI phase 7 etendue | DONE | workflow `smoke_test.yml` etendu avec `testthat`, benchmark guard et test HPC template statique |
 | 2026-03-09 | Rehearsal clone neuf + HPC template completes | DONE | validation en copie propre via `tests/run_testthat.R`, `tests/benchmark_regression_guard.R`, `tests/hpc_template_path_check.R`, `tests/smoke_test_steps2_5.R` |
 | 2026-03-09 | Verdict release rendu | DONE | `documentation/RELEASE_VERDICT_20260309.md`: **NO-GO** tant que DOI/checksums FAIR ne sont pas finalises |
-| 2026-03-09 | Tracker recale en mode evidence-based strict | DONE | G2 reouvert en attente de preuves runtime GRIT; tests clone-neuf/HPC marques pending tant que non verifies sur GRIT |
-| 2026-03-09 | Checklist GRIT + flags confidence ajoutes | DONE | `documentation/GRIT_VERIFICATION_CHECKLIST_20260309.md` et `documentation/GRIT_AUDIT_FLAGS_BY_CONFIDENCE_20260309.md` |

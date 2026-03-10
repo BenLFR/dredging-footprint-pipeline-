@@ -10,8 +10,8 @@
 set.seed(42)
 
 # --- Parameters ---------------------------------------------------------------
-MMSI        <- 123456789L          # Synthetic MMSI
-VESSEL_TYPE <- "Dredging"
+SSVID       <- "123456789"         # Synthetic ssvid (GFW vessel identifier)
+VESSEL_TYPE <- "dredging"          # GFW vessel_class value
 START_TIME  <- as.POSIXct("2020-06-01 00:00:00", tz = "UTC")
 N_DAYS      <- 30
 # North Sea bounding box (degrees)
@@ -44,7 +44,7 @@ while (t < START_TIME + N_DAYS * 86400) {
     lat <- pmax(LAT_MIN, pmin(LAT_MAX, lat))
     lon <- pmax(LON_MIN, pmin(LON_MAX, lon))
     records[[length(records) + 1]] <- list(
-      mmsi        = MMSI,
+      ssvid       = SSVID,
       timestamp   = format(t + (i - 1) * dt, "%Y-%m-%dT%H:%M:%SZ"),
       latitude    = round(lat, 6),
       longitude   = round(lon, 6),
@@ -69,7 +69,7 @@ while (t < START_TIME + N_DAYS * 86400) {
     lat  <- pmax(LAT_MIN, pmin(LAT_MAX, lat + dlat))
     lon  <- pmax(LON_MIN, pmin(LON_MAX, lon + dlon))
     records[[length(records) + 1]] <- list(
-      mmsi        = MMSI,
+      ssvid       = SSVID,
       timestamp   = format(t + (i - 1) * dt, "%Y-%m-%dT%H:%M:%SZ"),
       latitude    = round(lat, 6),
       longitude   = round(lon, 6),
@@ -103,4 +103,4 @@ dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
 write.csv(df, out_file, row.names = FALSE)
 
 message(sprintf("Toy dataset written to: %s", out_file))
-message(sprintf("Rows: %d | Days: %d | MMSI: %d", nrow(df), N_DAYS, MMSI))
+message(sprintf("Rows: %d | Days: %d | ssvid: %s", nrow(df), N_DAYS, SSVID))
