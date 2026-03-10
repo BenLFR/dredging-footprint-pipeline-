@@ -12,7 +12,7 @@ script_dir <- dirname(get_script_path())
 repo_root <- normalizePath(file.path(script_dir, ".."), winslash = "/", mustWork = TRUE)
 setwd(repo_root)
 
-cfg_path <- "benchmarks/runtime_thresholds.csv"
+cfg_path <- "config/runtime_thresholds.csv"
 if (!file.exists(cfg_path)) {
   stop(sprintf("Missing benchmark config: %s", cfg_path))
 }

@@ -453,7 +453,7 @@ if [[ "\$CO2" == true && \$FROM_STEP -le 8 ]]; then
   JOB_CO2=\$(submit_sbatch_retry sbatch --parsable --partition=\$PART \${DEP_CO2:-} \
     --output=\$LOGS/co2model_%j.out \
     --error=\$LOGS/co2model_%j.err \
-    \$PIPELINE/co2model_batch_grit.sh)
+    \$PIPELINE/co2model_batch.sh)
   echo "co2model=\$JOB_CO2" | tee -a \$MANIFEST
 
   sbatch --parsable --partition=\$PART \
