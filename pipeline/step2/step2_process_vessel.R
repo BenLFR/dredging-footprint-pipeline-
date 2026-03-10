@@ -1,22 +1,22 @@
 #!/usr/bin/env Rscript
 # ====================================================================
-# ÉTAPE 2: TRAITEMENT NAVIRE INDIVIDUEL (ARRAY JOB)
-# VERSION OPTIMISÉE V8 - Tiled spatial land mask
-#   - Découpe l'empreinte navire en tuiles spatiales (tile_deg°)
-#   - Charge le land mask PAR TUILE (évite OOM & timeout)
-#   - Cache par tuile pour crosses_land dans la boucle itérative
-#   - Fallback single-bbox si tiling désactivé ou trop de tuiles
-#   - Pré-calculs statiques: on_land + near_land hors boucle
-#   - crosses_land en CRS métrique (EPSG:3857) + filtre temps AVANT géom
+# STEP 2: INDIVIDUAL VESSEL PROCESSING (ARRAY JOB)
+# OPTIMISED V8 - Tiled spatial land mask
+#   - Partitions vessel footprint into spatial tiles (tile_deg degrees)
+#   - Loads land mask PER TILE (avoids OOM & timeout)
+#   - Per-tile cache for crosses_land in the iterative loop
+#   - Fallback single-bbox if tiling disabled or too many tiles
+#   - Static pre-computations: on_land + near_land outside loop
+#   - crosses_land in metric CRS (EPSG:3857) + time filter BEFORE geometry
 # ====================================================================
 
-cat("=== TRAITEMENT NAVIRE INDIVIDUEL (OPTIMISÉ V8 - TILED) ===\n")
+cat("=== INDIVIDUAL VESSEL PROCESSING (OPTIMISED V8 - TILED) ===\n")
 cat("SCRIPT_VERSION: step2_process_vessel.R 2026-01-27 tiled-v8\n")
-cat("Début:", format(Sys.time()), "\n")
+cat("Start:", format(Sys.time()), "\n")
 
 # CONFIGURATION R CRITIQUE - AVANT CHARGEMENT PACKAGES
 .libPaths("~/R/library")
-cat("R configuré avec library:", .libPaths()[1], "\n")
+cat("R library path:", .libPaths()[1], "\n")
 
 # ---- CONFIGURATION ANTI-GFORCE ----
 options(mc.cores = 1)
@@ -33,10 +33,10 @@ suppressPackageStartupMessages({
     if (requireNamespace("qs", quietly = TRUE)) {
       library(qs)
       use_qs <- TRUE
-      cat("Package qs disponible\n")
+      cat("[INFO] Package qs available\n")
     }
   }, error = function(e) {
-    cat("Package qs non disponible - fallback RDS\n")
+    cat("[WARN] Package qs unavailable, falling back to RDS\n")
   })
 
   library(lubridate)
@@ -47,13 +47,13 @@ suppressPackageStartupMessages({
   library(sf)
 })
 
-# Désactiver S2 (géométrie sphérique) - utiliser GEOS
+# Disable S2 spherical geometry — use GEOS planar
 sf::sf_use_s2(FALSE)
-cat("S2 désactivé - utilisation GEOS\n")
+cat("[INFO] S2 disabled — using GEOS\n")
 
 setDTthreads(1)
 options(datatable.optimize = 1)
-cat("Packages chargés - Configuration mono-thread activée\n")
+cat("[INFO] Packages loaded — single-thread mode enabled\n")
 
 # ── Runtime limitation warnings ───────────────────────────────────────────────
 # Sourced here so check_ais_coverage_region(), check_ping_density(), etc. are
@@ -70,13 +70,13 @@ local({
     message("[INFO] pipeline_warnings.R not found — limitation checks skipped.")
 })
 
-# ---- PARAMÈTRES GÉOSPATIAUX ----
+# ---- GEOSPATIAL PARAMETERS ----
 land_mask_path_raw <- Sys.getenv("LAND_MASK_FILE", unset = "~/ais-pipeline/configuration/land_mask/land_polygons.shp")
 land_mask_path     <- path.expand(land_mask_path_raw)
 land_buffer_m      <- suppressWarnings(as.numeric(Sys.getenv("LAND_MASK_BUFFER_M", unset = "0")))
 if (is.na(land_buffer_m)) land_buffer_m <- 0
 
-cat("\n--- Configuration géospatiale ---\n")
+cat("\n--- Geospatial configuration ---\n")
 cat("LAND_MASK_FILE (raw):", land_mask_path_raw, "\n")
 cat("LAND_MASK_FILE (expanded):", land_mask_path, "\n")
 cat("LAND_MASK_BUFFER_M:", land_buffer_m, "\n")
@@ -99,7 +99,7 @@ if (is.na(sf_chunk) || sf_chunk < 1000) sf_chunk <- 100000
 
 cat("SF_CHUNK:", sf_chunk, "\n")
 
-# ---- PARAMÈTRES TILING ----
+# ---- TILING PARAMETERS ----
 land_tile_enable <- as.logical(Sys.getenv("LAND_TILE_ENABLE", unset = "TRUE"))
 if (is.na(land_tile_enable)) land_tile_enable <- TRUE
 land_tile_deg <- suppressWarnings(as.numeric(Sys.getenv("LAND_TILE_DEG", unset = "5")))
@@ -141,7 +141,7 @@ chunk_any_intersects <- function(x, y, chunk = 100000, label = "intersects") {
   out
 }
 
-# Near-land via st_is_within_distance (évite OOM de st_union+st_buffer)
+# Near-land via st_is_within_distance (avoids OOM from st_union+st_buffer)
 chunk_any_within_distance <- function(x, y, dist_m, chunk = 100000, label = "within_dist") {
   n <- nrow(x)
   out <- logical(n)
@@ -218,9 +218,9 @@ load_land_tile <- function(path, bbox_4326, buffer_m = 0) {
   land_m
 }
 
-# --- Land mask local via WKT filter (évite chargement global) ---
+# --- Land mask local via WKT filter (avoids global load) ---
 prefer_land_datasource <- function(path) {
-  # Si un .gpkg existe à côté du .shp, le préférer (souvent plus rapide + spatial index)
+  # Prefer .gpkg alongside .shp when present (faster + spatial index)
   if (grepl("\\.shp$", path, ignore.case = TRUE)) {
     gpkg <- sub("\\.shp$", ".gpkg", path, ignore.case = TRUE)
     if (file.exists(gpkg)) return(gpkg)
@@ -229,7 +229,7 @@ prefer_land_datasource <- function(path) {
 }
 
 get_layer_crs_fast <- function(path) {
-  # Lecture minimale pour déterminer le CRS; n_max=1 limite le coût.
+  # Minimal read to determine CRS; n_max=1 limits cost.
   crs <- tryCatch({
     x <- sf::st_read(path, quiet = TRUE, n_max = 1)
     sf::st_crs(x)
@@ -248,13 +248,13 @@ load_land_local_wkt <- function(path, bbox_expanded_4326, buffer_m = 0) {
   cat("Datasource:", path, "\n")
 
   path_expanded <- path.expand(path)
-  cat("Chemin résolu:", path_expanded, "\n")
+  cat("Resolved path:", path_expanded, "\n")
 
   if (!file.exists(path_expanded)) {
     cat("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
-    cat("ATTENTION: LAND MASK INTROUVABLE!\n")
-    cat("Chemin:", path_expanded, "\n")
-    cat("Les filtres on_land / near_land / crosses_land seront DÉSACTIVÉS!\n")
+    cat("ATTENTION: LAND MASK NOT FOUND!\n")
+    cat("Path:", path_expanded, "\n")
+    cat("Land filters on_land / near_land / crosses_land will be DISABLED!\n")
     cat("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n")
     return(list(land_local_4326 = NULL, land_local_3857 = NULL))
   }
@@ -263,7 +263,7 @@ load_land_local_wkt <- function(path, bbox_expanded_4326, buffer_m = 0) {
   bbox_sfc <- sf::st_as_sfc(bbox_expanded_4326)
   sf::st_crs(bbox_sfc) <- 4326
 
-  # Adapter la bbox au CRS du layer (si différent)
+  # Adapt bbox to layer CRS if different
   layer_crs <- get_layer_crs_fast(path_expanded)
   bbox_for_filter <- bbox_sfc
   if (!is.na(layer_crs)[1] && !identical(layer_crs$epsg, 4326)) {
@@ -281,7 +281,7 @@ load_land_local_wkt <- function(path, bbox_expanded_4326, buffer_m = 0) {
   })
 
   if (is.null(land_local) || !inherits(land_local, "sf") || nrow(land_local) == 0) {
-    cat("Land local vide -> filtres terre désactivés\n")
+    cat("Local land empty — land filters disabled\n")
     cat("============================================================\n\n")
     return(list(land_local_4326 = NULL, land_local_3857 = NULL))
   }
@@ -300,13 +300,13 @@ load_land_local_wkt <- function(path, bbox_expanded_4326, buffer_m = 0) {
   land_local <- sf::st_make_valid(land_local)
   land_local <- land_local[!sf::st_is_empty(land_local), ]
 
-  cat("Land local chargé:", nrow(land_local), "polygones\n")
+  cat("Local land loaded:", nrow(land_local), "polygons\n")
 
-  # Buffer (optionnel) en métrique
+  # Optional metric buffer
   land_local_m <- tryCatch(sf::st_transform(land_local, 3857), error = function(e) NULL)
 
   if (!is.null(land_local_m) && is.finite(buffer_m) && buffer_m != 0) {
-    cat("Application buffer +", buffer_m, "m...\n", sep = "")
+    cat("Applying buffer +", buffer_m, "m...\n", sep = "")
     land_local_m <- tryCatch({
       x <- sf::st_buffer(land_local_m, dist = buffer_m)
       x <- sf::st_make_valid(x)
@@ -318,22 +318,22 @@ load_land_local_wkt <- function(path, bbox_expanded_4326, buffer_m = 0) {
     })
   }
 
-  # Recréer la version 4326 cohérente avec la 3857 (si buffer appliqué)
+  # Rebuild 4326 version consistent with 3857 (after optional buffer)
   if (!is.null(land_local_m)) {
     land_local_4326 <- tryCatch(sf::st_transform(land_local_m, 4326), error = function(e) land_local)
   } else {
     land_local_4326 <- land_local
   }
 
-  cat("Land local prêt (4326):", nrow(land_local_4326), "polygones\n")
-  if (!is.null(land_local_m)) cat("Land local prêt (3857):", nrow(land_local_m), "polygones\n")
+  cat("Local land ready (4326):", nrow(land_local_4326), "polygons\n")
+  if (!is.null(land_local_m)) cat("Local land ready (3857):", nrow(land_local_m), "polygons\n")
 
   cat("============================================================\n\n")
   list(land_local_4326 = land_local_4326, land_local_3857 = land_local_m)
 }
 
 # ============================================================
-# FONCTION OPTIMISÉE - Flags dynamiques seulement
+# OPTIMISED FUNCTION — dynamic flags only
 # ============================================================
 flag_geospatial_anomalies_instrumented <- function(dt, land_local_m, default_speed_kn,
                                                    spike_dist_min_nm = 1, spike_bridge_max_nm = 0.3,
@@ -348,7 +348,7 @@ flag_geospatial_anomalies_instrumented <- function(dt, land_local_m, default_spe
     flag_spike         = FALSE
   )]
 
-  # Calculs dynamiques (voisins changent après suppression)
+  # Dynamic calculations (neighbours change after removal)
   dt[, `:=`(
     gc_nm  = haversine_nm(Lat, Lon, shift(Lat), shift(Lon)),
     dt_sec = as.numeric(delta_t)
@@ -379,7 +379,7 @@ flag_geospatial_anomalies_instrumented <- function(dt, land_local_m, default_spe
     seg_candidates <- which((near_curr | near_next) & !on_curr)
     seg_candidates <- seg_candidates[seg_candidates < nrow(dt)]
 
-    # Filtre temps AVANT géométries
+    # Time filter BEFORE geometry tests
     next_dt_sec <- dt$dt_sec[seg_candidates + 1]
     seg_candidates <- seg_candidates[!is.na(next_dt_sec) & next_dt_sec < 3600]
 
@@ -481,7 +481,7 @@ flag_geospatial_anomalies_instrumented <- function(dt, land_local_m, default_spe
   dt
 }
 
-# ---- PARAMÈTRES ENVIRONNEMENT ----
+# ---- ENVIRONMENT PARAMETERS ----
 task_id <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 split_job_id <- Sys.getenv("SPLIT_JOB_ID")
 
@@ -492,32 +492,32 @@ cat("Split Job ID:", split_job_id, "\n")
 split_dir <- file.path("~/scratch", paste0("ais_split_", split_job_id))
 metadata_file <- file.path(split_dir, "navires_metadata.csv")
 
-if (!file.exists(metadata_file)) stop("Métadonnées introuvables: ", metadata_file)
+if (!file.exists(metadata_file)) stop("Metadata file not found: ", metadata_file)
 
 metadata <- fread(metadata_file)
-cat("Métadonnées chargées:", nrow(metadata), "navires\n")
+cat("Metadata loaded:", nrow(metadata), "vessels\n")
 
 if (task_id > nrow(metadata)) stop("Task ID ", task_id, " > nombre navires ", nrow(metadata))
 
-# ---- SÉLECTION NAVIRE ----
+# ---- VESSEL SELECTION ----
 navire_info <- metadata[task_id]
 input_file  <- navire_info$file_path
 navire_name <- navire_info$Navire
 
-cat("Navire sélectionné:", navire_name, "\n")
+cat("Vessel selected:", navire_name, "\n")
 cat("Fichier input:", input_file, "\n")
 if (!file.exists(input_file)) stop("Fichier navire introuvable: ", input_file)
 
-# ---- CHARGEMENT DONNÉES NAVIRE ----
-cat("Chargement données navire...\n")
+# ---- LOAD VESSEL DATA ----
+cat("Loading vessel data...\n")
 system.time({
   if (grepl("\\.qs$", input_file, ignore.case = TRUE)) {
     dt_nav <- qs::qread(input_file, as.data.table = TRUE)
-    cat("Format QS détecté et chargé\n")
+    cat("QS format detected and loaded\n")
   } else if (grepl("\\.rds$", input_file, ignore.case = TRUE)) {
     dt_nav <- readRDS(input_file)
     setDT(dt_nav)
-    cat("Format RDS détecté et chargé\n")
+    cat("RDS format detected and loaded\n")
   } else {
     stop("Format de fichier non reconnu: ", input_file)
   }
@@ -526,20 +526,20 @@ system.time({
 # Harmoniser le type de ssvid
 if ("ssvid" %in% names(dt_nav)) dt_nav[, ssvid := as.character(ssvid)]
 
-# Normalisation safe des coordonnées
+# Safe coordinate normalisation
 if ("Lon" %in% names(dt_nav)) dt_nav[, Lon := suppressWarnings(as.numeric(gsub(",", ".", Lon, fixed = TRUE)))]
 if ("Lat" %in% names(dt_nav)) dt_nav[, Lat := suppressWarnings(as.numeric(gsub(",", ".", Lat, fixed = TRUE)))]
 
-cat("✅ Données chargées:", nrow(dt_nav), "observations\n")
+cat("Data loaded:", nrow(dt_nav), "observations\n")
 cat("   Lon NA:", sum(is.na(dt_nav$Lon)), " Lat NA:", sum(is.na(dt_nav$Lat)), "\n")
 if (nrow(dt_nav) > 0) {
   cat("   Lon range:", paste(range(dt_nav$Lon, na.rm = TRUE), collapse = " "),
       " Lat range:", paste(range(dt_nav$Lat, na.rm = TRUE), collapse = " "), "\n")
 }
 
-# ---- LECTURE SPÉCIFICATIONS NAVIRES ----
+# ---- READ VESSEL SPECIFICATIONS ----
 spec_file <- "~/ais-pipeline/configuration/ship_specs.yaml"
-if (!file.exists(spec_file)) stop("ship_specs.yaml introuvable : ", spec_file)
+if (!file.exists(spec_file)) stop("ship_specs.yaml not found: ", spec_file)
 
 spec_list  <- yaml::read_yaml(spec_file)$ship_specs
 ship_specs <- rbindlist(spec_list, fill = TRUE)
@@ -558,7 +558,7 @@ if ("ssvid" %chin% names(dt_nav)) {
 }
 
 if (!"Service_speed" %chin% names(dt_nav) || all(is.na(dt_nav$Service_speed))) {
-  warning("Aucune vitesse de service pour ", navire_name)
+  warning("No service speed found for vessel ", navire_name)
 }
 
 # ---- FILTRE VITESSE PHYSIQUE ----
@@ -567,25 +567,25 @@ if ("Service_speed" %chin% names(dt_nav)) {
   n_before <- nrow(dt_nav)
   dt_nav   <- dt_nav[is.na(speed_limit) | Speed <= speed_limit]
   n_after  <- nrow(dt_nav)
-  cat(sprintf("Filtre vitesse physique : %d -> %d lignes (%.2f %% conservées)\n",
+  cat(sprintf("Physical speed filter: %d -> %d rows (%.2f %% retained)\n",
               n_before, n_after, 100 * n_after / n_before))
   dt_nav[, speed_limit := NULL]
 }
 
-# Préparation initiale
+# Initial preparation
 setorder(dt_nav, Timestamp)
 dt_nav[, delta_t := c(NA_real_, diff(as.numeric(Timestamp)))]
 
-# Index unique (stable) pour debug/log
-# (utile si tu veux remapper aux données originales)
+# Unique stable index for debug/log
+# (useful for mapping back to original data)
 dt_nav[, .row_id := .I]
 
-cat("Application filtres géospatiaux...\n")
+cat("Applying geospatial filters...\n")
 
 # ============================================================
-# PRÉ-CALCULS STATIQUES (Hors boucle) - SPATIAL TILING
+# STATIC PRE-COMPUTATIONS (outside loop) — SPATIAL TILING
 # ============================================================
-cat("\n--- Pré-calcul des relations Terre (Statique) ---\n")
+cat("\n--- Static land relations pre-computation ---\n")
 
 dt_nav[, flag_on_land_static   := FALSE]
 dt_nav[, flag_near_land_static := FALSE]
@@ -614,7 +614,7 @@ if (length(idx_ok) > 0) {
     # ============================================================
     # MODE TILING: charge land par tuile
     # ============================================================
-    cat("  >>> Mode TILING activé <<<\n")
+    cat("  >>> TILING mode enabled <<<\n")
 
     # Margin: near_coast for on_land/near_land + max segment length for crosses_land
     margin_deg <- max(near_coast_km / 111, default_speed_kn / 60) + 0.05
@@ -663,7 +663,7 @@ if (length(idx_ok) > 0) {
     }
 
     cat("  Total polygones (somme tiles):", total_polys, "\n")
-    cat("  Durée tiling:", round(as.numeric(difftime(Sys.time(), t_tile_start, units = "secs")), 1), "s\n")
+    cat("  Tiling duration:", round(as.numeric(difftime(Sys.time(), t_tile_start, units = "secs")), 1), "s\n")
     gc()
 
   } else {
@@ -671,12 +671,12 @@ if (length(idx_ok) > 0) {
     # FALLBACK: single BBOX (original approach)
     # ============================================================
     if (!land_tile_enable) {
-      cat("  Mode TILING désactivé par configuration\n")
+      cat("  TILING mode disabled by configuration\n")
     } else {
-      cat("  Trop de tiles (", n_tiles, " > ", land_tile_max, ") -> fallback single bbox\n", sep = "")
+      cat("  Too many tiles (", n_tiles, " > ", land_tile_max, ") — fallback to single bbox\n", sep = "")
     }
 
-    # BBOX robuste (quantiles) pour éviter outliers
+    # Robust bounding box (quantiles) to avoid outliers
     lon_q <- as.numeric(quantile(dt_nav$Lon[idx_ok], probs = c(0.001, 0.999), na.rm = TRUE))
     lat_q <- as.numeric(quantile(dt_nav$Lat[idx_ok], probs = c(0.001, 0.999), na.rm = TRUE))
 
@@ -715,11 +715,11 @@ if (length(idx_ok) > 0) {
       rm(pts_sf_all, pts_m_all)
       gc()
     } else {
-      cat("  Land local indisponible -> filtres terre désactivés\n")
+      cat("  Local land unavailable — land filters disabled\n")
     }
   }
 } else {
-  cat("  Aucun point avec coordonnées valides -> filtres terre désactivés\n")
+  cat("  No valid coordinates — land filters disabled\n")
 }
 
 cat("---\n\n")
@@ -739,7 +739,7 @@ speed_margin_pct <- 0.15
 }
 
 # ============================================================
-# BOUCLE ITÉRATIVE AVEC LOGGING EXACT
+# ITERATIVE LOOP WITH EXACT LOGGING
 # ============================================================
 iteration <- 0
 max_iterations <- 3
@@ -748,7 +748,7 @@ removed_log <- data.table()
 
 repeat {
   iteration <- iteration + 1
-  cat(sprintf("  Itération %d...\n", iteration))
+  cat(sprintf("  Iteration %d...\n", iteration))
 
   dt_nav <- flag_geospatial_anomalies_instrumented(
     dt_nav,
@@ -764,12 +764,12 @@ repeat {
   n_flagged <- sum(dt_nav$geo_flag, na.rm = TRUE)
 
   if (n_flagged == 0) {
-    cat("  Aucun nouveau point à supprimer\n")
+    cat("  No new points to remove\n")
     dt_nav[, c("geo_flag", "flag_on_land", "flag_crosses_land", "flag_speed_jump", "flag_long_jump", "flag_spike") := NULL]
     break
   }
 
-  # LOGGING: points à supprimer avant suppression
+  # LOG: points flagged for removal before deletion
   removed_iter <- dt_nav[geo_flag == TRUE, .(
     .row_id, Timestamp, Lat, Lon, Speed,
     flag_on_land, flag_crosses_land, flag_speed_jump, flag_long_jump, flag_spike
@@ -778,7 +778,7 @@ repeat {
   removed_log <- rbind(removed_log, removed_iter, fill = TRUE)
 
   if (iteration >= max_iterations) {
-    cat(sprintf("  Nombre max d'itérations atteint (%d), %d points restants marqués\n",
+    cat(sprintf("  Max iterations reached (%d), %d remaining flagged points removed\n",
                 max_iterations, n_flagged))
     dt_nav <- dt_nav[geo_flag == FALSE | is.na(geo_flag)]
     dt_nav[, c("geo_flag", "flag_on_land", "flag_crosses_land", "flag_speed_jump", "flag_long_jump", "flag_spike") := NULL]
@@ -786,12 +786,12 @@ repeat {
     break
   }
 
-  # Supprimer les points marqués
+  # Remove flagged points
   dt_nav <- dt_nav[geo_flag == FALSE | is.na(geo_flag)]
   dt_nav[, c("geo_flag", "flag_on_land", "flag_crosses_land", "flag_speed_jump", "flag_long_jump", "flag_spike") := NULL]
   total_removed <- total_removed + n_flagged
 
-  cat(sprintf("  -> %d points supprimés (total cumulé: %d)\n", n_flagged, total_removed))
+  cat(sprintf("  -> %d points removed (cumulative: %d)\n", n_flagged, total_removed))
 
   # Recalculer delta_t
   setorder(dt_nav, Timestamp)
@@ -803,15 +803,15 @@ dt_nav[, .row_id := NULL]
 if ("tile_key" %in% names(dt_nav)) dt_nav[, tile_key := NULL]
 
 n_after_geo <- nrow(dt_nav)
-cat(sprintf("Filtres géospatiaux : %d lignes supprimées en %d itération(s) (%.2f %%)\n",
+cat(sprintf("Geospatial filters: %d rows removed in %d iteration(s) (%.2f %%)\n",
             n_before_geo - n_after_geo, iteration,
             if (n_before_geo > 0) 100 * (n_before_geo - n_after_geo) / n_before_geo else 0))
 
 # ============================================================
-# DÉCOMPOSITION EXACTE DES SUPPRESSIONS
+# EXACT REMOVAL BREAKDOWN
 # ============================================================
 cat("\n============================================================\n")
-cat("DECOMPOSITION EXACTE DES SUPPRESSIONS\n")
+cat("EXACT REMOVAL BREAKDOWN\n")
 cat("============================================================\n")
 
 if (nrow(removed_log) > 0) {
@@ -833,15 +833,15 @@ if (nrow(removed_log) > 0) {
 
   decomp_one_label <- removed_log[, .(n = .N, pct = round(100 * .N / nrow(removed_log), 2)), by = reason][order(-n)]
 
-  cat("\nPar catégorie (mono-label avec priorité):\n")
+  cat("\nBy category (single-label, priority order):\n")
   print(decomp_one_label)
 
-  cat("\nPar itération:\n")
+  cat("\nBy iteration:\n")
   iter_summary <- removed_log[, .(n = .N), by = iteration][order(iteration)]
   print(iter_summary)
 
 } else {
-  cat("Aucun point supprimé par les filtres géospatiaux.\n")
+  cat("No points removed by geospatial filters.\n")
 }
 cat("============================================================\n\n")
 
@@ -861,7 +861,7 @@ if (file.exists(config_file)) {
     if_num_trees       = config$isolation_forest$num_trees,
     memory_conservative = TRUE
   )
-  cat("Configuration chargée:", config_file, "\n")
+  cat("[INFO] Configuration loaded:", config_file, "\n")
 } else {
   outlier_config <- list(
     contamination_rate = 0.03,
@@ -869,14 +869,14 @@ if (file.exists(config_file)) {
     if_num_trees       = 50,
     memory_conservative = TRUE
   )
-  cat("Configuration par défaut appliquée\n")
+  cat("[INFO] Using default configuration\n")
 }
 
-cat("Paramètres IF: contamination =", outlier_config$contamination_rate,
+cat("IF parameters: contamination =", outlier_config$contamination_rate,
     "| trees =", outlier_config$if_num_trees, "\n")
 
 detect_outliers_IF_optimized <- function(dt, config) {
-  cat("  Début Isolation Forest...\n")
+  cat("  Starting Isolation Forest...\n")
 
   features <- c("Lat", "Lon")
   if ("delta_t" %in% names(dt)) features <- c(features, "delta_t")
@@ -886,7 +886,7 @@ detect_outliers_IF_optimized <- function(dt, config) {
   dt_features <- dt_features[complete.cases(dt_features)]
 
   if (nrow(dt_features) < 50) {
-    cat("  Trop peu de données (", nrow(dt_features), ") - pas d'IF\n")
+    cat("  Too few data points (", nrow(dt_features), ") — skipping IF\n")
     return(rep(FALSE, nrow(dt)))
   }
 
@@ -909,24 +909,24 @@ detect_outliers_IF_optimized <- function(dt, config) {
     result[complete_idx] <- outliers
   }
 
-  cat("  IF terminé:", sum(result), "outliers sur", nrow(dt), "points\n")
+  cat("  IF done:", sum(result), "outliers out of", nrow(dt), "points\n")
   result
 }
 
-cat("Début traitement Isolation Forest...\n")
+cat("Running Isolation Forest...\n")
 system.time({
   dt_nav[, outlier_IF := detect_outliers_IF_optimized(dt_nav, outlier_config)]
 })
 
 # ---- CRÉATION COLONNES SUPPLÉMENTAIRES ----
-cat("Création de la colonne is_stop...\n")
+cat("Creating is_stop column...\n")
 setorder(dt_nav, Timestamp)
 dt_nav[, is_stop := (Speed < 1) | (delta_t > 300)]
 dt_nav[is.na(is_stop), is_stop := FALSE]
-cat("Colonne is_stop créée:", sum(dt_nav$is_stop), "arrêts détectés\n")
+cat("is_stop column created:", sum(dt_nav$is_stop), "stops detected\n")
 
 dt_nav[, Annee := year(Timestamp)]
-cat("Colonnes supplémentaires créées (Annee, Course_change, Accel)\n")
+cat("Additional columns created (Annee, Course_change, Accel)\n")
 
 # ---- STATISTIQUES ----
 n_outliers   <- sum(dt_nav$outlier_IF)
@@ -934,10 +934,10 @@ outlier_rate <- round(n_outliers / nrow(dt_nav) * 100, 2)
 n_stops      <- sum(dt_nav$is_stop)
 stop_rate    <- round(n_stops / nrow(dt_nav) * 100, 2)
 
-cat("\nRÉSULTATS NAVIRE:", navire_name, "\n")
-cat("  Observations totales:", nrow(dt_nav), "\n")
-cat("  Outliers détectés:", n_outliers, "(", outlier_rate, "%)\n")
-cat("  Arrêts détectés:", n_stops, "(", stop_rate, "%)\n")
+cat("\nVESSEL RESULTS:", navire_name, "\n")
+cat("  Total observations:", nrow(dt_nav), "\n")
+cat("  Outliers detected:", n_outliers, "(", outlier_rate, "%)\n")
+cat("  Stops detected:", n_stops, "(", stop_rate, "%)\n")
 
 # ---- SAUVEGARDE ----
 output_dir <- file.path("~/scratch", paste0("ais_results_", Sys.getenv("SLURM_ARRAY_JOB_ID")))
@@ -959,12 +959,12 @@ if (nrow(removed_log) > 0) {
 
   decomp_file <- file.path(output_dir, sprintf("%02d_%s_%s_decomp.csv", task_id, split_job_id, safe_name))
   fwrite(decomp_one_label, decomp_file)
-  cat("Décomposition:", decomp_file, "\n")
+  cat("Breakdown:", decomp_file, "\n")
 }
 
 # ---- NETTOYAGE ----
 rm(dt_nav)
 gc()
 
-cat("\nNavire", navire_name, "traité avec succès:", format(Sys.time()), "\n")
-cat("Résultat:", output_file, "\n")
+cat("\nVessel", navire_name, "processed successfully:", format(Sys.time()), "\n")
+cat("Output:", output_file, "\n")

@@ -1,62 +1,62 @@
 #!/bin/bash
 ###############################################################################
-#  SLURM – STEP 6 : Calcul du Carbone Reminéralise (Cri)
-#  Version GRIT-adapted
+#  SLURM — STEP 6: Remineralised Carbon calculation (Cri)
 ###############################################################################
 #SBATCH --job-name=step6_cri
 #SBATCH --mem=64G
 #SBATCH --cpus-per-task=4
 #SBATCH --time=08:00:00
-#SBATCH --chdir=/home/bloe/ais-pipeline/pipeline_V6
-#SBATCH --output=/home/bloe/logs/step6_cri_%j.out
-#SBATCH --error=/home/bloe/logs/step6_cri_%j.err
-#SBATCH --exclude=hpc-08.grit.ucsb.edu
+# --chdir: set via HPC_PIPELINE_DIR env var or adjust to your cluster path
+#SBATCH --output=logs/step6_cri_%j.out
+#SBATCH --error=logs/step6_cri_%j.err
+# #SBATCH --exclude=<node>  # uncomment to exclude a specific node
 
-echo "=== STEP 6 : CALCUL DE CRI (job $SLURM_JOB_ID) ==="
+echo "=== STEP 6: CRI CALCULATION (job $SLURM_JOB_ID) ==="
 echo "Node:  $SLURMD_NODENAME"
-echo "Debut: $(date)"
+echo "Start: $(date)"
 
 # R setup (GRIT: no module system on compute nodes, R in PATH directly)
 export R_LIBS_USER=~/R/library
 
-# Repertoires utiles
-mkdir -p ~/ais-pipeline/pipeline_V6/logs
+# Directories
+PIPELINE_DIR=${HPC_PIPELINE_DIR:-~/ais-pipeline/pipeline_V6}
+mkdir -p "$PIPELINE_DIR/logs"
 mkdir -p ~/scratch/output_V6
 mkdir -p ~/scratch/tmp_terra
 
-cd ~/ais-pipeline/pipeline_V6 || { echo "❌ Repertoire manquant"; exit 2; }
+cd "$PIPELINE_DIR" || { echo "ERROR: pipeline directory not found"; exit 2; }
 
-echo "✅ Repertoire courant: $(pwd)"
-echo "✅ R library path: $R_LIBS_USER"
+echo "Working directory: $(pwd)"
+echo "R library path: $R_LIBS_USER"
 
-# Pre-flight: verifier les rasters carbone Atwood
+# Pre-flight: check Atwood carbon rasters
 CARBON_DIR=~/scratch/configuration/atwood_carbon_full
 if [ ! -d "$CARBON_DIR" ] || [ -z "$(ls "$CARBON_DIR"/*.tif 2>/dev/null)" ]; then
-    echo "❌ Rasters carbone manquants dans $CARBON_DIR"
-    echo "   Lancez d'abord: bash deploy/upload_step6_to_grit.sh"
+    echo "ERROR: Carbon rasters missing in $CARBON_DIR"
+    echo "   Run first: bash deploy/upload_step6_assets.sh"
     exit 1
 fi
-echo "✅ Rasters carbone: $(ls "$CARBON_DIR"/*.tif | wc -l) fichiers TIF"
+echo "Carbon rasters: $(ls "$CARBON_DIR"/*.tif | wc -l) TIF files"
 
-# Pre-flight: verifier les fichiers f_i (output de Step 5)
+# Pre-flight: check f_i files (output from Step 5)
 FI_FILES=$(find ~/scratch/output_V6/ -name "fi_grid_*.parquet" -o -name "fi_grid_*.rds" 2>/dev/null | head -5)
 if [ -z "$FI_FILES" ]; then
-    echo "❌ Aucun fichier f_i trouve dans ~/scratch/output_V6/"
-    echo "   Lancez d'abord Step 5"
+    echo "ERROR: No f_i files found in ~/scratch/output_V6/"
+    echo "   Run Step 5 first"
     exit 1
 fi
-echo "✅ Fichiers f_i trouves:"
+echo "f_i files found:"
 echo "$FI_FILES"
 
-# Pre-flight: verifier constants.R
+# Pre-flight: check constants.R
 if [ ! -f constants.R ]; then
-    echo "❌ constants.R manquant dans $(pwd)"
+    echo "ERROR: constants.R missing in $(pwd)"
     exit 1
 fi
-echo "✅ constants.R present"
+echo "constants.R present"
 
 echo ""
-echo "🔄 Lancement step6_calculate_cri.R ..."
+echo "Running step6_calculate_cri.R ..."
 
 Rscript --vanilla -e "
   .libPaths('~/R/library')
@@ -66,10 +66,10 @@ Rscript --vanilla -e "
 exit_code=$?
 if [ $exit_code -eq 0 ]; then
     echo ""
-    echo "✅ STEP 6 termine avec succes : $(date)"
-    echo "📄 Fichiers generes :"
-    ls -lh ~/scratch/output_V6/cri_final_* 2>/dev/null || echo "   ⚠️ Aucun fichier cri_final trouve"
+    echo "STEP 6 complete: $(date)"
+    echo "Files generated:"
+    ls -lh ~/scratch/output_V6/cri_final_* 2>/dev/null || echo "   [WARN] No cri_final files found"
 else
-    echo "❌ STEP 6 a echoue (code $exit_code)"
+    echo "ERROR: STEP 6 failed (code $exit_code)"
     exit $exit_code
 fi

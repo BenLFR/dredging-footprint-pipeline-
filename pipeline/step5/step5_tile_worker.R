@@ -1,16 +1,16 @@
 #!/usr/bin/env Rscript
 # ────────────────────────────────────────────────────────────────────────────────
-# STEP-5  ─  WORKER TUILE (pipeline V6, cluster Rorqual)
-# Corrigé pour coller à la Méthode :
-#  - Grille 1 km stable (EPSG:6933) identique pour les étapes suivantes
-#  - Ordre temporel avant linéarisation (distances fiables)
-#  - p_d = 1 m (TSHD) comme décrit en 2.7–2.8  [CHANGEMENT]
-#  - pings sans litho (ou >10 km) EXCLUS du calcul de p_l (mais pas de SAR) [CHANGEMENT]
-#  - p_l agrégé au niveau cellule via moyenne simple des pings avec litho [CHANGEMENT]
+# STEP-5 — TILE WORKER (pipeline V6)
+# Methodology notes:
+#  - Stable 1 km grid (EPSG:6933) consistent with subsequent steps
+#  - Temporal order before linearisation (reliable distances)
+#  - p_d = 1 m (TSHD) as described in §2.7-2.8  [CHANGE]
+#  - Pings without lithology (or >10 km) EXCLUDED from p_l but not SAR [CHANGE]
+#  - p_l aggregated at cell level via simple mean of pings with lithology [CHANGE]
 # ────────────────────────────────────────────────────────────────────────────────
 
-## 0.  Bibliothèques ------------------------------------------------------------
-# Ajoute le répertoire utilisateur aux chemins de bibliothèques R
+## 0.  Libraries ----------------------------------------------------------------
+# Add user library path
 .libPaths(c("~/R/library", .libPaths()))
 
 # Packages requis (arrow optionnel - fallback RDS)
@@ -21,11 +21,11 @@ safe_library <- function(pkg) {
   tryCatch(
     {
       library(pkg, character.only = TRUE)
-      cat("✅", pkg, "OK\n")
+      cat("[INFO]", pkg, "OK\n")
       TRUE
     },
     error = function(e) {
-      stop("❌ Package manquant : ", pkg, "\nMessage : ", e$message)
+      stop("Missing package: ", pkg, "\nMessage: ", e$message)
     }
   )
 }
@@ -34,11 +34,11 @@ optional_library <- function(pkg) {
   tryCatch(
     {
       library(pkg, character.only = TRUE)
-      cat("✅", pkg, "OK\n")
+      cat("[INFO]", pkg, "OK\n")
       TRUE
     },
     error = function(e) {
-      cat("⚠️", pkg, "non disponible - fallback RDS\n")
+      cat("[WARN]", pkg, "unavailable — falling back to RDS\n")
       FALSE
     }
   )
@@ -48,12 +48,12 @@ optional_library <- function(pkg) {
 tryCatch(
   {
     library(sf)
-    cat("✅ sf OK\n")
+    cat("[INFO] sf OK\n")
     options(sf_max_print = 20)
     sf::sf_use_s2(FALSE)
   },
   error = function(e) {
-    stop("❌ Le package 'sf' ne peut pas être chargé.\nMessage : ", e$message)
+    stop("Package 'sf' could not be loaded: ", e$message)
   }
 )
 
@@ -77,8 +77,8 @@ source(file.path(script_dir, "constants.R"))
 
 # Fallback de sécurité si constants.R ancien (sans DEEP_HORIZON)
 if (!exists("DEEP_HORIZON")) {
-  DEEP_HORIZON <- SURF_HORIZON  # cap = même valeur que surface (5cm)
-  cat("⚠️  DEEP_HORIZON absent de constants.R — fallback à", DEEP_HORIZON, "m\n")
+  DEEP_HORIZON <- SURF_HORIZON  # cap to surface horizon value (5 cm)
+  cat("[WARN] DEEP_HORIZON missing in constants.R — using fallback", DEEP_HORIZON, "m\n")
 }
 
 # === Grille cellule stable (EPSG:6933) ===
@@ -99,7 +99,7 @@ snap_cells2 <- function(DT, xcol = "X", ycol = "Y") {
   DT
 }
 
-## 1.  Paramètres d'appel -------------------------------------------------------
+## 1.  Command-line arguments ---------------------------------------------------
 args <- commandArgs(trailingOnly = TRUE)
 if (!(length(args) %in% c(1, 6))) {
   stop(
@@ -109,7 +109,7 @@ if (!(length(args) %in% c(1, 6))) {
 }
 
 tile_id <- as.integer(args[1])
-if (is.na(tile_id) || tile_id < 1) stop("❌ ID de tuile invalide : ", args[1])
+if (is.na(tile_id) || tile_id < 1) stop("Invalid tile ID: ", args[1])
 
 is_subtile <- length(args) == 6
 if (is_subtile) {
@@ -119,17 +119,17 @@ if (is_subtile) {
   ymin <- as.numeric(args[5])
   ymax <- as.numeric(args[6])
   if (anyNA(c(sub_id, xmin, xmax, ymin, ymax))) {
-    stop("❌ Arguments sous-tuile invalides.")
+    stop("Invalid sub-tile arguments.")
   }
   cat(sprintf(
-    "🔧 Sous-tuile %d_%d — bbox : (%.0f,%.0f)-(%.0f,%.0f)\n",
+    "Sub-tile %d_%d — bbox: (%.0f,%.0f)-(%.0f,%.0f)\n",
     tile_id, sub_id, xmin, ymin, xmax, ymax
   ))
 } else {
-  cat("🔧 Traitement tuile complète :", tile_id, "\n")
+  cat("Processing full tile:", tile_id, "\n")
 }
 
-# Chargement des paramètres YAML
+# Load YAML parameters
 param_yaml <- "~/scratch/configuration/fi_parameters_with_freshness.yaml"
 params_raw <- yaml::read_yaml(param_yaml)
 
@@ -145,7 +145,7 @@ get_scenario <- function(name) {
 }
 par <- get_scenario("default")
 
-# Table des k régionaux (utilisée plus tard)
+# Regional k table (used later)
 k_table <- data.frame(
   longhurst_pr = names(par$k_fast),
   k_fast = unlist(par$k_fast) *
@@ -158,16 +158,16 @@ slow_k <- par$slow_k
 preserv_fact <- ifelse(is.null(par$preservation_factor), 0.272, par$preservation_factor)
 
 cat(
-  "🔧  Paramètres (pour info) : alpha_dep=", alpha_dep,
+  "[INFO] Parameters: alpha_dep=", alpha_dep,
   " fast_fraction=", fast_frac, " slow_k=", slow_k,
   " preservation_factor=", preserv_fact, "\n"
 )
 
 Sys.setenv(OMP_NUM_THREADS = 1, MKL_NUM_THREADS = 1, OPENBLAS_NUM_THREADS = 1)
 data.table::setDTthreads(1)
-cat("✅ Threads data.table = 1\n")
+cat("[INFO] data.table threads = 1\n")
 
-## 2.  Zone de travail ----------------------------------------------------------
+## 2.  Working zone -------------------------------------------------------------
 tiles_file <- "~/scratch/output_V6/tiles_1000km.gpkg"
 tiles <- st_read(tiles_file, quiet = TRUE)
 target_crs <- st_crs(tiles)
@@ -177,24 +177,24 @@ if (is_subtile) {
   tile_buffered <- tile_geom
 } else {
   tile_bb <- tiles[tiles$tile_id == tile_id, ]
-  if (nrow(tile_bb) == 0) stop("❌ Tuile ", tile_id, " absente de ", tiles_file)
+  if (nrow(tile_bb) == 0) stop("Tile ", tile_id, " not found in ", tiles_file)
   tile_geom <- st_geometry(tile_bb)
   tile_buffered <- st_buffer(tile_geom, TILE_BUFFER_M)
 }
 
-## 3.  Lecture AIS + lithologie -------------------------------------------------
+## 3.  Read AIS + lithology -----------------------------------------------------
 lithology_files <- list.files("~/scratch/output_V6/",
   pattern = "AIS_with_lithology_.*\\.rds$",
   full.names = TRUE
 )
 if (!length(lithology_files)) {
-  stop("❌ Aucun fichier AIS_with_lithology_* trouvé.")
+  stop("No AIS_with_lithology_* file found.")
 }
 
 dt_lithology <- readRDS(max(lithology_files))
 dredge_raw <- dt_lithology[Dragage_flag == 1 & !is.na(Lon) & !is.na(Lat)]
 if (!nrow(dredge_raw)) {
-  cat("⚠️  Aucun ping de dragage — sortie propre\n")
+  cat("[WARN] No dredging pings — clean exit\n")
   quit("no")
 }
 
@@ -204,7 +204,7 @@ dredge_sf <- st_as_sf(dredge_raw, coords = c("Lon", "Lat"), crs = 4326, remove =
 sel <- st_intersects(dredge_sf, tile_buffered, sparse = FALSE)[, 1]
 dredge_sf <- dredge_sf[sel, ]
 if (!nrow(dredge_sf)) {
-  cat("⚠️  Aucun ping dans la zone — fichier SAR vide écrit\n")
+  cat("[WARN] No pings in zone — writing empty SAR file\n")
   empty <- data.table(
     grid_id = integer(), sum_dw = numeric(),
     sum_dw_pd = numeric(), sum_d = numeric(),
@@ -275,11 +275,11 @@ if (!is_subtile) {
     sprintf("~/scratch/output_V6/ping_detail_%03d.parquet", tile_id),
     compression = "zstd"
   )
-  cat("✅ ping_detail exporté\n")
+  cat("[INFO] ping_detail exported\n")
 }
 
 ## 5.  Conversion en LIGNES avec TRI TEMPOREL ----------------------------------
-cat("🔄 Conversion en lignes (ordre temporel) ...\n")
+cat("Converting to lines (temporal order)...\n")
 to_posix <- function(x) {
   if (inherits(x, "POSIXt")) {
     x
@@ -318,7 +318,7 @@ lines_sf <- dredge_sf2 |>
   )
 
 if (nrow(lines_sf) == 0) {
-  cat("⚠️ Aucune ligne valide — sortie vide\n")
+  cat("[WARN] No valid lines — empty output\n")
   out <- if (is_subtile) {
     sprintf("~/scratch/output_V6/sar_%d_sub%d.parquet", tile_id, sub_id)
   } else {
@@ -333,10 +333,10 @@ if (nrow(lines_sf) == 0) {
   )
   quit("no")
 }
-cat("✅ Lignes créées :", nrow(lines_sf), "\n")
+cat("Lines created:", nrow(lines_sf), "\n")
 
-## 6.  Grille locale alignée monde ---------------------------------------------
-cat("🔲 Création de la grille locale alignée…\n")
+## 6.  World-aligned local grid ------------------------------------------------
+cat("Creating world-aligned local grid...\n")
 tile_bbox <- st_bbox(tile_buffered)
 
 col_start <- as.integer((tile_bbox["xmin"] - WORLD_XMIN) %/% CELL_SIZE_M)
@@ -367,10 +367,10 @@ local_grid <- st_make_grid(
   )
 
 grid1km <- st_intersection(local_grid, tile_buffered)
-cat("✅ Grille locale :", nrow(grid1km), "cellules\n")
+cat("Local grid:", nrow(grid1km), "cells\n")
 
-## 7.  Intersections lignes×grille (SAR) + Moyenne p_l simple par pings --------
-cat("🔄 Intersections ligne/grille…\n")
+## 7.  Line x grid intersections (SAR) + simple p_l mean per cell -------------
+cat("Line/grid intersections...\n")
 res <- data.table(
   grid_id = integer(),
   sum_dw = numeric(), sum_dw_pd = numeric(),
@@ -413,7 +413,7 @@ res <- merge(res, pl_cell, by = "grid_id", all.x = TRUE)
 res[is.na(n_with_pl), `:=`(n_with_pl = 0L, pl_sum = 0)]
 
 setkey(res, grid_id)
-cat("✅ Intersections terminées :", nrow(res), "cellules touchées\n")
+cat("Intersections complete:", nrow(res), "cells touched\n")
 
 ## 8.  Sauvegarde ---------------------------------------------------------------
 out <- if (is_subtile) {
@@ -425,16 +425,16 @@ out <- if (is_subtile) {
 if (requireNamespace("arrow", quietly = TRUE) &&
   packageVersion("arrow") >= numeric_version(PARQUET_VERSION_MIN)) {
   arrow::write_parquet(res, out)
-  cat("✅ Résultats sauvegardés (Parquet) :", basename(out), "\n")
+  cat("[INFO] Results saved (Parquet):", basename(out), "\n")
 } else {
   saveRDS(res, sub("\\.parquet$", ".rds", out))
-  cat("⚠️  Arrow absent — sauvegarde RDS\n")
+  cat("[WARN] Arrow absent — saving as RDS\n")
 }
 
-cat("\n📊 STAT TUILE ", if (is_subtile) sprintf("%d_%d", tile_id, sub_id) else tile_id, "\n",
+cat("\nTILE STATS ", if (is_subtile) sprintf("%d_%d", tile_id, sub_id) else tile_id, "\n",
   "   - Cellules :", nrow(res), "\n",
   "   - Distance totale :", format(sum(res$sum_d), scientific = FALSE), "m\n",
   "   - SAR moyen :", format(mean(res$sum_dw / CELL_AREA_M2, na.rm = TRUE), scientific = FALSE), "\n",
   sep = ""
 )
-cat("\n✅ Terminé\n")
+cat("\nDone\n")

@@ -10,37 +10,38 @@
 # Configuration R GRIT
 module load R
 
-echo "🚀 === ÉTAPE 1: FRACTIONNEMENT PAR NAVIRE ==="
+echo "=== STEP 1: SPLIT AIS BY VESSEL ==="
 echo "Job ID: $SLURM_JOB_ID"
 echo "Node: $SLURMD_NODENAME"
-echo "Début: $(date)"
+echo "Start: $(date)"
 
 # Configuration R Beluga
 
 export R_LIBS_USER=~/R/library
-export AIS_INPUT_FILE=~/scratch/AIS_data/benjamin3_clean.csv
+# AIS_INPUT_FILE must be set in the submission environment — do not hardcode here
 
-# Création répertoires
+# Create directories
 mkdir -p ~/scratch/ais_split_${SLURM_JOB_ID}
 mkdir -p logs
 
-# CORRECTION: Rester dans le bon répertoire
-cd ~/scratch/pipeline_V6
+# Change to pipeline working directory
+cd ~/ais-pipeline/pipeline_V6 || { echo "ERROR: pipeline directory not found"; exit 1; }
 
-echo "✅ Répertoire de travail: $(pwd)"
-echo "✅ Vérification fichier R: $(ls -la step1_split_vessels.R 2>/dev/null || echo 'FICHIER MANQUANT')"
+echo "  Working directory: $(pwd)"
+echo "  Checking R script: $(ls -la step1_split_vessels.R 2>/dev/null || echo 'FILE NOT FOUND')"
 
-echo "✅ Lancement script de fractionnement..."
+echo "  Launching split script..."
 Rscript --vanilla -e "
-.libPaths('~/.local/R/4.2.1/')
+.libPaths(Sys.getenv('R_LIBS_USER', '~/R/library'))
 Sys.setenv(SLURM_JOB_ID = '$SLURM_JOB_ID')
 source('step1_split_vessels.R')
 " 2>&1
 
-echo "✅ Étape 1 terminée: $(date)"
-echo "📁 Fichiers sauvés dans: ~/scratch/ais_split_${SLURM_JOB_ID}/"
+echo "  Step 1 complete: $(date)"
+echo "  Files saved to: ~/scratch/ais_split_${SLURM_JOB_ID}/"
 
-# Affichage résumé
-echo "📊 RÉSUMÉ FRACTIONNEMENT:"
-ls -lh ~/scratch/ais_split_${SLURM_JOB_ID}/ | grep ".fst"
-wc -l ~/scratch/ais_split_${SLURM_JOB_ID}/*.fst 2>/dev/null || echo "Erreur: aucun fichier .fst trouvé" 
+# Display summary
+echo "  SPLIT SUMMARY:"
+# Note: format may be .qs or .rds depending on package availability
+ls -lh ~/scratch/ais_split_${SLURM_JOB_ID}/ | grep -E "\.(qs|rds|fst)$"
+wc -l ~/scratch/ais_split_${SLURM_JOB_ID}/*.fst 2>/dev/null || echo "No .fst files found"
