@@ -1,37 +1,41 @@
 # ────────────────────────────────────────────────────────────────────────────────
-# CONSTANTES PARTAGÉES - Pipeline Step-5 Modulaire
-# Grille mondiale 1 km Equal-Earth EPSG:6933
+# SHARED CONSTANTS - Modular Step-5 Pipeline
+# Global parameters used by all pipeline scripts
 # ────────────────────────────────────────────────────────────────────────────────
 
-# Emprise mondiale en mètres (EPSG:6933) – conforme Atwood et Step 3
-WORLD_XMIN <- -17367530.45
-WORLD_XMAX <-  17367530.45
-WORLD_YMIN <- -7342699.72
-WORLD_YMAX <-  7342699.72
+# Tiling parameters
+CELL_KM <- 1000   # Tile size in km (reduced from 5000 to 1000 to avoid OOM)
+CRS_EQUIVALENT <- 6933   # Equivalent CRS (metres)
 
-# Paramètres de grille 1 km
-CELL_SIZE_M    <- 1000
-CELL_AREA_M2   <- CELL_SIZE_M * CELL_SIZE_M
-GRID_COLS      <- as.integer((WORLD_XMAX - WORLD_XMIN) / CELL_SIZE_M)   # 34735
-GRID_ROWS      <- as.integer((WORLD_YMAX - WORLD_YMIN) / CELL_SIZE_M)   # 14685
-NCOLS          <- GRID_COLS
-NROWS          <- GRID_ROWS
+# Global extent in metres (EPSG:6933) - HARMONISED WITH STEP 3
+WORLD_XMIN <- -18000000      # -180° Equal-Earth
+WORLD_YMIN <- -9000000       # -90° Equal-Earth
+WORLD_XMAX <-  18000000      # +180° Equal-Earth
+WORLD_YMAX <-   9000000      # +90° Equal-Earth
 
-# Buffers pour tuiles (test multi-runs SLURM)
+# Grid parameters
+CELL_SIZE_M <- 1000          # 1 km
+CELL_AREA_M2 <- 1e6
+
+GRID_COLS <- 36000L          # 360° * 1000 m
+GRID_ROWS <- 18000L          # 180° * 1000 m
+
+# ──────────────
+# BUFFER SENSITIVITY TEST SYSTEM
+# ──────────────
+# List of buffers to test (in metres)
 BUFFER_TEST_VALUES <- c(2000, 10000, 20000, 50000, 100000)
-BUFFER_IDX <- as.integer(Sys.getenv("BUFFER_IDX", "4"))
-if(is.na(BUFFER_IDX) || BUFFER_IDX < 1 || BUFFER_IDX > length(BUFFER_TEST_VALUES)) BUFFER_IDX <- 1
+
+# Usage: to test different buffers, set the environment variable "BUFFER_IDX"
+# e.g. in the shell or SLURM job: export BUFFER_IDX=3   (for 20000 m)
+BUFFER_IDX <- as.integer(Sys.getenv("BUFFER_IDX", "1"))
+if(is.na(BUFFER_IDX) || BUFFER_IDX < 1 || BUFFER_IDX > length(BUFFER_TEST_VALUES)) {
+  BUFFER_IDX <- 1  # default: first buffer in the list
+}
+
 TILE_BUFFER_M <- BUFFER_TEST_VALUES[BUFFER_IDX]
-cat(sprintf("🌍 [INFO] TILE_BUFFER_M défini à %d m (BUFFER_IDX = %d)\n", TILE_BUFFER_M, BUFFER_IDX))
 
-# Version arrow minimale (modifie selon ta stack logicielle)
-PARQUET_VERSION_MIN <- "14.0.0"
+cat(sprintf("[INFO] TILE_BUFFER_M set to %d m (BUFFER_IDX = %d)\n", TILE_BUFFER_M, BUFFER_IDX))
 
-# Paramètres pour la génération des tuiles
-CELL_KM <- 1000  # Taille des tuiles en km
-CRS_EQUIVALENT <- "EPSG:6933"  # CRS Equal-Earth
-
-# Paramètres pour le calcul de la lithologie effective (thèse §2.7-2.8)
-SURF_HORIZON <- 0.05          # 5 cm (horizon de surface)
-DEEP_HORIZON <- 0.05          # 5 cm max (horizon profond - CAPPÉ)
-FACTOR_DEEP  <- 0.3           # Facteur de pondération couche profonde
+# Save parameters
+PARQUET_VERSION_MIN <- "14.0.0"  # Minimum arrow version for Parquet

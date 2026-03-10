@@ -19,6 +19,15 @@ logs/
 *.err
 *.log
 
+# ── Deploy secrets and private cluster config ─────────────────────────────────
+deploy/config.env
+deploy/*.key
+deploy/*.pem
+deploy/id_*
+deploy/known_hosts
+deploy/ssh_config
+deploy/reports/
+
 # ── R environment ──────────────────────────────────────────────────────────────
 .Rhistory
 .RData

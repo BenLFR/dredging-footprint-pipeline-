@@ -1,8 +1,7 @@
-#!/bin/bash
-# Generic wrapper for Step 7 upload on an HPC cluster.
-# Keeps public docs cluster-neutral while preserving legacy script behavior.
+#!/usr/bin/env bash
+# Legacy compatibility wrapper. Prefer deploy/upload_step7_assets.sh.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "${SCRIPT_DIR}/upload_step7_to_grit.sh" "$@"
+exec "${SCRIPT_DIR}/upload_step7_assets.sh" "$@"
