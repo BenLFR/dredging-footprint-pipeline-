@@ -7,11 +7,11 @@ the pipeline on any SLURM-based HPC system.
 
 ```bash
 # 1. Copy and fill in your cluster paths
-cp deploy/config.example.env deploy/local.env
-# Edit deploy/local.env: set PIPELINE_DIR, SCRATCH_DIR, HPC_HOST, etc.
+cp deploy/config.example.env deploy/config.env
+# Edit deploy/config.env: set HPC_HOST, HPC_BASEDIR, HPC_SCRATCH, etc.
 
 # 2. Verify connectivity
-source deploy/local.env
+source deploy/config.env
 bash deploy/preflight_hpc.sh
 
 # 3. Sync pipeline code to cluster
@@ -74,7 +74,7 @@ bash deploy/hpc_fetch.sh output_V6/fi_grid_*.parquet .
 
 ## Environment variables
 
-All scripts read from `deploy/local.env` (gitignored) if present, or fall back
+All scripts read from `deploy/config.env` (gitignored) if present, or fall back
 to defaults. Key variables:
 
 | Variable | Description |

@@ -64,10 +64,10 @@ deploy::require_vars HPC_HOST HPC_BASEDIR
 sync_cmd=(
   bash "${SCRIPT_DIR}/hpc_sync.sh"
   --env-file "${DEPLOY_ENV_FILE}"
-  --item pipeline/step7_export_jtrawl.sh
-  --item step7_export_jtrawl.R
-  --item pipeline/step7_extract_ocim_cache.py
-  --item pipeline/step7_extract_ocim_cache.m
+  --item pipeline/step7/step7_export_jdredge.sh
+  --item pipeline/step7/step7_export_jdredge.R
+  --item pipeline/step7/step7_extract_ocim_cache.py
+  --item pipeline/step7/step7_extract_ocim_cache.m
   --item pipeline/constants.R
 )
 
@@ -112,5 +112,5 @@ fi
 
 deploy::info "Step 7 code sync completed."
 deploy::info "Suggested next steps:"
-printf '1. python3 %q\n' "${PIPELINE_DIR_REMOTE:-${HPC_BASEDIR%/}/pipeline}/step7_extract_ocim_cache.py"
-printf '2. bash deploy/hpc_submit.sh --export OCIM_DIR=%q pipeline/step7_export_jtrawl.sh\n' "${STEP7_OCIM_REMOTE_DIR:-<remote_ocim_dir>}"
+printf '1. python3 %q\n' "${PIPELINE_DIR_REMOTE:-${HPC_BASEDIR%/}/pipeline}/step7/step7_extract_ocim_cache.py"
+printf '2. bash deploy/hpc_submit.sh --export OCIM_DIR=%q pipeline/step7/step7_export_jdredge.sh\n' "${STEP7_OCIM_REMOTE_DIR:-<remote_ocim_dir>}"

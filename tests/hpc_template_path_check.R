@@ -27,14 +27,14 @@ for (p in required) {
 submit <- paste(readLines("deploy/hpc_submit.sh",       warn = FALSE, encoding = "UTF-8"), collapse = "\n")
 env    <- paste(readLines("deploy/config.example.env",  warn = FALSE, encoding = "UTF-8"), collapse = "\n")
 
-must_have_submit <- c("SBATCH_PARTITION", "SBATCH_ACCOUNT", "SBATCH_QOS", "sbatch")
+must_have_submit <- c("SLURM_PARTITION", "SLURM_ACCOUNT", "SLURM_QOS", "sbatch")
 for (needle in must_have_submit) {
   if (!grepl(needle, submit, fixed = TRUE)) {
     stop(sprintf("deploy/hpc_submit.sh missing token: %s", needle))
   }
 }
 
-must_have_env <- c("PIPELINE_DIR", "SCRATCH_DIR", "OUTPUT_DIR", "CONFIG_DIR", "LOGS_DIR")
+must_have_env <- c("HPC_BASEDIR", "HPC_SCRATCH", "REMOTE_LOG_DIR", "PIPELINE_DIR_REMOTE", "SLURM_PARTITION")
 for (needle in must_have_env) {
   if (!grepl(needle, env, fixed = TRUE)) {
     stop(sprintf("deploy/config.example.env missing token: %s", needle))

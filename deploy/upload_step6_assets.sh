@@ -58,8 +58,8 @@ deploy::require_vars HPC_HOST HPC_BASEDIR
 sync_cmd=(
   bash "${SCRIPT_DIR}/hpc_sync.sh"
   --env-file "${DEPLOY_ENV_FILE}"
-  --item pipeline/step6_calculate_cri.sh
-  --item pipeline/step6_calculate_cri.R
+  --item pipeline/step6/step6_calculate_cri.sh
+  --item pipeline/step6/step6_calculate_cri.R
   --item pipeline/constants.R
 )
 
@@ -102,4 +102,4 @@ fi
 
 deploy::info "Step 6 code sync completed."
 deploy::info "Suggested submission command:"
-printf 'bash deploy/hpc_submit.sh --export CARBON_DIR=%q pipeline/step6_calculate_cri.sh\n' "${STEP6_CARBON_REMOTE_DIR:-<remote_carbon_dir>}"
+printf 'bash deploy/hpc_submit.sh --export CARBON_DIR=%q pipeline/step6/step6_calculate_cri.sh\n' "${STEP6_CARBON_REMOTE_DIR:-<remote_carbon_dir>}"

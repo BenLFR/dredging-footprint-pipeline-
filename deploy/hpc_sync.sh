@@ -67,7 +67,7 @@ if (( ${#requested_items[@]} == 0 )); then
       requested_items+=("${item}")
     done
   else
-    requested_items=(deploy pipeline config documentation tests data/toy postproc README.md LICENSE THIRD_PARTY_NOTICES.md CITATION.cff requirements.txt renv.lock step7_export_jtrawl.R)
+    requested_items=(deploy pipeline config documentation tests data/toy postproc README.md LICENSE THIRD_PARTY_NOTICES.md CITATION.cff requirements.txt renv.lock)
   fi
 fi
 
