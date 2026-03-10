@@ -1,115 +1,34 @@
-# GRIT Cheat Sheet (connexion + verifications pipeline)
+# Generic HPC Cheat Sheet
 
-## Connexion
+Use placeholders from `deploy/config.env` rather than editing scripts inline.
 
-Connexion via config SSH:
+## Preflight
 
 ```bash
-ssh -F ~/.ssh/config_grit grit
+bash deploy/preflight_hpc.sh --ping
 ```
 
-Alternative (bastion direct):
+## Sync
 
 ```bash
-ssh -F ~/.ssh/config_grit grit-bastion
+bash deploy/hpc_sync.sh --dry-run
+bash deploy/hpc_sync.sh
 ```
 
-## Repertoires utiles sur GRIT
-
-- Code pipeline: `/home/bloe/ais-pipeline/`
-- Scripts Step: `/home/bloe/ais-pipeline/pipeline_V6/`
-- Config: `/home/bloe/ais-pipeline/configuration/`
-- Land mask: `/home/bloe/ais-pipeline/configuration/land_mask/`
-- Outputs Step 0/1/2: `~/scratch/` (ex: `~/scratch/ais_split_JOBID/`)
-
-## Step 0 (core window)
-
-Lancer:
+## Submit
 
 ```bash
-cd /home/bloe/ais-pipeline/pipeline_V6
-sbatch step0_window_select_grit.sh
+bash deploy/hpc_submit.sh pipeline/step0_window_select.sh
 ```
 
-Logs:
+## Fetch
 
 ```bash
-ls -lh /home/bloe/ais-pipeline/pipeline_V6/logs/step0_window_enhanced_*.out
-tail -50 /home/bloe/ais-pipeline/pipeline_V6/logs/step0_window_enhanced_<JOBID>.out
+bash deploy/hpc_fetch.sh --path output_V6
 ```
 
-Verifier la config:
+## Accounting
 
 ```bash
-cat ~/scratch/output_V6/core_window.yaml | grep -A15 "core_ships:"
-```
-
-## Step 1 (split navires)
-
-Lancer:
-
-```bash
-cd /home/bloe/ais-pipeline/pipeline_V6
-sbatch step1_split_navires.sh
-```
-
-Logs:
-
-```bash
-ls -lh /home/bloe/ais-pipeline/pipeline_V6/logs/step1_split_*.out
-tail -50 /home/bloe/ais-pipeline/pipeline_V6/logs/step1_split_<JOBID>.out
-```
-
-Verifier les fichiers produits:
-
-```bash
-ls -lh ~/scratch/ais_split_<JOBID>/
-cat ~/scratch/ais_split_<JOBID>/navires_metadata.csv
-```
-
-## Step 2 (process navires)
-
-Pre-requis:
-
-```bash
-ls -lh /home/bloe/ais-pipeline/pipeline_V6/step2_process*
-ls -lh /home/bloe/ais-pipeline/configuration/ship_specs.yaml
-ls -lh /home/bloe/ais-pipeline/configuration/outlier_config_V6.yaml
-ls -lh /home/bloe/ais-pipeline/configuration/land_mask/land_polygons.*
-```
-
-Lancer:
-
-```bash
-cd /home/bloe/ais-pipeline/pipeline_V6
-SPLIT_JOB_ID=<STEP1_JOBID> sbatch --array=1-10 step2_process_array.sh
-```
-
-Logs:
-
-```bash
-ls -lh /home/bloe/ais-pipeline/pipeline_V6/logs/step2_process_<JOBID>_*.out
-tail -50 /home/bloe/ais-pipeline/pipeline_V6/logs/step2_process_<JOBID>_1.out
-tail -50 /home/bloe/ais-pipeline/pipeline_V6/logs/step2_process_<JOBID>_1.err
-```
-
-Resultats:
-
-```bash
-ls -lh ~/scratch/ais_results_<JOBID>/
-```
-
-## Commandes utiles
-
-Voir les jobs:
-
-```bash
-squeue -u bloe
-```
-
-Verifier un fichier:
-
-```bash
-ls -lh <chemin>
-head -20 <fichier>
+bash deploy/capture_sacct.sh <job_id>
 ```
