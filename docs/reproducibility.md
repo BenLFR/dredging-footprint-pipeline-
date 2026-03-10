@@ -53,7 +53,7 @@ data/external/co2model_vendor/
 Then use:
 
 ```bash
-bash deploy/upload_step7_to_cluster.sh --co2model-src data/external/co2model_vendor
+bash deploy/upload_step7_assets.sh --co2model-src data/external/co2model_vendor
 ```
 
 See [`co2model/README.md`](../co2model/README.md) and

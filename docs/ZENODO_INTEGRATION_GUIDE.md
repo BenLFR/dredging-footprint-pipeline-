@@ -19,7 +19,7 @@ repository metadata consistently.
 
 1. Log in to Zenodo (`https://zenodo.org`).
 2. Go to `Account -> GitHub`.
-3. Enable the repository `BenLFR/Master-thesis-code-`.
+3. Enable the repository `BenLFR/dredging-footprint-pipeline-`.
 
 ## 3. Prepare release metadata in Git
 
@@ -72,7 +72,7 @@ git push origin pub/v1.0-clean
 1. Download Zenodo release files.
 2. Compute SHA256 checksums.
 3. Compare against `ARCHIVE_MANIFEST.yaml`.
-4. Store generated checksum file in release notes or `documentation/`.
+4. Store generated checksum file in release notes or `docs/`.
 
 Example:
 
@@ -86,4 +86,4 @@ sha256sum <downloaded_file>
 2. DOI in `docs/data_policy.md` is real and resolves.
 3. `configuration/codemeta.json` is valid JSON and DOI-aligned.
 4. `ARCHIVE_MANIFEST.yaml` includes final checksums and DOI values.
-5. Tracker (`documentation/PUBLIC_READINESS_TRACKER.md`) Phase 5 is updated.
+5. Release notes are updated with DOI and checksum values.
