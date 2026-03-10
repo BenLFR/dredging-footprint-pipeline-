@@ -16,7 +16,6 @@ This document explains how to obtain each input.
 | step5 (tile worker) | `fi_parameters_with_freshness.yaml`, `ship_specs.yaml` | YAML | <1 MB |
 | step5 (merge) | Longhurst provinces shapefile | SHP | ~5 MB |
 | step6 | Atwood et al. sediment carbon stock rasters | GeoTIFF (multi-band) | ~1 GB |
-| step6 | Trawling history raster (optional, for depletion factor) | RDS | variable |
 | step7 / co2model | OCIM2-48L transport matrix + WOA09 nutrients | .mat | ~8 GB total |
 
 Place all real data in `data/external/` (gitignored).
