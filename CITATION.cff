@@ -9,7 +9,8 @@ abstract: >
 authors:
   - family-names: Loeffler
     given-names: Benjamin
-    # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # register at orcid.org then add here
+    orcid: "https://orcid.org/0009-0008-0641-426X"
+    affiliation: "Environmental Markets Lab (emLab), UC Santa Barbara; Institute for the Oceans and Fisheries, University of British Columbia"
   - family-names: Wabnitz
     given-names: Colette
     orcid: "https://orcid.org/0000-0002-5076-9163"
