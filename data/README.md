@@ -80,14 +80,17 @@ Or browse manually at: https://hub.ocean.digital/stac
 Source: Atwood T.B. et al. (2020) "Global patterns in marine sediment carbon
 stocks." *Frontiers in Marine Science*, doi: 10.3389/fmars.2020.00165
 
-The pipeline (step6) expects a multi-band GeoTIFF with bands named:
+Dataset: Figshare doi: 10.6084/m9.figshare.11956356
+Direct: https://figshare.com/articles/dataset/Global_marine_sedimentary_carbon_stock/11956356
+
+Download the GeoTIFF files (1 km resolution, 1 m depth, units: Mg C km⁻²).
+The pipeline (step6) expects a directory containing `.tif` files with bands:
 - `Mean carbon_stock`
 - `global_error_lower_bound`
 - `global_error_upper_bound`
 
-Contact the corresponding authors for data access (see paper SI for details).
-Place in `~/scratch/configuration/atwood_carbon_full/` on the cluster, or set
-the `CARBON_DIR` environment variable to the directory containing the `.tif` files.
+Place the `.tif` files in `~/scratch/configuration/atwood_carbon_full/` on the
+cluster, or set the `CARBON_DIR` environment variable to point to the directory.
 
 ---
 
