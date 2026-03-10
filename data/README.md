@@ -10,12 +10,14 @@ This document explains how to obtain each input.
 
 | Step | Input file(s) | Format | Size (approx.) |
 |------|---------------|--------|----------------|
-| step0–3 | AIS vessel tracking data | CSV / Parquet | ~50 GB/year |
-| step2 | Land mask shapefile | SHP | ~500 MB |
-| step4 | dbSEABED lithology grid | via HubOcean STAC API | variable |
-| step5 | Longhurst provinces shapefile | SHP | ~5 MB |
+| step0, step1 | AIS vessel tracking data (raw) | CSV | ~50 GB/year |
+| step2 | Land mask (`land_polygons.shp`) | SHP | ~500 MB |
+| step4 | dbSEABED sediment texture rasters (mud, sand, gravel fractions) + `pl_lookup_v1.csv` | GeoTIFF + CSV | variable |
+| step5 (tile worker) | `fi_parameters_with_freshness.yaml`, `ship_specs.yaml` | YAML | <1 MB |
+| step5 (merge) | Longhurst provinces shapefile | SHP | ~5 MB |
 | step6 | Atwood et al. sediment carbon stock rasters | GeoTIFF (multi-band) | ~1 GB |
-| step7/co2model | OCIM2-48L transport matrix + WOA09 nutrients | .mat | ~8 GB total |
+| step6 | Trawling history raster (optional, for depletion factor) | RDS | variable |
+| step7 / co2model | OCIM2-48L transport matrix + WOA09 nutrients | .mat | ~8 GB total |
 
 Place all real data in `data/external/` (gitignored).
 
