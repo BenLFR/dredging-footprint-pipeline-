@@ -122,7 +122,7 @@ Request the MATLAB OCIM CO2 solver package by email from T. DeVries
 (`tdevries@geog.ucsb.edu`), then upload to the cluster:
 
 ```bash
-bash deploy/upload_step7_to_cluster.sh --co2model-src /path/to/received/package
+bash deploy/upload_step7_assets.sh --co2model-src /path/to/received/package
 ```
 
 ---

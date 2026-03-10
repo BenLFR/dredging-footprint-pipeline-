@@ -51,12 +51,12 @@ AIS tracks (CSV/Parquet)
 |------|--------|-----------|-------------|
 | step0 | `pipeline/step0/step0_core_window.R` | AIS CSV/RDS, config | `core_window.yaml`, coverage matrix |
 | step1 | `pipeline/step1/step1_split_vessels.R` | AIS CSV/RDS, `core_window.yaml` | `vessel_*.rds` (one per MMSI) |
-| step2 | `pipeline/step2/step2_process_vessel.R` | `vessel_*.rds`, `config/outlier_config.yaml` | `vessel_*_clean.rds` |
+| step2 | `pipeline/step2/step2_process_vessel.R` | `vessel_*.rds`, `config/outlier_config_V6.yaml` | `vessel_*_clean.rds` |
 | step3 | `pipeline/step3/step3_merge.R` | `vessel_*_clean.rds` | `AIS_data_core_preprocessed_V6_*.rds` |
 | step4 | `pipeline/step4/step4_add_lithology.R` | step3 merged RDS, dbSEABED rasters | `AIS_with_lithology_*.rds` |
 | step5a | `pipeline/step5/step5_make_tiles.R` | `pipeline/constants.R` | `tiles_1000km.gpkg` |
 | step5b | `pipeline/step5/step5_tile_worker.R` | `AIS_with_lithology_*.rds`, tiles, YAML params | `sar_NNN.parquet` (parallel array) |
-| step5c | `pipeline/step5/step5_merge_tiles.R` | `sar_*.parquet`, Longhurst, `config/fi_parameters.yaml` | `fi_grid_*.parquet`, `fi_grid_*.tif` |
+| step5c | `pipeline/step5/step5_merge_tiles.R` | `sar_*.parquet`, Longhurst, `config/fi_parameters_with_freshness.yaml` | `fi_grid_*.parquet`, `fi_grid_*.tif` |
 | step6 | `pipeline/step6/step6_calculate_cri.R` | `fi_grid_*.parquet`, Atwood C0 rasters | `cri_final_*.parquet`, `cri_final_*.tif` |
 | step7 | `pipeline/step7/step7_export_jdredge.R` | `cri_final_*.parquet`, `ocim_cache.mat` | `jdredge_ocim2_48l_*.mat` |
 | co2model (external) | external MATLAB code | `jdredge_*.mat`, OCIM2-48L matrix | `co2_output_*.mat` |

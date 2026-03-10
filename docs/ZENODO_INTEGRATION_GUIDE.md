@@ -7,10 +7,10 @@ repository metadata consistently.
 
 1. Branch `pub/v1.0-clean` is up to date.
 2. `ARCHIVE_MANIFEST.yaml` exists and lists release artifacts.
-3. `CITATION.cff` and `configuration/codemeta.json` are present.
+3. `CITATION.cff` and `codemeta.json` are present.
 4. Files with placeholder DOI values are known:
    - `CITATION.cff`
-   - `configuration/codemeta.json`
+   - `codemeta.json`
    - `docs/data_policy.md`
    - `ARCHIVE_MANIFEST.yaml`
    - `README.md` (if DOI placeholder is present)
@@ -53,7 +53,7 @@ After Zenodo minting completes:
 1. Copy the minted DOI(s).
 2. Replace `10.5281/zenodo.XXXXXXX` in:
    - `CITATION.cff` (`doi:`),
-   - `configuration/codemeta.json` (`identifier`, `citation`),
+   - `codemeta.json` (`identifier`, `citation`),
    - `docs/data_policy.md`,
    - `ARCHIVE_MANIFEST.yaml` (`zenodo_*` fields).
 3. If ORCID is available, add it in `CITATION.cff`.
@@ -62,7 +62,7 @@ Commit and push the metadata finalization:
 
 ```bash
 git checkout pub/v1.0-clean
-git add CITATION.cff configuration/codemeta.json docs/data_policy.md ARCHIVE_MANIFEST.yaml
+git add CITATION.cff codemeta.json docs/data_policy.md ARCHIVE_MANIFEST.yaml
 git commit -m "Finalize DOI metadata after Zenodo release v1.0.0"
 git push origin pub/v1.0-clean
 ```
@@ -84,6 +84,6 @@ sha256sum <downloaded_file>
 
 1. DOI in `CITATION.cff` is real and resolves.
 2. DOI in `docs/data_policy.md` is real and resolves.
-3. `configuration/codemeta.json` is valid JSON and DOI-aligned.
+3. `codemeta.json` is valid JSON and DOI-aligned.
 4. `ARCHIVE_MANIFEST.yaml` includes final checksums and DOI values.
 5. Release notes are updated with DOI and checksum values.

@@ -56,7 +56,7 @@ Then use:
 bash deploy/upload_step7_assets.sh --co2model-src data/external/co2model_vendor
 ```
 
-See [`co2model/README.md`](../co2model/README.md) and
+See [`data/README.md`](../data/README.md) (section 6b) and
 [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) for compliance details.
 
 ## Apptainer Container

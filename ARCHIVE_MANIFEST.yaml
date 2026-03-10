@@ -2,8 +2,8 @@ schema_version: "1.0"
 generated_on: "2026-03-09"
 
 repository:
-  name: "Master-thesis-code-"
-  url: "https://github.com/BenLFR/Master-thesis-code-"
+  name: "dredging-footprint-pipeline-"
+  url: "https://github.com/BenLFR/dredging-footprint-pipeline-"
   branch: "pub/v1.0-clean"
   commit: "8784656aa798cb1db452a8b679130d3bc58769c2"
 
@@ -84,7 +84,7 @@ external_inputs_not_redistributed:
   - id: "ocim_matlab_solver_code"
     access: "email request to tdevries@geog.ucsb.edu"
     redistributable: false
-    source: "co2model/README.md"
+    source: "data/README.md (section 6b)"
 
   - id: "ocim2_48l_transport_matrix"
     access: "author-provided package"
