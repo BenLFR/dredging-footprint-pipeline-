@@ -38,7 +38,7 @@ cd $PIPELINE_DIR
 # Verification pre-requis: cache HubOcean
 CACHE_DIR=~/scratch/hubocean_cache
 if [ ! -d "$CACHE_DIR" ]; then
-    echo "ERREUR: Cache HubOcean non trouve: $CACHE_DIR"
+    echo "ERROR: HubOcean cache not found: $CACHE_DIR"
     echo "Executez d'abord sur login node: python prefetch_hubocean_stac.py"
     exit 1
 fi
@@ -57,7 +57,7 @@ ls -lh $CACHE_DIR/rock/*.tif 2>/dev/null || ls -lh $CACHE_DIR/rock__*.tif 2>/dev
 AIS_DIR=~/scratch/output_V6
 echo ""
 echo "Fichiers AIS disponibles:"
-ls -lh $AIS_DIR/AIS_data_core_preprocessed_V6_*.rds 2>/dev/null || echo "  ERREUR: Aucun fichier AIS trouve"
+ls -lh $AIS_DIR/AIS_data_core_preprocessed_V6_*.rds 2>/dev/null || echo "  ERROR: No AIS file found"
 
 # Espace disque
 echo ""
@@ -96,7 +96,7 @@ if [ $exit_code -eq 0 ]; then
     fi
 else
     echo ""
-    echo "ERREUR Step 4: code $exit_code"
+    echo "ERROR Step 4: code $exit_code"
     exit $exit_code
 fi
 

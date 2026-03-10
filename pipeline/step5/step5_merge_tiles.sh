@@ -37,10 +37,10 @@ echo "Generation GeoTIFF: $MAKE_TIFF"
 
 # Verification tuiles SAR
 SAR_COUNT=$(ls ~/scratch/output_V6/sar_*.parquet 2>/dev/null | wc -l)
-echo "Tuiles SAR trouvees: $SAR_COUNT"
+echo "SAR tiles found: $SAR_COUNT"
 
 if [ "$SAR_COUNT" -eq 0 ]; then
-  echo "ERREUR: Aucune tuile SAR trouvee dans ~/scratch/output_V6/"
+  echo "ERROR: No SAR tile files found dans ~/scratch/output_V6/"
   exit 1
 fi
 
@@ -48,7 +48,7 @@ fi
 for f in ~/scratch/configuration/fi_parameters_with_freshness.yaml \
          ~/scratch/output_V6/tiles_1000km.gpkg; do
   if [ ! -f "$f" ]; then
-    echo "ERREUR: Fichier requis manquant: $f"
+    echo "ERROR: Required file missing: $f"
     exit 1
   fi
 done
@@ -70,13 +70,13 @@ fi
 
 # Verification constants.R
 if [ ! -f "$PIPELINE_DIR/constants.R" ]; then
-  echo "ERREUR: constants.R manquant dans $PIPELINE_DIR"
+  echo "ERROR: constants.R missing in $PIPELINE_DIR"
   exit 1
 fi
 
 SCRIPT_PATH="$PIPELINE_DIR/step5/step5_merge_tiles.R"
 if [ ! -f "$SCRIPT_PATH" ]; then
-  echo "ERREUR: Script R non trouve: $SCRIPT_PATH"
+  echo "ERROR: R script not found: $SCRIPT_PATH"
   exit 1
 fi
 echo "Script R: $SCRIPT_PATH"
@@ -97,7 +97,7 @@ if [ $exit_code -eq 0 ]; then
   ls -lh ~/scratch/output_V6/fi_grid_*.rds 2>/dev/null || echo "  (aucun rds)"
   ls -lh ~/scratch/output_V6/fi_grid_*.tif 2>/dev/null || echo "  (aucun tif)"
 else
-  echo "ERREUR Step 5 merge: code $exit_code"
+  echo "ERROR Step 5 merge: code $exit_code"
   exit $exit_code
 fi
 

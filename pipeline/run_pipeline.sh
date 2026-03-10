@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # run_pipeline.sh
-# Full autonomous pipeline orchestrator — GRIT cluster (emlab_nodes partition)
+# Full autonomous pipeline orchestrator — generic HPC/SLURM cluster
 #
 # Usage:
 #   bash run_pipeline.sh                   # run from step 0

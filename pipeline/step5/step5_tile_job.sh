@@ -34,8 +34,8 @@ SCRIPT="$PIPELINE_DIR/step5/step5_tile_worker.R"
 TILES_FILE="$HOME/scratch/output_V6/tiles_1000km.gpkg"
 
 echo "Lancement tuile $TILE_ID"
-[ -f "$SCRIPT" ] || { echo "ERREUR: Script R manquant: $SCRIPT"; exit 1; }
-[ -f "$TILES_FILE" ] || { echo "ERREUR: Fichier tuiles manquant: $TILES_FILE"; exit 1; }
+[ -f "$SCRIPT" ] || { echo "ERROR: R script missing: $SCRIPT"; exit 1; }
+[ -f "$TILES_FILE" ] || { echo "ERROR: Tiles file missing: $TILES_FILE"; exit 1; }
 
 # Verification skip si deja traite
 OUT_FILE=~/scratch/output_V6/sar_$(printf "%03d" $TILE_ID).parquet
@@ -52,6 +52,6 @@ exit_code=$?
 if [ $exit_code -eq 0 ]; then
     echo "Tuile $TILE_ID traitee avec succes: $(date)"
 else
-    echo "ERREUR tuile $TILE_ID: code $exit_code"
+    echo "ERROR tile $TILE_ID: code $exit_code"
     exit $exit_code
 fi
