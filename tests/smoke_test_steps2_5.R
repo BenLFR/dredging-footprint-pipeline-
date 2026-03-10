@@ -54,18 +54,18 @@ fit <- tryCatch(
   error = function(e) NULL
 )
 if (!is.null(fit)) {
-  clean[, Dragage_flag := as.integer(fit$classification == which.min(fit$parameters$mean))]
+  clean[, dredging_flag := as.integer(fit$classification == which.min(fit$parameters$mean))]
 } else {
-  clean[, Dragage_flag := as.integer(speed_knots < 4.5)]
+  clean[, dredging_flag := as.integer(speed_knots < 4.5)]
 }
 merged_file <- file.path(scratch, "merged.rds")
 saveRDS(clean, merged_file)
 if (!file.exists(merged_file)) stop("Step3 mock failed to produce merged RDS.")
-log(sprintf("Step3 dredging rows: %d", sum(clean$Dragage_flag, na.rm = TRUE)))
+log(sprintf("Step3 dredging rows: %d", sum(clean$dredging_flag, na.rm = TRUE)))
 
 # Step5 mock
 fi_file <- file.path(scratch, "fi_grid_test.rds")
-dredge <- clean[Dragage_flag == 1L]
+dredge <- clean[dredging_flag == 1L]
 if (!nrow(dredge)) {
   fi <- data.table(lon = numeric(0), lat = numeric(0), fi = numeric(0))
 } else {

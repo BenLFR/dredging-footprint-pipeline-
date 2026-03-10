@@ -8,8 +8,9 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TOY_AIS="$REPO_ROOT/data/toy/toy_ais.csv"
+export TOY_AIS="$REPO_ROOT/data/toy/toy_ais.csv"
 SCRATCH="$(mktemp -d)"
+export SCRATCH
 trap 'rm -rf "$SCRATCH"' EXIT
 
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
@@ -39,7 +40,7 @@ qsave(dt, Sys.getenv("VESSEL_FILE"), preset="fast")
 cat("Step1-mock: saved", nrow(dt), "rows\n")
 REOF
 
-export TOY_AIS VESSEL_FILE
+export VESSEL_FILE
 Rscript - <<'REOF'
 suppressPackageStartupMessages({
   library(data.table)
@@ -57,7 +58,6 @@ saveRDS(dt_clean, out_file)
 cat("Step2-mock: kept", nrow(dt_clean), "/", nrow(dt), "rows\n")
 REOF
 
-export SCRATCH
 CLEAN_FILE=$(ls "$SCRATCH/vessel_"*"_clean.rds" 2>/dev/null | head -1)
 [ -n "$CLEAN_FILE" ] || fail "step2 produced no clean RDS"
 log "Step2 OK: $CLEAN_FILE"
@@ -81,12 +81,12 @@ fit <- tryCatch(
 )
 
 if (!is.null(fit)) {
-  dt[, Dragage_flag := as.integer(fit$classification == which.min(fit$parameters$mean))]
+  dt[, dredging_flag := as.integer(fit$classification == which.min(fit$parameters$mean))]
 } else {
-  dt[, Dragage_flag := as.integer(speed_knots < 4.5)]
+  dt[, dredging_flag := as.integer(speed_knots < 4.5)]
 }
 
-cat("Step3: dredging rows:", sum(dt$Dragage_flag), "/", nrow(dt), "\n")
+cat("Step3: dredging rows:", sum(dt$dredging_flag), "/", nrow(dt), "\n")
 saveRDS(dt, Sys.getenv("MERGED_FILE"))
 REOF
 
@@ -106,7 +106,7 @@ suppressPackageStartupMessages({
 })
 
 dt <- readRDS(Sys.getenv("MERGED_FILE"))
-dredge <- dt[Dragage_flag == 1L]
+dredge <- dt[dredging_flag == 1L]
 
 if (nrow(dredge) == 0) {
   cat("No dredging rows — creating empty fi_grid\n")

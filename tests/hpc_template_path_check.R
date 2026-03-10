@@ -1,4 +1,5 @@
 #!/usr/bin/env Rscript
+# Verifies that deploy/ HPC scripts remain cluster-neutral.
 
 get_script_path <- function() {
   args <- commandArgs(trailingOnly = FALSE)
@@ -13,36 +14,37 @@ repo_root <- normalizePath(file.path(script_dir, ".."), winslash = "/", mustWork
 setwd(repo_root)
 
 required <- c(
-  "config/templates/slurm/README.md",
-  "config/templates/slurm/cluster_overrides.env.example",
-  "config/templates/slurm/submit_step.sh"
+  "deploy/hpc_submit.sh",
+  "deploy/config.example.env",
+  "deploy/hpc_sync.sh",
+  "deploy/hpc_fetch.sh"
 )
 
 for (p in required) {
-  if (!file.exists(p)) stop(sprintf("Missing template file: %s", p))
+  if (!file.exists(p)) stop(sprintf("Missing deploy file: %s", p))
 }
 
-submit <- paste(readLines("config/templates/slurm/submit_step.sh", warn = FALSE, encoding = "UTF-8"), collapse = "\n")
-env <- paste(readLines("config/templates/slurm/cluster_overrides.env.example", warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+submit <- paste(readLines("deploy/hpc_submit.sh",       warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+env    <- paste(readLines("deploy/config.example.env",  warn = FALSE, encoding = "UTF-8"), collapse = "\n")
 
 must_have_submit <- c("SBATCH_PARTITION", "SBATCH_ACCOUNT", "SBATCH_QOS", "sbatch")
 for (needle in must_have_submit) {
   if (!grepl(needle, submit, fixed = TRUE)) {
-    stop(sprintf("submit_step.sh missing token: %s", needle))
+    stop(sprintf("deploy/hpc_submit.sh missing token: %s", needle))
   }
 }
 
 must_have_env <- c("PIPELINE_DIR", "SCRATCH_DIR", "OUTPUT_DIR", "CONFIG_DIR", "LOGS_DIR")
 for (needle in must_have_env) {
   if (!grepl(needle, env, fixed = TRUE)) {
-    stop(sprintf("cluster_overrides.env.example missing token: %s", needle))
+    stop(sprintf("deploy/config.example.env missing token: %s", needle))
   }
 }
 
 blocked_tokens <- c("grit.ucsb.edu", "Beluga", "/home/bloe", "config_grit")
 for (needle in blocked_tokens) {
   if (grepl(needle, submit, fixed = TRUE) || grepl(needle, env, fixed = TRUE)) {
-    stop(sprintf("Cluster-specific hard-code found in templates: %s", needle))
+    stop(sprintf("Cluster-specific hard-code found in deploy/ templates: %s", needle))
   }
 }
 

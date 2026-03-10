@@ -21,16 +21,13 @@ resolve_script <- function(label, candidates) {
 
 step3 <- resolve_script(
   "Step3 merge",
-  c(
-    "pipeline/step3_merge_final.R",
-    "pipeline_V6/pipeline_V6/step3_merge_final.R"
-  )
+  c("pipeline/step3/step3_merge.R")
 )
 
-# Guard check requested by audit: t_seuil must be defined before n_min uses it.
+# Guard check: t_seuil must be defined before n_min uses it.
 step3_lines <- readLines(step3, warn = FALSE, encoding = "UTF-8")
 t_seuil_idx <- grep("\\bt_seuil\\s*<-", step3_lines)
-n_min_idx <- grep("n_min\\s*:=", step3_lines)
+n_min_idx   <- grep("n_min\\s*:=",      step3_lines)
 if (!length(t_seuil_idx)) {
   stop("[FAIL] Step3: `t_seuil <- ...` assignment not found.")
 }
@@ -44,25 +41,17 @@ cat("[OK] Step3: t_seuil guard logic detected in expected order.\n")
 
 invisible(resolve_script(
   "Step4 lithology",
-  c(
-    "pipeline_V6/pipeline_V6/step4_add_lithology_vNext.R",
-    "pipeline/step4_add_lithology.R"
-  )
+  c("pipeline/step4/step4_add_lithology.R")
 ))
 
 invisible(resolve_script(
   "Step5 merge",
-  c(
-    "pipeline_V6/step5_merge_tiles_optimized.R",
-    "pipeline/step5_merge_tiles.R"
-  )
+  c("pipeline/step5/step5_merge_tiles.R")
 ))
 
 invisible(resolve_script(
   "Step6 CRI",
-  c(
-    "pipeline/step6_calculate_cri.R"
-  )
+  c("pipeline/step6/step6_calculate_cri.R")
 ))
 
 cat("[PASS] smoke_test_steps3_6_entrypoints.R\n")
