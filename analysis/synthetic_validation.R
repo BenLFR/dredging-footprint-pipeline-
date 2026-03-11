@@ -1,0 +1,229 @@
+#!/usr/bin/env Rscript
+# ============================================================================
+# synthetic_validation.R
+# Creates 5 virtual dredgers with known swept area and verifies that the
+# pipeline f_i formula recovers the true value within ±15%.
+#
+# Ground truth: known_fi = (dredge_width_m × distance_dredged_m) / cell_area_m2
+# (simplified SVR, penetrability = 1, all pings are dredging)
+#
+# Pass criterion: |recovered_fi - known_fi| / known_fi < 0.15 for ≥80% of
+# cells across all 5 virtual vessels.
+#
+# Output: output_V6/validation/synthetic_test_results.txt
+# ============================================================================
+
+suppressPackageStartupMessages(library(data.table))
+
+dir.create("output_V6/validation", showWarnings = FALSE, recursive = TRUE)
+
+# ── Constants (from constants.R) ─────────────────────────────────────────────
+CELL_SIZE_M  <- 1000L          # 1 km grid
+CELL_AREA_M2 <- 1e6            # m²
+KN_TO_MS     <- 0.5144444      # 1 knot = 0.5144 m/s
+
+# fi formula parameters (defaults from fi_parameters_with_freshness.yaml)
+ALPHA_DEP           <- 0.25
+FAST_FRACTION       <- 0.30
+SLOW_K              <- 0.05
+PRESERVATION_FACTOR <- 0.87
+K_FAST_GLOBAL_MEAN  <- 1.67   # Atlantic k_fast as conservative default
+
+PASS_THRESHOLD  <- 0.15   # ±15% relative error
+PASS_MIN_FRAC   <- 0.80   # ≥80% of cells must pass
+
+# ── Virtual dredger specifications ───────────────────────────────────────────
+# dredge_width_m: calibrated to actual TSHD beam / sweep width (ship_specs.yaml)
+#   SAR = (dredge_width_m × distance_m) / cell_area_m2
+#   distance_m = speed_kn × KN_TO_MS × 3600 × hours_per_day
+#   known_fi = SAR × PRESERVATION_FACTOR × mineralization_factor
+#              where mineralization_factor = FAST_FRACTION*(1-exp(-K_FAST)) +
+#                                            (1-FAST_FRACTION)*(1-exp(-SLOW_K))
+# p_l_corr is set to 1.0 (full penetrability) for the synthetic test.
+
+vessels <- data.table(
+  vessel_id          = c("V001", "V002", "V003", "V004", "V005"),
+  dredge_width_m     = c(  20L,    15L,    25L,    18L,    22L),
+  speed_kn           = c( 2.0,    1.5,    2.5,    1.8,    2.2),
+  hours_dredging_day = c(  16,     12,     20,     14,     18),
+  region             = c("North Sea", "Persian Gulf", "South China Sea",
+                         "Bay of Biscay", "Gulf of Mexico"),
+  # 0.5° × 0.5° box centres (lon, lat) — open-water, well-covered by AIS
+  box_lon            = c(  3.0,   52.0,  110.0,   -4.0,  -90.0),
+  box_lat            = c( 54.0,   26.0,   15.0,   45.0,   25.0)
+)
+
+# ── fi mineralization factor (constant across iterations, no spatial variation)
+p_l_corr <- 1.0   # synthetic: full penetrability
+miner_factor <- FAST_FRACTION       * (1 - exp(-K_FAST_GLOBAL_MEAN)) +
+                (1 - FAST_FRACTION) * (1 - exp(-SLOW_K))
+
+cat(sprintf("Mineralization factor: %.6f\n", miner_factor))
+cat(sprintf("Preservation factor:   %.3f\n\n", PRESERVATION_FACTOR))
+
+# ── Helper: generate synthetic AIS pings for one vessel ─────────────────────
+generate_pings <- function(v, n_days = 30, delta_t_s = 600) {
+  speed_ms  <- v$speed_kn * KN_TO_MS
+  dist_ping <- speed_ms * delta_t_s  # metres per ping
+
+  pings_per_day    <- as.integer(v$hours_dredging_day * 3600 / delta_t_s)
+  total_pings      <- pings_per_day * n_days
+
+  # Random walk in 0.5° × 0.5° box (degrees → metres at mid-latitude not needed:
+  # we work in Cartesian metres for grid snapping)
+  BOX_HALF_M <- 25000   # ±25 km around box centre
+
+  # Seed reproducibility per vessel
+  set.seed(as.integer(chartr("ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                              "01234567890123456789012345",
+                              substr(v$vessel_id, 2, 4))))
+
+  heading <- runif(1, 0, 360)
+  x <- 0; y <- 0
+  xs <- numeric(total_pings); ys <- numeric(total_pings)
+  headings <- numeric(total_pings)
+
+  for (i in seq_len(total_pings)) {
+    heading <- (heading + rnorm(1, 0, 5)) %% 360
+    dx <- dist_ping * sin(heading * pi / 180)
+    dy <- dist_ping * cos(heading * pi / 180)
+    x  <- max(-BOX_HALF_M, min(BOX_HALF_M, x + dx))
+    y  <- max(-BOX_HALF_M, min(BOX_HALF_M, y + dy))
+    xs[i] <- x; ys[i] <- y; headings[i] <- heading
+  }
+
+  data.table(
+    ssvid         = v$vessel_id,
+    x_m           = xs,
+    y_m           = ys,
+    speed_kn      = v$speed_kn + rnorm(total_pings, 0, 0.1),
+    Dragage_flag  = 1L,   # all synthetic pings are dredging
+    dredge_width_m = v$dredge_width_m
+  )
+}
+
+# ── Helper: snap pings to 1-km grid, compute pipeline f_i per cell ──────────
+compute_fi_pipeline <- function(pings, v) {
+  # Grid snap (Cartesian): cell_id = (floor(x/1000), floor(y/1000))
+  pings[, cell_x := floor(x_m / CELL_SIZE_M)]
+  pings[, cell_y := floor(y_m / CELL_SIZE_M)]
+  pings[, cell_id := paste0(cell_x, "_", cell_y)]
+
+  # SAR per cell = (dredge_width × distance_per_dredging_ping) / cell_area
+  # Distance per ping = speed_ms × delta_t_s = already encoded in spacing
+  # Here we approximate: distance_covered = n_dredging_pings × dist_ping
+  dist_ping_m <- v$speed_kn * KN_TO_MS * 600  # delta_t = 600 s
+
+  cell_stats <- pings[Dragage_flag == 1,
+    .(n_pings_dredge = .N), by = cell_id]
+
+  # SVR (simplified: penetration depth = 1m -> SVR = SAR × 1m / 1m = SAR)
+  cell_stats[, SAR_pipeline := (v$dredge_width_m * n_pings_dredge * dist_ping_m) /
+                                 CELL_AREA_M2]
+
+  # Apply f_i formula with p_l_corr = 1 (synthetic)
+  cell_stats[, fi_pipeline := SAR_pipeline * p_l_corr * PRESERVATION_FACTOR *
+               (FAST_FRACTION       * (1 - exp(-K_FAST_GLOBAL_MEAN)) +
+                (1 - FAST_FRACTION) * (1 - exp(-SLOW_K)))]
+
+  cell_stats
+}
+
+# ── Helper: compute known (analytical) f_i per cell ─────────────────────────
+compute_fi_known <- function(pings, v) {
+  dist_ping_m <- v$speed_kn * KN_TO_MS * 600
+
+  pings[, cell_x := floor(x_m / CELL_SIZE_M)]
+  pings[, cell_y := floor(y_m / CELL_SIZE_M)]
+  pings[, cell_id := paste0(cell_x, "_", cell_y)]
+
+  cell_truth <- pings[Dragage_flag == 1,
+    .(n_pings_dredge = .N), by = cell_id]
+
+  # Known SAR: same geometry, but no formula uncertainty (p_l_corr = 1, exact params)
+  cell_truth[, SAR_known := (v$dredge_width_m * n_pings_dredge * dist_ping_m) /
+                               CELL_AREA_M2]
+
+  cell_truth[, fi_known := SAR_known * p_l_corr * PRESERVATION_FACTOR * miner_factor]
+  cell_truth
+}
+
+# ── Run validation for each vessel ───────────────────────────────────────────
+N_DAYS     <- 30
+DELTA_T_S  <- 600   # 10-minute ping interval
+
+results_all  <- list()
+pass_log     <- character()
+
+cat(sprintf("%-8s %-18s %9s %9s %9s %8s %6s\n",
+            "Vessel", "Region", "fi_known", "fi_pipe", "err_pct", "n_cells", "Pass?"))
+cat(strrep("-", 72), "\n")
+
+for (i in seq_len(nrow(vessels))) {
+  v <- vessels[i]
+  pings <- generate_pings(v, n_days = N_DAYS, delta_t_s = DELTA_T_S)
+
+  fi_pipe  <- compute_fi_pipeline(pings, v)
+  fi_truth <- compute_fi_known(pings, v)
+
+  comp <- merge(fi_pipe, fi_truth[, .(cell_id, fi_known)], by = "cell_id")
+
+  if (nrow(comp) == 0) {
+    line <- sprintf("FAIL [%s -- %s]: no cells to compare\n", v$vessel_id, v$region)
+    cat(line); pass_log <- c(pass_log, line); next
+  }
+
+  comp[, rel_err := abs(fi_pipeline - fi_known) / pmax(fi_known, 1e-12)]
+  frac_pass  <- mean(comp$rel_err < PASS_THRESHOLD, na.rm = TRUE)
+  cell_pass  <- if (frac_pass >= PASS_MIN_FRAC) "PASS" else "FAIL"
+
+  med_known  <- median(comp$fi_known,    na.rm = TRUE)
+  med_pipe   <- median(comp$fi_pipeline, na.rm = TRUE)
+  med_err    <- median(comp$rel_err,     na.rm = TRUE) * 100
+
+  cat(sprintf("%-8s %-18s %9.4f %9.4f %8.1f%% %8d  %s\n",
+              v$vessel_id, v$region, med_known, med_pipe, med_err,
+              nrow(comp), cell_pass))
+
+  line <- sprintf("%s [%s -- %s]: median fi_known=%.6f, fi_pipeline=%.6f, err=%.1f%%, cells_passing=%.0f%% (%d cells)",
+                  cell_pass, v$vessel_id, v$region,
+                  med_known, med_pipe, med_err,
+                  frac_pass * 100, nrow(comp))
+  pass_log <- c(pass_log, line)
+
+  results_all[[v$vessel_id]] <- comp[, .(cell_id, fi_known, fi_pipeline,
+                                          rel_err, cell_pass = rel_err < PASS_THRESHOLD)]
+}
+
+# ── Overall verdict ───────────────────────────────────────────────────────────
+n_pass <- sum(grepl("^PASS", pass_log))
+n_total <- nrow(vessels)
+overall <- if (n_pass >= 4) "OVERALL PASS" else "OVERALL FAIL"   # ≥4/5 vessels
+
+cat(strrep("-", 72), "\n")
+cat(sprintf("%s: %d/%d vessels pass (threshold: %d/5)\n\n",
+            overall, n_pass, n_total, 4L))
+
+# ── Save results ──────────────────────────────────────────────────────────────
+out_txt  <- "output_V6/validation/synthetic_test_results.txt"
+out_csv  <- "output_V6/validation/synthetic_test_details.csv"
+
+writeLines(c(
+  "=== Synthetic Validation Results ===",
+  sprintf("Date: %s", Sys.time()),
+  sprintf("N_DAYS=%d | DELTA_T=%ds | PASS_THRESHOLD=%.0f%% | PASS_MIN_FRAC=%.0f%%",
+          N_DAYS, DELTA_T_S, PASS_THRESHOLD * 100, PASS_MIN_FRAC * 100),
+  "",
+  "Per-vessel results (median cell-level statistics):",
+  pass_log,
+  "",
+  sprintf("%s: %d/%d vessels pass", overall, n_pass, n_total)
+), out_txt)
+
+if (length(results_all) > 0) {
+  all_dt <- rbindlist(results_all, idcol = "vessel_id")
+  fwrite(all_dt, out_csv)
+}
+
+cat(sprintf("Saved: %s\n", out_txt))
+cat(sprintf("Saved: %s\n", out_csv))
