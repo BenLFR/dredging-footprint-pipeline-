@@ -23,6 +23,15 @@ if (!is.na(alpha_dep_override)) {
   cat(sprintf("alpha_dep override from CLI: %.6f\n", alpha_dep_override))
 }
 
+get_env_path <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+output_root <- get_env_path("OUTPUT_DIR", "output_V6")
+config_root <- get_env_path("CONFIG_DIR", if (dir.exists("configuration")) "configuration" else "config")
+config_dirs <- unique(c(config_root, "configuration", "config"))
+
 read_table_auto <- function(path) {
   if (grepl("\\.parquet$", path, ignore.case = TRUE)) {
     if (!requireNamespace("arrow", quietly = TRUE)) {
@@ -45,7 +54,7 @@ load_latest_fi_grid <- function(search_roots) {
     )
   }
   if (length(candidates) == 0) {
-    stop("No fi_grid_*.parquet or fi_grid_*.rds found in output_V6 or ~/scratch/output_V6.")
+    stop("No fi_grid_*.parquet or fi_grid_*.rds found in OUTPUT_DIR (default: output_V6/).")
   }
 
   candidates <- candidates[order(file.info(candidates)$mtime, decreasing = TRUE)]
@@ -60,20 +69,16 @@ load_latest_fi_grid <- function(search_roots) {
 }
 
 load_fi_defaults <- function() {
-  yaml_candidates <- c(
-    file.path(path.expand("~"), "scratch", "configuration", "fi_parameters_with_freshness.yaml"),
-    file.path(path.expand("~"), "scratch", "configuration", "fi_parameters.yaml"),
-    "configuration/fi_parameters_with_freshness.yaml",
-    "configuration/fi_parameters.yaml",
-    "config/fi_parameters_with_freshness.yaml",
-    "config/fi_parameters.yaml"
-  )
-  yaml_path <- yaml_candidates[file.exists(path.expand(yaml_candidates))][1]
+  yaml_candidates <- unique(c(
+    file.path(config_dirs, "fi_parameters_with_freshness.yaml"),
+    file.path(config_dirs, "fi_parameters.yaml")
+  ))
+  yaml_path <- yaml_candidates[file.exists(yaml_candidates)][1]
   if (is.na(yaml_path)) {
     return(list(source = NA_character_, alpha_dep = 0.25))
   }
 
-  params_raw <- yaml::read_yaml(path.expand(yaml_path))
+  params_raw <- yaml::read_yaml(yaml_path)
   if (!is.null(params_raw$scenarios$default)) {
     par <- params_raw$scenarios$default
   } else if (!is.null(params_raw$default)) {
@@ -83,7 +88,7 @@ load_fi_defaults <- function() {
   }
 
   list(
-    source = path.expand(yaml_path),
+    source = yaml_path,
     alpha_dep = if (!is.null(par$alpha_dep)) as.numeric(par$alpha_dep) else 0.25
   )
 }
@@ -107,7 +112,7 @@ add_check <- function(check_id, severity, status, detail) {
 t0 <- proc.time()[["elapsed"]]
 cat("=== fi_grid consistency audit ===\n")
 
-fi_obj <- load_latest_fi_grid(c("output_V6", file.path(path.expand("~"), "scratch", "output_V6")))
+fi_obj <- load_latest_fi_grid(unique(c(output_root, "output_V6")))
 fi_dt <- fi_obj$data
 cat(sprintf("Loaded fi_grid: %s\n", fi_obj$path))
 cat(sprintf("Rows: %d | Cols: %d\n", nrow(fi_dt), ncol(fi_dt)))
@@ -263,7 +268,7 @@ if (is.finite(sum_fi) && is.finite(sum_svr) && sum_fi > 0 && sum_svr > 0) {
 }
 
 diag_dt <- rbindlist(diagnostics, fill = TRUE)
-out_dir <- "output_V6/diagnostics"
+out_dir <- file.path(output_root, "diagnostics")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 checks_csv <- file.path(out_dir, "fi_grid_consistency_checks.csv")

@@ -14,7 +14,7 @@
 #
 # Notes:
 #   - Expects files matching fi_grid_*_default.parquet (or fi_grid_default_*,
-#     etc.) in output_V6/. Pattern detection is flexible.
+#     etc.) in OUTPUT_DIR (default: output_V6/). Pattern detection is flexible.
 #   - Uses only grid coords + f_i_full + C_ri columns to minimise memory.
 # ============================================================================
 
@@ -28,12 +28,19 @@ if (!requireNamespace("arrow", quietly = TRUE))
   stop("Package 'arrow' required: install.packages('arrow')")
 library(arrow)
 
+get_env_path <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+output_root <- get_env_path("OUTPUT_DIR", "output_V6")
+
 # ── 1. Locate parquet files per scenario ─────────────────────────────────────
-search_dirs <- c(
+search_dirs <- unique(c(
+  output_root,
   "output_V6",
-  file.path(path.expand("~"), "scratch", "output_V6"),
   "GeoTIFF_Step5"
-)
+))
 
 find_scenario_file <- function(scenario_tag, dirs) {
   for (d in dirs) {
@@ -129,9 +136,10 @@ totals[, pct_vs_default := (total_fi - total_fi[scenario == "default"]) /
 cat("\n=== Global Totals ===\n")
 print(totals)
 
-dir.create("output_V6", showWarnings = FALSE, recursive = TRUE)
-fwrite(totals, "output_V6/scenario_comparison_totals.csv")
-cat("Saved: output_V6/scenario_comparison_totals.csv\n")
+dir.create(output_root, showWarnings = FALSE, recursive = TRUE)
+totals_csv <- file.path(output_root, "scenario_comparison_totals.csv")
+fwrite(totals, totals_csv)
+cat("Saved:", totals_csv, "\n")
 
 # ── 6. Reconstruct lon/lat for mapping ───────────────────────────────────────
 # EPSG:6933 to WGS84: use x/y if present, else reconstruct from grid_id
@@ -202,9 +210,10 @@ p <- ggplot() +
   theme_minimal(base_size = 10) +
   theme(legend.position = "bottom")
 
-ggsave("output_V6/scenario_comparison_map.png", p,
+map_png <- file.path(output_root, "scenario_comparison_map.png")
+ggsave(map_png, p,
        width = 12, height = 6, dpi = 150)
-cat("Saved: output_V6/scenario_comparison_map.png\n")
+cat("Saved:", map_png, "\n")
 
 cat("\nDone. Summary of uncertainty spread:\n")
 cat(sprintf("  Conservative scenario: %.1f%% below default (global total)\n",

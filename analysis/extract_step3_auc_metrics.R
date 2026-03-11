@@ -14,12 +14,18 @@
 
 suppressPackageStartupMessages(library(data.table))
 
+get_env_path <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+output_root <- get_env_path("OUTPUT_DIR", "output_V6")
+
 # ── 1. Locate most recent gridsearch RDS ─────────────────────────────────────
-# Search both local output_V6/ and cluster-style ~/scratch/output_V6/
-search_dirs <- c(
-  "output_V6",
-  file.path(path.expand("~"), "scratch", "output_V6")
-)
+search_dirs <- unique(c(
+  output_root,
+  "output_V6"
+))
 
 rds_files <- character(0)
 for (d in search_dirs) {
@@ -33,7 +39,7 @@ for (d in search_dirs) {
 if (length(rds_files) == 0) {
   stop(paste(
     "No dragage_gridsearch_results_V6_*.rds found.",
-    "Expected in output_V6/ or ~/scratch/output_V6/.",
+    "Expected in OUTPUT_DIR (default: output_V6/) or a compatible local output directory.",
     "Run step3_merge_final.R first."
   ))
 }
@@ -101,8 +107,8 @@ metrics_dt <- data.table(
 )
 
 # ── 5. Save ───────────────────────────────────────────────────────────────────
-dir.create("output_V6", showWarnings = FALSE, recursive = TRUE)
-out_path <- "output_V6/step3_auc_metrics.csv"
+dir.create(output_root, showWarnings = FALSE, recursive = TRUE)
+out_path <- file.path(output_root, "step3_auc_metrics.csv")
 fwrite(metrics_dt, out_path)
 cat(sprintf("\nSaved: %s\n", out_path))
 cat("Columns:", paste(names(metrics_dt), collapse = ", "), "\n")

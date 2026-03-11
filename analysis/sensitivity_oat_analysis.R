@@ -5,7 +5,7 @@
 # Recomputes C_ri on the full fi_grid when step5 output is available, and falls
 # back to a 25-cell synthetic test patch only when fi_grid is unavailable.
 #
-# Called by scripts_cluster/submit_sensitivity_array.sh with TASK_ID as arg.
+# Can be called from an array wrapper with TASK_ID as arg.
 #
 # Output: appends one row to output_V6/sensitivity/oat_results.csv
 #
@@ -28,13 +28,25 @@ suppressPackageStartupMessages({
   library(yaml)
 })
 
+get_env_path <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+output_root <- get_env_path("OUTPUT_DIR", "output_V6")
+config_root <- get_env_path("CONFIG_DIR", if (dir.exists("configuration")) "configuration" else "config")
+config_dirs <- unique(c(config_root, "configuration", "config"))
+
 cat(sprintf("=== OAT Sensitivity | task_id=%d ===\n", TASK_ID))
 t0 <- proc.time()[["elapsed"]]
 
 # Load sensitivity manifest
-manifest_path <- "configuration/sensitivity_manifest.csv"
-if (!file.exists(manifest_path)) {
-  stop("configuration/sensitivity_manifest.csv not found. Run from project root.")
+manifest_candidates <- unique(c(
+  file.path(config_dirs, "sensitivity_manifest.csv")
+))
+manifest_path <- manifest_candidates[file.exists(manifest_candidates)][1]
+if (is.na(manifest_path)) {
+  stop("sensitivity_manifest.csv not found. Set CONFIG_DIR or place it under configuration/ or config/.")
 }
 manifest <- fread(manifest_path)
 row <- manifest[task_id == TASK_ID]
@@ -48,24 +60,13 @@ value_label <- row$value_label
 cat(sprintf("Parameter: %s = %g  (label: %s)\n", param_name, param_value, value_label))
 
 # Load fi parameter defaults and override the target parameter in memory.
-yaml_paths <- c(
-  "~/scratch/configuration/fi_parameters_with_freshness.yaml",
-  "_-SpectreBen/scratch/configuration/fi_parameters_with_freshness.yaml",
-  "configuration/fi_parameters_with_freshness.yaml",
-  "~/scratch/configuration/fi_parameters.yaml",
-  "_-SpectreBen/scratch/configuration/fi_parameters.yaml",
-  "configuration/fi_parameters.yaml"
-)
-yaml_path <- NULL
-for (p in yaml_paths) {
-  expanded <- path.expand(p)
-  if (file.exists(expanded)) {
-    yaml_path <- expanded
-    break
-  }
-}
-if (is.null(yaml_path)) {
-  stop("No fi parameter YAML found. Checked: ", paste(yaml_paths, collapse = ", "))
+yaml_paths <- unique(c(
+  file.path(config_dirs, "fi_parameters_with_freshness.yaml"),
+  file.path(config_dirs, "fi_parameters.yaml")
+))
+yaml_path <- yaml_paths[file.exists(yaml_paths)][1]
+if (is.na(yaml_path)) {
+  stop("No fi parameter YAML found. Set CONFIG_DIR or place it under configuration/ or config/.")
 }
 cat(sprintf("Using fi parameter YAML: %s\n", yaml_path))
 
@@ -213,10 +214,10 @@ recompute_c_ri <- function(fi_dt, alpha_dep_value, fast_frac_value, slow_k_value
 
 # NOTE: When fi_grid is available, C_ri is recomputed on the full grid.
 # The synthetic 25-cell patch is retained only as a fallback when fi_grid is absent.
-search_dirs <- c(
-  "output_V6",
-  file.path(path.expand("~"), "scratch", "output_V6")
-)
+search_dirs <- unique(c(
+  output_root,
+  "output_V6"
+))
 fi_grid_obj <- load_latest_fi_grid(search_dirs)
 
 global_C_ri_sum <- NA_real_
@@ -295,13 +296,7 @@ result_row <- data.table(
   runtime_sec = round(runtime_sec, 1)
 )
 
-# On cluster, prefer ~/scratch/output_V6/ (NFS scratch); fall back to local output_V6/
-scratch_dir <- file.path(path.expand("~"), "scratch", "output_V6", "sensitivity")
-out_dir <- if (dir.exists(file.path(path.expand("~"), "scratch"))) {
-  scratch_dir
-} else {
-  "output_V6/sensitivity"
-}
+out_dir <- file.path(output_root, "sensitivity")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 out_csv <- file.path(out_dir, "oat_results.csv")
 

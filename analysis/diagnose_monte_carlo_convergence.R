@@ -23,6 +23,13 @@ if (is.na(window_n) || window_n < 5L) {
   stop("window_n must be an integer >= 5.")
 }
 
+get_env_path <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+output_root <- get_env_path("OUTPUT_DIR", "output_V6")
+
 read_table_auto <- function(path) {
   if (grepl("\\.parquet$", path, ignore.case = TRUE)) {
     if (!requireNamespace("arrow", quietly = TRUE)) {
@@ -34,10 +41,10 @@ read_table_auto <- function(path) {
 }
 
 load_mc_table <- function() {
-  search_dirs <- c(
-    file.path("output_V6", "uncertainty"),
-    file.path(path.expand("~"), "scratch", "output_V6", "uncertainty")
-  )
+  search_dirs <- unique(c(
+    file.path(output_root, "uncertainty"),
+    file.path("output_V6", "uncertainty")
+  ))
 
   batch_files <- character(0)
   for (root in search_dirs) {
@@ -68,7 +75,7 @@ load_mc_table <- function() {
   }
 
   if (length(summary_files) == 0L) {
-    stop("No mc_batch_* or mc_results_summary files found in output_V6/uncertainty.")
+    stop("No mc_batch_* or mc_results_summary files found in OUTPUT_DIR/uncertainty.")
   }
 
   summary_files <- summary_files[order(file.info(summary_files)$mtime, decreasing = TRUE)]
@@ -178,7 +185,7 @@ summary_dt <- data.table(
   convergence_flag = status
 )
 
-out_dir <- "output_V6/diagnostics"
+out_dir <- file.path(output_root, "diagnostics")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 iter_csv <- file.path(out_dir, "mc_iteration_summary.csv")

@@ -14,10 +14,16 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 
-sens_dirs <- c(
-  file.path(path.expand("~"), "scratch", "output_V6", "sensitivity"),
-  "output_V6/sensitivity"
-)
+get_env_path <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+output_root <- get_env_path("OUTPUT_DIR", "output_V6")
+sens_dirs <- unique(c(
+  file.path(output_root, "sensitivity"),
+  file.path("output_V6", "sensitivity")
+))
 sens_dir <- sens_dirs[dir.exists(sens_dirs)][1]
 if (is.na(sens_dir)) {
   stop("Sensitivity output directory not found.")
@@ -161,11 +167,7 @@ p <- ggplot(plot_dt, aes(x = pct, y = param_label, fill = direction)) +
     panel.grid.minor = element_blank()
   )
 
-out_dir <- if (dir.exists(file.path(path.expand("~"), "scratch"))) {
-  file.path(path.expand("~"), "scratch", "output_V6", "sensitivity")
-} else {
-  "output_V6/sensitivity"
-}
+out_dir <- file.path(output_root, "sensitivity")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 tornado_png <- file.path(out_dir, "tornado_plot.png")

@@ -37,6 +37,13 @@ suppressPackageStartupMessages({
   library(data.table)
 })
 
+get_env_path <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+output_root <- get_env_path("OUTPUT_DIR", "output_V6")
+
 CELL_SIZE_M <- 1000
 AIS_POS_ERROR_M_1SIGMA <- 30.0
 FI_PARAM_CV <- 0.10
@@ -129,9 +136,13 @@ sample_large_grid <- function(fi_dt, max_cells) {
 }
 
 # Load LOYO AUC from step3 benchmarking output if available.
-auc_metrics_path <- "output_V6/step3_auc_metrics.csv"
+auc_metrics_candidates <- unique(c(
+  file.path(output_root, "step3_auc_metrics.csv"),
+  file.path("output_V6", "step3_auc_metrics.csv")
+))
+auc_metrics_path <- auc_metrics_candidates[file.exists(auc_metrics_candidates)][1]
 LOYO_AUC <- 0.85
-if (file.exists(auc_metrics_path)) {
+if (!is.na(auc_metrics_path)) {
   auc_dt <- fread(auc_metrics_path)
   if ("mean_auc" %in% names(auc_dt)) {
     LOYO_AUC <- auc_dt$mean_auc[1]
@@ -142,10 +153,10 @@ if (file.exists(auc_metrics_path)) {
   cat("Run extract_step3_auc_metrics.R first for more accurate uncertainty estimates.\n")
 }
 
-search_dirs <- c(
-  "output_V6",
-  file.path(path.expand("~"), "scratch", "output_V6")
-)
+search_dirs <- unique(c(
+  output_root,
+  "output_V6"
+))
 fi_grid_obj <- load_latest_fi_grid(search_dirs)
 
 if (!is.null(fi_grid_obj)) {
@@ -280,11 +291,7 @@ mc_results <- rbindlist(results_list)
 cat(sprintf("Generated %d MC rows (%d cells x %d iterations)\n",
             nrow(mc_results), n_cells, N_ITER))
 
-out_dir <- if (dir.exists(file.path(path.expand("~"), "scratch"))) {
-  file.path(path.expand("~"), "scratch", "output_V6", "uncertainty")
-} else {
-  "output_V6/uncertainty"
-}
+out_dir <- file.path(output_root, "uncertainty")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 out_file <- file.path(out_dir, sprintf("mc_batch_%02d.parquet", BATCH_ID))
 

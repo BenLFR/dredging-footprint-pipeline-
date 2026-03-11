@@ -25,6 +25,13 @@ if (!requireNamespace("sensitivity", quietly = TRUE)) {
 }
 library(sensitivity)
 
+get_env_path <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+output_root <- get_env_path("OUTPUT_DIR", "output_V6")
+
 t0 <- proc.time()[["elapsed"]]
 cat("=== Sobol Global Sensitivity Analysis ===\n")
 cat(sprintf("Date: %s\n", format(Sys.time(), "%Y-%m-%d %H:%M:%S")))
@@ -144,11 +151,7 @@ for (p in param_names) {
   }
 }
 
-out_dir <- if (dir.exists(file.path(path.expand("~"), "scratch"))) {
-  file.path(path.expand("~"), "scratch", "output_V6", "sensitivity")
-} else {
-  "output_V6/sensitivity"
-}
+out_dir <- file.path(output_root, "sensitivity")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 sobol_dt <- data.table(

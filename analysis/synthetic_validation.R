@@ -14,7 +14,14 @@
 
 suppressPackageStartupMessages(library(data.table))
 
-dir.create("output_V6/validation", showWarnings = FALSE, recursive = TRUE)
+get_env_path <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+output_root <- get_env_path("OUTPUT_DIR", "output_V6")
+validation_dir <- file.path(output_root, "validation")
+dir.create(validation_dir, showWarnings = FALSE, recursive = TRUE)
 
 CELL_SIZE_M <- 1000L
 CELL_AREA_M2 <- 1e6
@@ -176,8 +183,8 @@ overall <- if (n_pass >= 4) "OVERALL PASS" else "OVERALL FAIL"
 cat(strrep("-", 72), "\n")
 cat(sprintf("%s: %d/%d vessels pass (threshold: %d/5)\n\n", overall, n_pass, n_total, 4L))
 
-out_txt <- "output_V6/validation/synthetic_test_results.txt"
-out_csv <- "output_V6/validation/synthetic_test_details.csv"
+out_txt <- file.path(validation_dir, "synthetic_test_results.txt")
+out_csv <- file.path(validation_dir, "synthetic_test_details.csv")
 
 writeLines(c(
   "=== Synthetic Validation Results [FORMULA INTEGRITY CHECK - not an external validation] ===",

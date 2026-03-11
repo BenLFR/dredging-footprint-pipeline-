@@ -23,12 +23,19 @@ suppressPackageStartupMessages({
 
 args <- commandArgs(trailingOnly = TRUE)
 
+get_env_path <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+output_root <- get_env_path("OUTPUT_DIR", "output_V6")
+
 find_core_rds <- function() {
-  search_dirs <- c(
+  search_dirs <- unique(c(
+    output_root,
     "output_V6",
-    file.path(path.expand("~"), "scratch", "output_V6"),
     "scripts_cluster"
-  )
+  ))
   for (d in search_dirs) {
     if (!dir.exists(d)) {
       next
@@ -49,7 +56,7 @@ rds_path <- if (length(args) > 0) args[1] else find_core_rds()
 if (is.null(rds_path) || !file.exists(rds_path)) {
   stop(paste(
     "No AIS_data_core_preprocessed_V6_*_flagOK.rds found.",
-    "Provide a path as argument or ensure output_V6/ is accessible."
+    "Provide a path as argument or ensure OUTPUT_DIR (default: output_V6/) is accessible."
   ))
 }
 
@@ -192,9 +199,10 @@ cat("\n=== Benchmarking Results ===\n")
 print(results[, .(method, precision, recall, f1_macro, auc, n_dredging)])
 cat("Oracle step3-vs-step3 metrics are intentionally omitted from the CSV because they are trivially perfect.\n")
 
-dir.create("output_V6", showWarnings = FALSE, recursive = TRUE)
-fwrite(results, "output_V6/benchmarking_results.csv")
-cat("Saved: output_V6/benchmarking_results.csv\n")
+dir.create(output_root, showWarnings = FALSE, recursive = TRUE)
+results_csv <- file.path(output_root, "benchmarking_results.csv")
+fwrite(results, results_csv)
+cat("Saved:", results_csv, "\n")
 
 speed_label <- sprintf("Speed threshold baseline (< %.1f kn)", DREDGING_SPEED_THRESHOLD_KN)
 gfw_label <- if (has_heading_change) {
@@ -231,5 +239,6 @@ p <- ggplot(plot_dt, aes(x = metric, y = value, fill = method_label)) +
   theme_minimal(base_size = 11) +
   theme(legend.position = "bottom")
 
-ggsave("output_V6/benchmarking_comparison.png", p, width = 8, height = 5, dpi = 150)
-cat("Saved: output_V6/benchmarking_comparison.png\n")
+plot_path <- file.path(output_root, "benchmarking_comparison.png")
+ggsave(plot_path, p, width = 8, height = 5, dpi = 150)
+cat("Saved:", plot_path, "\n")

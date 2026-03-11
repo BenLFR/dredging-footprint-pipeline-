@@ -34,16 +34,21 @@ if (length(n_values) == 0L || any(is.na(n_values)) || any(n_values < 64L)) {
   stop("Provide Sobol sample sizes as integers >= 64, for example: 250,500,1000")
 }
 
+get_env_path <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+output_root <- get_env_path("OUTPUT_DIR", "output_V6")
+config_root <- get_env_path("CONFIG_DIR", if (dir.exists("configuration")) "configuration" else "config")
+config_dirs <- unique(c(config_root, "configuration", "config"))
+
 load_fi_defaults <- function() {
-  yaml_candidates <- c(
-    file.path(path.expand("~"), "scratch", "configuration", "fi_parameters_with_freshness.yaml"),
-    file.path(path.expand("~"), "scratch", "configuration", "fi_parameters.yaml"),
-    "configuration/fi_parameters_with_freshness.yaml",
-    "configuration/fi_parameters.yaml",
-    "config/fi_parameters_with_freshness.yaml",
-    "config/fi_parameters.yaml"
-  )
-  yaml_path <- yaml_candidates[file.exists(path.expand(yaml_candidates))][1]
+  yaml_candidates <- unique(c(
+    file.path(config_dirs, "fi_parameters_with_freshness.yaml"),
+    file.path(config_dirs, "fi_parameters.yaml")
+  ))
+  yaml_path <- yaml_candidates[file.exists(yaml_candidates)][1]
 
   defaults <- list(
     alpha_dep = 0.25,
@@ -67,7 +72,7 @@ load_fi_defaults <- function() {
     return(defaults)
   }
 
-  params_raw <- yaml::read_yaml(path.expand(yaml_path))
+  params_raw <- yaml::read_yaml(yaml_path)
   if (!is.null(params_raw$scenarios$default)) {
     par <- params_raw$scenarios$default
   } else if (!is.null(params_raw$default)) {
@@ -76,7 +81,7 @@ load_fi_defaults <- function() {
     par <- params_raw
   }
 
-  defaults$source <- path.expand(yaml_path)
+  defaults$source <- yaml_path
   for (nm in c("alpha_dep", "fast_fraction", "slow_k", "preservation_factor", "k_fast_multiplier")) {
     if (!is.null(par[[nm]])) {
       defaults[[nm]] <- as.numeric(par[[nm]])
@@ -227,7 +232,7 @@ if (length(n_values) >= 2L) {
   )
 }
 
-out_dir <- "output_V6/diagnostics"
+out_dir <- file.path(output_root, "diagnostics")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 long_csv <- file.path(out_dir, "sobol_convergence_long.csv")
