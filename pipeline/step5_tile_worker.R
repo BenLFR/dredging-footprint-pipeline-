@@ -1,463 +1,359 @@
 #!/usr/bin/env Rscript
 # ────────────────────────────────────────────────────────────────────────────────
-# STEP-5 ─ WORKER TILE (pipeline V6, cluster Rorqual)
-# Traite une tile individuelle with gestion memory optimisee
+# STEP-5 ─ TILE WORKER (pipeline V6)
+# Processes one tile (or sub-tile) of the global grid.
+# Changes vs previous version:
+#  - World-aligned 1 km grid (EPSG:6933), consistent with downstream steps
+#  - Temporal sort before line construction (reliable distances)
+#  - p_d = 1 m (TSHD default, §2.7-2.8)
+#  - Pings without lithology or >10 km from seabed data EXCLUDED from p_l
+#  - p_l aggregated per cell as simple mean of qualifying pings
 # ────────────────────────────────────────────────────────────────────────────────
 
-## 0. Bibliotheques ------------------------------------------------------------
-pkgs <- c("sf","dplyr","data.table","tidyr","rlang","tidyselect","lubridate","yaml","arrow")
+## 0. Libraries ----------------------------------------------------------------
+.libPaths(c("~/R/library", .libPaths()))
 
-safe_library <- function(pkg){
-  tryCatch({ library(pkg, character.only = TRUE)
-             cat("", pkg, "OK\n")},
-           error=function(e) stop(" Package missing : ", pkg, "\nMessage : ", e$message))
+pkgs_required <- c("sf", "dplyr", "data.table", "tidyr", "rlang", "tidyselect", "lubridate", "yaml")
+pkgs_optional <- c("arrow")
+
+safe_library <- function(pkg) {
+  tryCatch(
+    { library(pkg, character.only = TRUE); cat("[OK]", pkg, "\n"); TRUE },
+    error = function(e) stop("[ERR] Missing package: ", pkg, "\n", e$message)
+  )
 }
 
-# Loading robuste of sf
+optional_library <- function(pkg) {
+  tryCatch(
+    { library(pkg, character.only = TRUE); cat("[OK]", pkg, "\n"); TRUE },
+    error = function(e) { cat("[WARN]", pkg, "unavailable - fallback to RDS\n"); FALSE }
+  )
+}
+
 tryCatch({
   library(sf)
-  cat(" sf OK\n")
+  cat("[OK] sf\n")
   options(sf_max_print = 20)
   sf::sf_use_s2(FALSE)
-}, error=function(e) {
-  stop(" The package 'sf' ne peut pas etre loaded.\nMessage : ", e$message)
-})
+}, error = function(e) stop("[ERR] Cannot load 'sf':\n", e$message))
 
-# Loading the other packages
-invisible(lapply(pkgs[pkgs != "sf"], safe_library)); cat("\n")
+invisible(lapply(pkgs_required[pkgs_required != "sf"], safe_library))
+HAS_ARROW <- optional_library("arrow")
+cat("\n")
 
-# Loading the constantes partagees
+# Load shared constants
 this_file <- function() {
-  # Rscript --file=... syntax
   f <- sub("^--file=", "", grep("^--file=", commandArgs(), value = TRUE))
   if (length(f)) return(normalizePath(f))
-  # fallback when sourced
   if (!is.null(sys.frame(1)$ofile)) return(normalizePath(sys.frame(1)$ofile))
   stop("Cannot locate running script")
 }
 script_dir <- dirname(this_file())
 source(file.path(script_dir, "constants.R"))
 
-# ───── PARAMETERS f_i (k, alpha_dep, etc.) ────────────────────────────────
-args     <- commandArgs(trailingOnly = TRUE)
-tile_id  <- as.integer(args[1])
-
-if(is.na(tile_id) || tile_id < 1) {
-  stop(" ID of tile invalide. Usage: Rscript step5_tile_worker.R <tile_id>")
+# Safety fallback if constants.R predates DEEP_HORIZON
+if (!exists("DEEP_HORIZON")) {
+  DEEP_HORIZON <- SURF_HORIZON
+  cat("[WARN] DEEP_HORIZON absent from constants.R - fallback to", DEEP_HORIZON, "m\n")
 }
 
-cat(" Traitement tile :", tile_id, "\n")
+# World-aligned cell snapping (EPSG:6933)
+snap_cells2 <- function(DT, xcol = "X", ycol = "Y") {
+  x   <- as.numeric(DT[[xcol]])
+  y   <- as.numeric(DT[[ycol]])
+  col <- floor((x - WORLD_XMIN) / CELL_SIZE_M)
+  row <- floor((y - WORLD_YMIN) / CELL_SIZE_M)
+  cx  <- WORLD_XMIN + col * CELL_SIZE_M + CELL_SIZE_M / 2
+  cy  <- WORLD_YMIN + row * CELL_SIZE_M + CELL_SIZE_M / 2
+  DT[, `:=`(
+    col     = as.integer(col),
+    row     = as.integer(row),
+    x       = as.numeric(cx),
+    y       = as.numeric(cy),
+    grid_id = as.integer(row * GRID_COLS + col + 1L)
+  )]
+  DT
+}
 
-# Loading the parameters YAML
-param_yaml <- "~/scratch/configuration/fi_parameters.yaml"
-params_raw <- yaml::read_yaml(param_yaml)
+## 1. Arguments ----------------------------------------------------------------
+args <- commandArgs(trailingOnly = TRUE)
+if (!(length(args) %in% c(1, 6))) {
+  stop(
+    "Usage:\n",
+    "  Rscript step5_tile_worker.R <tile_id>\n",
+    "  Rscript step5_tile_worker.R <tile_id> <sub_id> <xmin> <xmax> <ymin> <ymax>"
+  )
+}
 
-# — inheritance helper ---------------------------------------------------------
+tile_id <- as.integer(args[1])
+if (is.na(tile_id) || tile_id < 1) stop("[ERR] Invalid tile ID: ", args[1])
+
+is_subtile <- length(args) == 6
+if (is_subtile) {
+  sub_id <- as.integer(args[2])
+  xmin   <- as.numeric(args[3]); xmax <- as.numeric(args[4])
+  ymin   <- as.numeric(args[5]); ymax <- as.numeric(args[6])
+  if (anyNA(c(sub_id, xmin, xmax, ymin, ymax))) stop("[ERR] Invalid sub-tile arguments.")
+  cat(sprintf("[INFO] Sub-tile %d_%d - bbox: (%.0f,%.0f)-(%.0f,%.0f)\n",
+              tile_id, sub_id, xmin, ymin, xmax, ymax))
+} else {
+  cat("[INFO] Processing full tile:", tile_id, "\n")
+}
+
+# YAML parameters
+SCRATCH_DIR <- Sys.getenv("SCRATCH_DIR", path.expand("~/scratch"))
+param_yaml  <- file.path(SCRATCH_DIR, "configuration/fi_parameters_with_freshness.yaml")
+params_raw  <- yaml::read_yaml(param_yaml)
+
 get_scenario <- function(name) {
   s <- params_raw$scenarios[[name]]
   if (!is.null(s$inherit)) {
-    parent <- get_scenario(s$inherit)
-    s$inherit <- NULL
-    modifyList(parent, s)
+    parent <- get_scenario(s$inherit); s$inherit <- NULL; modifyList(parent, s)
   } else s
 }
 par <- get_scenario("default")
 
-# — table the k regionaux ------------------------------------------------------
 k_table <- data.frame(
   longhurst_pr = names(par$k_fast),
-  k_fast       = unlist(par$k_fast) *
-                 ifelse(is.null(par$k_fast_multiplier), 1, par$k_fast_multiplier)
+  k_fast = unlist(par$k_fast) *
+    ifelse(is.null(par$k_fast_multiplier), 1, par$k_fast_multiplier)
 )
+alpha_dep    <- par$alpha_dep
+fast_frac    <- par$fast_fraction
+slow_k       <- par$slow_k
+preserv_fact <- ifelse(is.null(par$preservation_factor), 0.87, par$preservation_factor)
 
-alpha_dep     <- par$alpha_dep
-fast_frac     <- par$fast_fraction
-slow_k        <- par$slow_k     # a−1
-preserv_fact  <- ifelse(is.null(par$preservation_factor), 0.272, par$preservation_factor)  # p_r factor with valeur par default
+cat("[INFO] Parameters: alpha_dep=", alpha_dep,
+    " fast_fraction=", fast_frac, " slow_k=", slow_k,
+    " preservation_factor=", preserv_fact, "\n")
 
-cat(" Parameters f_i :\n")
-cat(" - alpha_dep:", alpha_dep, "\n")
-cat(" - fast_fraction:", fast_frac, "\n")
-cat(" - slow_k:", slow_k, "a−1\n")
-cat(" - preservation_factor:", preserv_fact, "\n")
-
-# Limitation the threads BLAS/OMP for eviter the surconsommation memory
-Sys.setenv(OMP_NUM_THREADS = 1,
-           MKL_NUM_THREADS = 1,
-           OPENBLAS_NUM_THREADS = 1)
-
-# Configuration data.table
+Sys.setenv(OMP_NUM_THREADS = 1, MKL_NUM_THREADS = 1, OPENBLAS_NUM_THREADS = 1)
 data.table::setDTthreads(1)
-cat(" data.table threads fixes a 1\n")
+cat("[OK] data.table threads = 1\n")
 
-## 1. Loading of the tile ---------------------------------------------------
-cat(" Loading of the tile...\n")
-# Utiliser the variable d'environnement CELL_KM si definie
-cell_km_env <- Sys.getenv("CELL_KM", "1000")
-if (!is.na(as.integer(cell_km_env))) {
-  CELL_KM <- as.integer(cell_km_env)
+## 2. Work area ----------------------------------------------------------------
+tiles_file <- file.path(SCRATCH_DIR, "output_V6/tiles_1000km.gpkg")
+tiles      <- st_read(tiles_file, quiet = TRUE)
+target_crs <- st_crs(tiles)
+
+if (is_subtile) {
+  tile_geom     <- st_as_sfc(st_bbox(c(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax), crs=target_crs))
+  tile_buffered <- tile_geom
+} else {
+  tile_bb <- tiles[tiles$tile_id == tile_id, ]
+  if (nrow(tile_bb) == 0) stop("[ERR] Tile ", tile_id, " not found in ", tiles_file)
+  tile_geom     <- st_geometry(tile_bb)
+  tile_buffered <- st_buffer(tile_geom, TILE_BUFFER_M)
 }
 
-tiles_file <- sprintf("~/scratch/output_V6/tiles_%dkm.gpkg", CELL_KM)
-tiles   <- st_read(tiles_file, quiet=TRUE)
-tile_bb <- tiles[tiles$tile_id == tile_id, ]
+## 3. Load AIS + lithology -----------------------------------------------------
+output_dir       <- file.path(SCRATCH_DIR, "output_V6")
+lithology_files  <- list.files(output_dir,
+                               pattern = "AIS_with_lithology_.*\\.rds$",
+                               full.names = TRUE)
+if (!length(lithology_files)) stop("[ERR] No AIS_with_lithology_* file found in ", output_dir)
 
-if(nrow(tile_bb) == 0) {
-  cat(" Tile", tile_id, "not found in", tiles_file, "- creation file vide\n")
-  # Creation d'un data.table vide to bon format
-  res <- data.table(
-    grid_id = integer(),
-    sum_dw = numeric(),
-    sum_dw_pd = numeric(),
-    sum_d = numeric(),
-    sum_d_pl = numeric()
-  )
-  output_file <- sprintf("~/scratch/output_V6/sar_%03d.parquet", tile_id)
-  if(requireNamespace("arrow", quietly = TRUE) && 
-     packageVersion("arrow") >= numeric_version(PARQUET_VERSION_MIN)) {
-    arrow::write_parquet(res, output_file)
-  } else {
-    saveRDS(res, sub("\\.parquet$", ".rds", output_file))
-  }
-  cat(" File of output vide written :", output_file, "\n")
-  quit(save="no")
+dt_lithology <- readRDS(max(lithology_files))
+dredge_raw   <- dt_lithology[Dragage_flag == 1 & !is.na(Lon) & !is.na(Lat)]
+if (!nrow(dredge_raw)) {
+  cat("[WARN] No dredging pings - clean exit\n")
+  quit("no")
 }
 
-cat(" Tile chargee :", tile_id, "\n")
+dredge_sf <- st_as_sf(dredge_raw, coords = c("Lon", "Lat"), crs = 4326, remove = FALSE) |>
+  st_transform(target_crs)
 
-## 2. Pre-filtrage the data -------------------------------------------------
-cat(" Pre-filtrage the data AIS...\n")
-
-# Loading of file with lithology (step 4)
-# Accepte the deux conventions of nommage observees:
-# - AIS_with_lithology_clean_*.rds
-# - AIS_with_lithology_*.rds
-output_dir <- "~/scratch/output_V6/"
-pat_clean <- "AIS_with_lithology_clean_.*\\.rds$"
-pat_base  <- "AIS_with_lithology_.*\\.rds$"
-
-lithology_files <- unique(c(
-  list.files(output_dir, pattern = pat_clean, full.names = TRUE),
-  list.files(output_dir, pattern = pat_base, full.names = TRUE)
-))
-
-if(!length(lithology_files)) {
-  stop(
-    " No file with lithology found (Step 4).\n",
-    "   Tested patterns: ", pat_clean, " ; ", pat_base
-  )
-}
-
-latest_idx <- which.max(file.info(lithology_files)$mtime)
-lithology_path <- lithology_files[latest_idx]
-dt_lithology <- readRDS(lithology_path)
-cat(" File with lithology lu :", basename(lithology_path), "(", nrow(dt_lithology), "lines)\n")
-
-# CORRECTION : Selection spatiale correcte with reprojection
-# 1. Filtrer the pings of dredging with coordinates valides
-dredge_raw <- dt_lithology[Dragage_flag == 1 & !is.na(Lon) & !is.na(Lat)]
-cat(" dredging pings with coordinates :", nrow(dredge_raw), "\n")
-
-if(nrow(dredge_raw) == 0) {
-  cat(" No ping of dredging in the data - clean output\n")
-  quit(save="no")
-}
-
-# 2. Convertir en sf et reproject en EPSG:6933 (metres)
-dredge_sf <- st_as_sf(dredge_raw, coords=c("Lon","Lat"), crs=4326) %>%
-             st_transform(CRS_EQUIVALENT)
-
-# 3. Buffer autour of the tile for capture the lines qui tratoent
-tile_geom <- st_geometry(tile_bb)
-tile_buffered <- st_buffer(tile_geom, TILE_BUFFER_M)
-
-# 4. Selection spatiale correcte
-sel <- st_intersects(dredge_sf, tile_buffered, sparse=FALSE)[,1]
+sel       <- st_intersects(dredge_sf, tile_buffered, sparse = FALSE)[, 1]
 dredge_sf <- dredge_sf[sel, ]
 
-if(nrow(dredge_sf) == 0) {
-  cat(" No ping of dredging in the tile", tile_id, "- empty file written\n")
-  # Creation d'un data.table vide to bon format
-  res <- data.table(
-    grid_id = integer(),
-    sum_dw = numeric(),
-    sum_dw_pd = numeric(),
-    sum_d = numeric(),
-    sum_d_pl = numeric()
-  )
-  output_file <- sprintf("~/scratch/output_V6/sar_%03d.parquet", tile_id)
-  if(requireNamespace("arrow", quietly = TRUE) && 
-     packageVersion("arrow") >= numeric_version(PARQUET_VERSION_MIN)) {
-    arrow::write_parquet(res, output_file)
-  } else {
-    saveRDS(res, sub("\\.parquet$", ".rds", output_file))
-  }
-  cat(" File of output vide written :", output_file, "\n")
-  quit(save="no")
+write_empty <- function(path) {
+  empty <- data.table(grid_id = integer(), sum_dw = numeric(),
+                      sum_dw_pd = numeric(), sum_d = numeric(),
+                      n_with_pl = integer(), pl_sum = numeric())
+  if (HAS_ARROW) arrow::write_parquet(empty, path)
+  else           saveRDS(empty, sub("\\.parquet$", ".rds", path))
 }
 
-# 4bis. Extraire the coordinates projetees X,Y en metres depuis the geometrie
-coords <- st_coordinates(dredge_sf)
-dredge_sf$X <- coords[,1]
-dredge_sf$Y <- coords[,2]
+out_path <- if (is_subtile) {
+  file.path(output_dir, sprintf("sar_%d_sub%d.parquet", tile_id, sub_id))
+} else {
+  file.path(output_dir, sprintf("sar_%03d.parquet", tile_id))
+}
 
-# 5. Reconvertir en data.table for the suite of pipeline (on conserve X,Y + toutes the other columns)
+if (!nrow(dredge_sf)) {
+  cat("[WARN] No pings in tile - writing empty file\n")
+  write_empty(out_path)
+  quit("no")
+}
+
+coords     <- st_coordinates(dredge_sf)
+dredge_sf$X <- coords[, 1]; dredge_sf$Y <- coords[, 2]
 dredge <- as.data.table(dredge_sf)
-dredge[, geometry := NULL]  # Supprimer the column geometry
+dredge[, geometry := NULL]
 
-cat(" dredging pings filters :", nrow(dredge), "\n")
-
-## 3. Loading the specs navires ---------------------------------------------
-cat(" Loading the specs navires...\n")
-specs_list <- yaml::read_yaml("~/scratch/configuration/ship_specs_clean.yaml")$ship_specs
-
-# Protection contre the erreurs of parsing YAML
-if (is.null(specs_list) || !length(specs_list)) {
-  stop(" ship_specs_clean.yaml n'a pas pu etre parse - check l'encodage UTF-8 et l'indentation")
+# Harmonise vessel identifier
+id_cols <- c("ssvid", "SSVID", "mmsi", "MMSI", "vessel_id", "VESSEL_ID", "Navire")
+for (cc in id_cols) {
+  if (cc %in% names(dredge)) { setnames(dredge, cc, "ssvid", skip_absent=TRUE); break }
 }
 
-specs_dt <- rbindlist(lapply(specs_list, as.data.table), fill=TRUE)
-specs_dt[, suction_pipe_diameter_m := (suction_pipe_diameter_mm/1000) * ifelse(is.na(twin_pipes), 1, twin_pipes)]
-specs_dt <- specs_dt[, .(ssvid, name, suction_pipe_diameter_m, dredging_depth_m, dredge_width_m)]
+# Defaults / cleaning
+if (!"dredging_depth_m" %in% names(dredge)) dredge[, dredging_depth_m := 1.0]
+if (!"dredge_width_m"   %in% names(dredge)) dredge[, dredge_width_m   := 2.6]
+if (!"pl_base"          %in% names(dredge)) dredge[, pl_base           := NA_real_]
+if (!"has_lithology"    %in% names(dredge)) dredge[, has_lithology     := TRUE]
+if (!"dist_km"          %in% names(dredge)) dredge[, dist_km           := NA_real_]
 
-# Debug : afficher the columns disponibles
-cat(" Columns in dredge :", paste(names(dredge), collapse=", "), "\n")
+# p_d = 1 m (TSHD, §2.7-2.8)
+dredge[, dredging_depth_m := 1.0]
 
-# Harmoniser the nom of the column d'identifiant si besoin
-# Check multiple variantes possible
-vessel_id_cols <- c("ssvid", "SSVID", "mmsi", "MMSI", "vessel_id", "VESSEL_ID")
-found_col <- NULL
+# World-aligned grid snap
+dredge <- snap_cells2(dredge, "X", "Y")
 
-for(col in vessel_id_cols) {
-  if(col %in% names(dredge)) {
-    found_col <- col
-    break
-  }
-}
-
-if(!is.null(found_col) && found_col != "ssvid") {
-  cat(" Renommage of", found_col, "to ssvid\n")
-  setnames(dredge, found_col, "ssvid")
-} else if(is.null(found_col)) {
-  cat(" No column d'identifiant vessel found parmi :", paste(vessel_id_cols, collapse=", "), "\n")
-  cat(" Columns disponibles :", paste(names(dredge), collapse=", "), "\n")
-}
-
-# Merge specs on dredge with suffixes for eviter the conflits
-if("ssvid" %in% names(dredge)) {
-  dredge <- merge(
-    dredge,
-    specs_dt,
-    by = "ssvid",
-    all.x = TRUE,
-    suffixes = c("", ".spec")
-  )
-  cat(" Merge specs realise\n")
-  cat(" - Pings with specs :", sum(!is.na(dredge$dredging_depth_m.spec)), "\n")
-  cat(" - Pings without specs :", sum(is.na(dredge$dredging_depth_m.spec)), "\n")
-  
-  # Debug : afficher the columns after merge
-  cat(" Columns after merge :", paste(names(dredge), collapse=", "), "\n")
-} else {
-  warning(" No column ssvid found for joindre the specs YAML.")
-}
-
-# Valeurs par default si missing
-if(any(is.na(dredge$suction_pipe_diameter_m))) {
-  dredge[is.na(suction_pipe_diameter_m), suction_pipe_diameter_m := 0.5]
-}
-
-# Gestion of dredging_depth_m : priorite aux specs YAML, sinon valeur d'origine, sinon default
-if("dredging_depth_m.spec" %in% names(dredge)) {
-  # Utiliser the specs YAML quand disponibles, sinon the valeur d'origine
-  dredge[, dredging_depth_m := fifelse(!is.na(dredging_depth_m.spec), dredging_depth_m.spec, dredging_depth_m)]
-  # Valeur par default for the cas restants
-  dredge[is.na(dredging_depth_m), dredging_depth_m := 1.0]
-} else {
-  # Si pas of specs, utiliser the valeur d'origine ou default
-  if(any(is.na(dredge$dredging_depth_m))) {
-    dredge[is.na(dredging_depth_m), dredging_depth_m := 1.0]
-  }
-}
-
-## 4. Utilisation the data of lithology ------------------------------------
-cat(" Utilisation the data of lithology...\n")
-
-# The data of lithology are already in dt_lithology
-# Check que the columns of lithology are present
-litho_cols <- c("lithologie", "pl_base", "dist_km")
-missing_cols <- setdiff(litho_cols, names(dredge))
-
-if(length(missing_cols) > 0) {
-  cat(" Columns of lithology missing :", paste(missing_cols, collapse=", "), "\n")
-  # Add the columns par default si missing
-  if("pl_base" %in% missing_cols) dredge[, pl_base := 0]
-  if("lithologie" %in% missing_cols) dredge[, lithologie := "unknown"]
-  if("dist_km" %in% missing_cols) dredge[, dist_km := NA_real_]
-}
-
-# Gestion the missing values
+# Depth-weighted pl_eff at ping level (§2.7-2.8, Option B: dz2 capped at DEEP_HORIZON)
 dredge[, `:=`(
-  has_lithology = !is.na(pl_base),
-  pl_base = fifelse(is.na(pl_base), 0, pl_base)
+  dz1 = pmin(dredging_depth_m, SURF_HORIZON),
+  dz2 = pmin(pmax(0, dredging_depth_m - SURF_HORIZON), DEEP_HORIZON)
 )]
+dredge[, pl_eff := (pl_base * dz1 + FACTOR_DEEP * pl_base * dz2) / pmax(dredging_depth_m, 1e-6)]
 
-cat(" Lithology disponible :", sum(dredge$has_lithology), "pings with lithology\n")
+# Pings eligible for carbon p_l: valid lithology + within 10 km of seabed data
+dredge[, use_for_carbon := has_lithology == TRUE & is.finite(pl_eff) &
+                           (is.na(dist_km) | dist_km <= 10)]
 
-# Protection contre largeur of dredging missing
-dredge[is.na(dredge_width_m), dredge_width_m := 2.6]  # valeur par default
-# Warning si too of valeurs par default
-default_n <- dredge[dredge_width_m == 2.6, .N]
-if (default_n > 0 && default_n / nrow(dredge) > 0.10) {
-  cat(sprintf(" %d pings (%.1f%%) utilisent the largeur of dredging par default (2.6 m)\n",
-              default_n, 100*default_n / nrow(dredge)))
-}
-
-## 5. Contoion en lines -----------------------------------------------------
-cat(" Contoion en lines...\n")
-# The data are already en EPSG:6933 depuis the pre-filtrage, on utilise the coordinates X/Y
-dredge_sf <- st_as_sf(dredge, coords=c("X","Y"), crs=CRS_EQUIVALENT, remove=FALSE)
-
-dredge_sf$sub_seg_id <- paste0(dredge_sf$Navire,"_",format(dredge_sf$Timestamp,"%Y%m%d"))
-
-# Regroupement par segment of navigation
-lines_sf  <- dredge_sf %>%
-  group_by(sub_seg_id) %>%
-  filter(n()>1) %>%
-  summarise(W_v   = first(dredge_width_m),
-            p_d_i = first(dredging_depth_m),
-            pl_b  = first(pl_base),
-            geometry = st_cast(st_combine(geometry),"MULTILINESTRING"),
-            .groups="drop")
-
-if(nrow(lines_sf) == 0) {
-  cat(" No line valide in the tile", tile_id, "- creation file vide\n")
-  # Creation d'un data.table vide to bon format
-  res <- data.table(
-    grid_id = integer(),
-    sum_dw = numeric(),
-    sum_dw_pd = numeric(),
-    sum_d = numeric(),
-    sum_d_pl = numeric()
+## 4. Export ping_detail (full tile only) --------------------------------------
+if (!is_subtile) {
+  detail_cols <- intersect(
+    c("Timestamp", "Lon", "Lat", "X", "Y", "col", "row", "grid_id", "ssvid",
+      "dredging_depth_m", "dredge_width_m", "pl_base", "pl_eff",
+      "lithologie", "dist_km", "has_lithology", "use_for_carbon"),
+    names(dredge)
   )
-  output_file <- sprintf("~/scratch/output_V6/sar_%03d.parquet", tile_id)
-  if(requireNamespace("arrow", quietly = TRUE) && 
-     packageVersion("arrow") >= numeric_version(PARQUET_VERSION_MIN)) {
-    arrow::write_parquet(res, output_file)
-  } else {
-    saveRDS(res, sub("\\.parquet$", ".rds", output_file))
-  }
-  cat(" File of output vide written :", output_file, "\n")
-  quit(save="no")
+  detail_path <- file.path(output_dir, sprintf("ping_detail_%03d.parquet", tile_id))
+  if (HAS_ARROW) arrow::write_parquet(dredge[, ..detail_cols], detail_path, compression = "zstd")
+  cat("[OK] ping_detail exported\n")
 }
 
-cat(" Lines creees :", nrow(lines_sf), "\n")
+## 5. Lines with temporal sort -------------------------------------------------
+cat("[INFO] Building lines (temporal order)...\n")
 
-## 6. Grid locale 1 km ------------------------------------------------------
-cat(" Creation of the grid locale...\n")
-grid1km <- st_make_grid(tile_bb, cellsize=CELL_SIZE_M) %>%
-           st_sf(grid_id = seq_along(.), geometry = ., crs=CRS_EQUIVALENT)
+to_posix <- function(x) {
+  if (inherits(x, "POSIXt")) x
+  else if (is.numeric(x)) as.POSIXct(x, origin = "1970-01-01", tz = "UTC")
+  else as.POSIXct(x, tz = "UTC")
+}
+if (!"Timestamp" %in% names(dredge)) dredge[, Timestamp := NA]
+dredge[, Timestamp := to_posix(Timestamp)]
 
-# Add the coordinates of the grid globale (coherent with constants.R)
-# NOTE: WORLD_XMIN/YMIN doivent etre the multiples of CELL_SIZE_M for eviter the decalages
-grid_coords <- st_coordinates(st_centroid(grid1km))
-grid1km$col <- as.integer(floor((grid_coords[,1] - WORLD_XMIN)/CELL_SIZE_M))
-grid1km$row <- as.integer(floor((WORLD_YMAX - grid_coords[,2])/CELL_SIZE_M))
-grid1km$global_grid_id <- grid1km$row*GRID_COLS + grid1km$col + 1L
+dredge[, sub_seg_id := paste0(ssvid, "_", format(Timestamp, "%Y%m%d"))]
 
-cat(" Grid locale :", nrow(grid1km), "cells\n")
+# Recompute pl_eff (redundant but defensive)
+dredge[, `:=`(
+  dz1 = pmin(dredging_depth_m, SURF_HORIZON),
+  dz2 = pmin(pmax(0, dredging_depth_m - SURF_HORIZON), DEEP_HORIZON)
+)]
+dredge[, pl_eff := (pl_base * dz1 + FACTOR_DEEP * pl_base * dz2) / pmax(dredging_depth_m, 1e-6)]
 
-## 7. Intersection & agregation streaming --------------------------------------
-cat(" Intersections line/grid (mode streaming)...\n")
-start_time <- Sys.time()
+dredge_sf2 <- st_as_sf(dredge, coords = c("X", "Y"), crs = target_crs, remove = FALSE)
 
-# Initialisation of result
-res <- data.table(grid_id = integer(),
-                  sum_dw = numeric(), sum_dw_pd = numeric(),
-                  sum_d = numeric(), sum_d_pl = numeric())
+lines_sf <- dredge_sf2 |>
+  arrange(sub_seg_id, Timestamp) |>
+  group_by(sub_seg_id) |>
+  filter(n() > 1) |>
+  summarise(
+    W_v   = first(dredge_width_m),
+    p_d_i = 1.0,   # p_d = 1 m (TSHD)
+    geometry = st_cast(st_combine(geometry), "MULTILINESTRING"),
+    .groups = "drop"
+  )
 
-# Traitement line par line for economiser the memory
+if (nrow(lines_sf) == 0) {
+  cat("[WARN] No valid lines - writing empty file\n")
+  write_empty(out_path)
+  quit("no")
+}
+cat("[OK] Lines created:", nrow(lines_sf), "\n")
+
+## 6. World-aligned local grid -------------------------------------------------
+cat("[INFO] Building world-aligned local grid...\n")
+tile_bbox <- st_bbox(tile_buffered)
+
+col_start <- max(0L,           as.integer((tile_bbox["xmin"] - WORLD_XMIN) %/% CELL_SIZE_M) - 1L)
+col_end   <- min(GRID_COLS-1L, as.integer((tile_bbox["xmax"] - WORLD_XMIN) %/% CELL_SIZE_M) + 1L)
+row_start <- max(0L,           as.integer((tile_bbox["ymin"] - WORLD_YMIN) %/% CELL_SIZE_M) - 1L)
+row_end   <- min(GRID_ROWS-1L, as.integer((tile_bbox["ymax"] - WORLD_YMIN) %/% CELL_SIZE_M) + 1L)
+
+local_grid <- st_make_grid(
+  offset   = c(WORLD_XMIN + col_start * CELL_SIZE_M, WORLD_YMIN + row_start * CELL_SIZE_M),
+  cellsize = CELL_SIZE_M,
+  n        = c(col_end - col_start + 1, row_end - row_start + 1),
+  crs      = target_crs,
+  what     = "polygons"
+) |> st_sf() |>
+  mutate(
+    col     = col_start + ((dplyr::row_number() - 1L) %% (col_end - col_start + 1L)),
+    row     = row_start + ((dplyr::row_number() - 1L) %/% (col_end - col_start + 1L)),
+    grid_id = row * GRID_COLS + col + 1L
+  )
+
+grid1km <- st_intersection(local_grid, tile_buffered)
+cat("[OK] Local grid:", nrow(grid1km), "cells\n")
+
+## 7. Line × grid intersections (SAR) + simple p_l mean per cell --------------
+cat("[INFO] Line/grid intersections...\n")
+
+res <- data.table(
+  grid_id   = integer(),
+  sum_dw    = numeric(),
+  sum_dw_pd = numeric(),
+  sum_d     = numeric()
+)
+
 for (i in seq_len(nrow(lines_sf))) {
-  if(i %% 100 == 0) {
-    cat(" Progression:", i, "/", nrow(lines_sf), "\n")
-    gc()  # Nettoyage memory regulier
-  }
-  
-  # Intersection with the grid (optimisation C++)
-  cand <- sf::st_intersects(lines_sf[i,], grid1km, sparse = FALSE)[1, ]
+  cand <- sf::st_intersects(lines_sf[i, ], grid1km, sparse = FALSE)[1, ]
   if (!any(cand)) next
-  
-  inter <- sf::st_intersection(lines_sf[i,], grid1km[cand,])
+  inter <- sf::st_intersection(lines_sf[i, ], grid1km[cand, ])
   if (!nrow(inter)) next
-  
-  # Calcul the longueurs
-  len <- as.numeric(st_length(inter))
-  
-  # Agregation the results
-  res_i <- data.table(grid_id      = inter$global_grid_id,
-                      sum_dw       = len * lines_sf$W_v[i],
-                      sum_dw_pd    = len * lines_sf$W_v[i] * lines_sf$p_d_i[i],
-                      sum_d        = len,
-                      sum_d_pl     = len * lines_sf$pl_b[i])
-  
-  # Fusion optimisee with accumulateur (evite O(n2))
-  if (nrow(res)) {
-    # Mise a jour the lines existantes
-    res[res_i, on="grid_id", `:=`(
-      sum_dw     = sum_dw     + i.sum_dw,
-      sum_dw_pd  = sum_dw_pd  + i.sum_dw_pd,
-      sum_d      = sum_d      + i.sum_d,
-      sum_d_pl   = sum_d_pl   + i.sum_d_pl
-    )]
-    
-    # Add the nouvelles lines (grid_id not presents in res)
-    new_rows <- res_i[!res, on="grid_id"]
-    if (nrow(new_rows) > 0) {
-      res <- rbindlist(list(res, new_rows))
-    }
-  } else {
-    res <- res_i
-  }
-  
-  # Nettoyage
-  rm(inter, res_i)
+  len   <- as.numeric(st_length(inter))
+  res_i <- data.table(
+    grid_id   = inter$grid_id,
+    sum_dw    = len * lines_sf$W_v[i],
+    sum_dw_pd = len * lines_sf$W_v[i] * lines_sf$p_d_i[i],
+    sum_d     = len
+  )
+  res[res_i, on = "grid_id", `:=`(
+    sum_dw    = fifelse(is.na(sum_dw),    i.sum_dw,    sum_dw    + i.sum_dw),
+    sum_dw_pd = fifelse(is.na(sum_dw_pd), i.sum_dw_pd, sum_dw_pd + i.sum_dw_pd),
+    sum_d     = fifelse(is.na(sum_d),     i.sum_d,     sum_d     + i.sum_d)
+  )]
+  new_rows <- res_i[!res, on = "grid_id"]
+  if (nrow(new_rows)) res <- rbindlist(list(res, new_rows), use.names = TRUE)
 }
 
-# Optimisation finale of the table of results
-if(nrow(res) > 0) {
-  setkey(res, grid_id)  # Cle for optimiser the fusions downstream
-}
+# Simple mean p_l per cell (pings with valid lithology within 10 km)
+pl_cell <- dredge[use_for_carbon == TRUE & is.finite(pl_eff),
+                  .(n_with_pl = .N, pl_sum = sum(pl_eff, na.rm = TRUE)),
+                  by = grid_id]
 
-# Nettoyage final
-rm(lines_sf, grid1km, dredge_sf, dredge)
-gc()
+res <- merge(res, pl_cell, by = "grid_id", all.x = TRUE)
+res[is.na(n_with_pl), `:=`(n_with_pl = 0L, pl_sum = 0)]
 
-cat(" Intersections completed :", nrow(res), "cells touched\n")
-cat("⏱ Duration :", round(difftime(Sys.time(), start_time, units="mins"), 2), "minutes\n")
+setkey(res, grid_id)
+cat("[OK] Intersections done:", nrow(res), "cells\n")
 
-## 8. Save partielle -----------------------------------------------------
-cat(" Save the results...\n")
-output_file <- sprintf("~/scratch/output_V6/sar_%03d.parquet", tile_id)
-
-# Verification of the toion d'arrow et save
-if(requireNamespace("arrow", quietly = TRUE) && 
-   packageVersion("arrow") >= numeric_version(PARQUET_VERSION_MIN)) {
-  arrow::write_parquet(res, output_file)
-  cat(" Results saved en Parquet :", basename(output_file), "\n")
+## 8. Save ---------------------------------------------------------------------
+if (HAS_ARROW) {
+  arrow::write_parquet(res, out_path)
+  cat("[OK] Saved (Parquet):", basename(out_path), "\n")
 } else {
-  # Fallback RDS si arrow not disponible ou toion too ancienne
-  saveRDS(res, sub("\\.parquet$", ".rds", output_file))
-  cat(" Arrow not disponible ou toion <", PARQUET_VERSION_MIN, "- save RDS :", 
-      basename(sub("\\.parquet$", ".rds", output_file)), "\n")
+  saveRDS(res, sub("\\.parquet$", ".rds", out_path))
+  cat("[WARN] Arrow unavailable - saved as RDS\n")
 }
 
-# Statistiques finales
-cat("\n STATISTIQUES TILE", tile_id, "\n")
-cat(" - Cells touched :", nrow(res), "\n")
-if(nrow(res) > 0) {
-  cat(" - Distance totale :", format(sum(res$sum_d), scientific=FALSE), "m\n")
-  cat(" - SAR moyen :", format(mean(res$sum_dw / CELL_AREA_M2), scientific=FALSE), "\n")
-  cat(" - SAR max :", format(max(res$sum_dw / CELL_AREA_M2), scientific=FALSE), "\n")
-}
+cat(sprintf("\n[STATS] Tile %s\n  cells: %d\n  total distance: %s m\n  mean SAR: %s\n",
+    if (is_subtile) sprintf("%d_%d", tile_id, sub_id) else as.character(tile_id),
+    nrow(res),
+    format(sum(res$sum_d), scientific = FALSE),
+    format(mean(res$sum_dw / CELL_AREA_M2, na.rm = TRUE), scientific = FALSE)))
 
-cat("\n Tile", tile_id, "completed successfully !\n") 
+cat("[OK] Done\n")
