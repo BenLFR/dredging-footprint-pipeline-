@@ -61,12 +61,11 @@ cat(sprintf("Parameter: %s = %g  (label: %s)\n", param_name, param_value, value_
 
 # Load fi parameter defaults and override the target parameter in memory.
 yaml_paths <- unique(c(
-  file.path(config_dirs, "fi_parameters_with_freshness.yaml"),
-  file.path(config_dirs, "fi_parameters.yaml")
+  file.path(config_dirs, "fi_parameters_with_freshness.yaml")
 ))
 yaml_path <- yaml_paths[file.exists(yaml_paths)][1]
 if (is.na(yaml_path)) {
-  stop("No fi parameter YAML found. Set CONFIG_DIR or place it under configuration/ or config/.")
+  stop("No fi_parameters_with_freshness.yaml found. Set CONFIG_DIR or place it under configuration/ or config/.")
 }
 cat(sprintf("Using fi parameter YAML: %s\n", yaml_path))
 

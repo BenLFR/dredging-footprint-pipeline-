@@ -45,8 +45,7 @@ config_dirs <- unique(c(config_root, "configuration", "config"))
 
 load_fi_defaults <- function() {
   yaml_candidates <- unique(c(
-    file.path(config_dirs, "fi_parameters_with_freshness.yaml"),
-    file.path(config_dirs, "fi_parameters.yaml")
+    file.path(config_dirs, "fi_parameters_with_freshness.yaml")
   ))
   yaml_path <- yaml_candidates[file.exists(yaml_candidates)][1]
 

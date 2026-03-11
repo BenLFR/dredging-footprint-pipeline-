@@ -2,7 +2,7 @@
 # ============================================================================
 # compare_scenarios.R
 # Loads three fi_grid parquet files (default / conservative / upper_bound
-# scenarios from fi_parameters.yaml), computes per-cell % differences, and
+# scenarios from fi_parameters_with_freshness.yaml), computes per-cell % differences, and
 # frames the three scenarios as parameter uncertainty bounds.
 #
 # Outputs:
