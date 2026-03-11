@@ -2,20 +2,16 @@
 # ============================================================================
 # monte_carlo_uncertainty.R
 # Monte Carlo uncertainty propagation through the f_i and C_ri calculations.
-# Propagates three independent error sources:
-#   1. AIS position error (±30 m Gaussian, 1σ) → cell assignment uncertainty
-#   2. Dredging classification error (Bernoulli flip ∝ 1 - LOYO_AUC)
-#   3. fi parameter uncertainty (±10% Gaussian for each of 5 parameters)
+# Uses the full fi_grid when available, with a stratified fallback only if the
+# grid is very large for local RAM.
 #
-# Runs in batches of 50 iterations each. Full run = 10 batches × 50 = 500 iter.
+# Propagated error sources:
+#   1. AIS position error (+/-30 m Gaussian, 1 sigma)
+#   2. Dredging classification error (Bernoulli flip proportional to 1 - LOYO_AUC)
+#   3. fi parameter uncertainty (+/-10% Gaussian for each of 5 parameters)
 #
 # Usage:
 #   Rscript analysis/monte_carlo_uncertainty.R <BATCH_ID>
-#   # BATCH_ID: integer 1–10; each batch does iterations (BATCH_ID-1)*50+1 to BATCH_ID*50
-#
-# Output:
-#   output_V6/uncertainty/mc_batch_<BATCH_ID>.parquet
-#   (after all 10 batches: run submit_monte_carlo.sh merge step)
 # ============================================================================
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -28,47 +24,113 @@ if (is.na(BATCH_ID) || BATCH_ID < 1 || BATCH_ID > 10) {
 }
 
 ITER_START <- (BATCH_ID - 1) * 50 + 1
-ITER_END   <- BATCH_ID * 50
-N_ITER     <- ITER_END - ITER_START + 1
+ITER_END <- BATCH_ID * 50
+N_ITER <- ITER_END - ITER_START + 1
 
-# Reproducible seed per batch
 set.seed(BATCH_ID * 42)
 
 cat(sprintf("=== Monte Carlo Uncertainty | Batch %d (iter %d-%d) ===\n",
             BATCH_ID, ITER_START, ITER_END))
-t0 <- proc.time()["elapsed"]
+t0 <- proc.time()[["elapsed"]]
 
 suppressPackageStartupMessages({
   library(data.table)
-  library(yaml)
 })
 
-# ── Constants from constants.R ────────────────────────────────────────────────
-CELL_SIZE_M  <- 1000L
-CELL_AREA_M2 <- CELL_SIZE_M * CELL_SIZE_M
-GRID_COLS    <- 34735L
-WORLD_XMIN   <- -17367530.45
-WORLD_YMAX   <-  7342699.72
-
-# AIS position error (1σ) in metres
+CELL_SIZE_M <- 1000
 AIS_POS_ERROR_M_1SIGMA <- 30.0
+FI_PARAM_CV <- 0.10
+MAX_FULL_GRID_CELLS <- 200000L
 
-# fi parameter uncertainty (1σ as fraction of default)
-FI_PARAM_CV <- 0.10   # coefficient of variation
-
-# ── Default fi parameters (from fi_parameters_with_freshness.yaml) ────────────
 fi_params_default <- list(
-  alpha_dep           = 0.25,
-  fast_fraction       = 0.30,
-  slow_k              = 0.05,
+  alpha_dep = 0.25,
+  fast_fraction = 0.30,
+  slow_k = 0.05,
   preservation_factor = 0.87,
-  k_fast_multiplier   = 1.00
+  k_fast_multiplier = 1.00
 )
 
-# ── 1. Load AUC from step3 gridsearch results ──────────────────────────────────
-auc_metrics_path <- "output_V6/step3_auc_metrics.csv"
-LOYO_AUC <- 0.85   # fallback if step3_auc_metrics.csv not yet available
+k_fast_defaults <- c(
+  North_Pacific = 1.67,
+  South_Pacific = 3.84,
+  Atlantic = 1.00,
+  Indian = 4.76,
+  Mediterranean = 12.3,
+  Arctic = 0.275,
+  Gulf_Mexico_Caribbean = 16.8
+)
 
+load_latest_fi_grid <- function(search_roots) {
+  fi_files <- character(0)
+  for (d in search_roots) {
+    if (!dir.exists(d)) {
+      next
+    }
+    fi_files <- c(
+      fi_files,
+      list.files(d, pattern = "^fi_grid_.*\\.(parquet|rds)$", full.names = TRUE)
+    )
+  }
+  if (length(fi_files) == 0) {
+    return(NULL)
+  }
+
+  fi_files <- fi_files[order(file.info(fi_files)$mtime, decreasing = TRUE)]
+  for (candidate in fi_files) {
+    fi_dt <- tryCatch(
+      if (grepl("\\.parquet$", candidate)) {
+        if (!requireNamespace("arrow", quietly = TRUE)) {
+          stop("arrow package not available for parquet input.")
+        }
+        setDT(arrow::read_parquet(candidate))
+      } else {
+        setDT(readRDS(candidate))
+      },
+      error = function(e) {
+        cat(sprintf("Skipping unreadable fi_grid candidate %s: %s\n",
+                    basename(candidate), conditionMessage(e)))
+        NULL
+      }
+    )
+    if (!is.null(fi_dt)) {
+      return(list(path = candidate, data = fi_dt))
+    }
+  }
+
+  NULL
+}
+
+sample_large_grid <- function(fi_dt, max_cells) {
+  if (nrow(fi_dt) <= max_cells) {
+    return(list(data = fi_dt, sampled = FALSE, stratifier = NA_character_))
+  }
+
+  stratifier <- NULL
+  if ("longhurst_pr" %in% names(fi_dt)) {
+    stratifier <- "longhurst_pr"
+  } else if ("ProvDescr" %in% names(fi_dt)) {
+    stratifier <- "ProvDescr"
+  }
+
+  if (is.null(stratifier)) {
+    sampled_dt <- fi_dt[sample(.N, max_cells)]
+    return(list(data = sampled_dt, sampled = TRUE, stratifier = NA_character_))
+  }
+
+  sampled_dt <- fi_dt[
+    ,
+    .SD[sample(.N, max(1L, round(max_cells * .N / nrow(fi_dt))))],
+    by = stratifier
+  ]
+  if (nrow(sampled_dt) > max_cells) {
+    sampled_dt <- sampled_dt[sample(.N, max_cells)]
+  }
+  list(data = sampled_dt, sampled = TRUE, stratifier = stratifier)
+}
+
+# Load LOYO AUC from step3 benchmarking output if available.
+auc_metrics_path <- "output_V6/step3_auc_metrics.csv"
+LOYO_AUC <- 0.85
 if (file.exists(auc_metrics_path)) {
   auc_dt <- fread(auc_metrics_path)
   if ("mean_auc" %in% names(auc_dt)) {
@@ -77,146 +139,147 @@ if (file.exists(auc_metrics_path)) {
   }
 } else {
   cat(sprintf("step3_auc_metrics.csv not found. Using fallback AUC=%.2f.\n", LOYO_AUC))
-  cat("Run extract_step3_auc_metrics.R first for accurate uncertainty estimates.\n")
+  cat("Run extract_step3_auc_metrics.R first for more accurate uncertainty estimates.\n")
 }
 
-# ── 2. Load fi_grid data for the test region ──────────────────────────────────
-# Same test region as sensitivity analysis: Indian Ocean ~10-12.5 N, 60-62.5 E
-search_dirs <- c("output_V6",
-                 file.path(path.expand("~"), "scratch", "output_V6"))
-fi_files <- character(0)
-for (d in search_dirs) {
-  if (dir.exists(d)) {
-    found <- list.files(d, pattern = "^fi_grid_.*\\.(parquet|rds)$", full.names = TRUE)
-    fi_files <- c(fi_files, found)
-  }
-}
+search_dirs <- c(
+  "output_V6",
+  file.path(path.expand("~"), "scratch", "output_V6")
+)
+fi_grid_obj <- load_latest_fi_grid(search_dirs)
 
-if (length(fi_files) > 0) {
-  fi_path <- fi_files[which.max(file.info(fi_files)$mtime)]
-  cat(sprintf("Loading fi_grid: %s\n", basename(fi_path)))
-  if (grepl("\\.parquet$", fi_path) && requireNamespace("arrow", quietly = TRUE)) {
-    fi_dt <- setDT(arrow::read_parquet(fi_path))
-  } else {
-    fi_dt <- setDT(readRDS(fi_path))
-  }
-  # Subset to test region or random sample for performance
-  if ("lon" %in% names(fi_dt) && "lat" %in% names(fi_dt)) {
-    fi_sub <- fi_dt[lat >= 10 & lat <= 12.5 & lon >= 60 & lon <= 62.5]
-    if (nrow(fi_sub) == 0) {
-      cat("Test region empty — using random subsample.\n")
-      fi_sub <- fi_dt[sample(.N, min(.N, 500))]
+if (!is.null(fi_grid_obj)) {
+  fi_raw <- fi_grid_obj$data
+  fi_sample <- sample_large_grid(fi_raw, MAX_FULL_GRID_CELLS)
+  fi_dt <- fi_sample$data
+
+  cat(sprintf("Loading fi_grid: %s\n", basename(fi_grid_obj$path)))
+  cat(sprintf("Source fi_grid cells: %d\n", nrow(fi_raw)))
+  if (isTRUE(fi_sample$sampled)) {
+    if (!is.na(fi_sample$stratifier)) {
+      cat(sprintf(
+        "Using stratified sample of %d cells by %s (limit=%d)\n",
+        nrow(fi_dt), fi_sample$stratifier, MAX_FULL_GRID_CELLS
+      ))
+    } else {
+      cat(sprintf(
+        "Using random sample of %d cells (limit=%d)\n",
+        nrow(fi_dt), MAX_FULL_GRID_CELLS
+      ))
     }
   } else {
-    fi_sub <- fi_dt[sample(.N, min(.N, 500))]
+    cat(sprintf("Using full fi_grid: %d cells\n", nrow(fi_dt)))
   }
-  cat(sprintf("Test region: %d cells\n", nrow(fi_sub)))
-  USE_REAL_DATA <- TRUE
 } else {
-  cat("No fi_grid found — using synthetic test patch (25 cells).\n")
-  set.seed(99)
-  n_cells <- 25
-  fi_sub <- data.table(
-    grid_id = 1:n_cells,
-    SVR     = runif(n_cells, 0, 0.1),
-    p_l_corr = runif(n_cells, 0.2, 0.8),
-    C0i     = runif(n_cells, 0.5, 5.0),
-    Dragage_flag = rbinom(n_cells, 1, 0.3)
+  cat("No fi_grid found - using synthetic 25-cell test patch.\n")
+  fi_dt <- data.table(
+    grid_id = seq_len(25L),
+    SVR = runif(25L, 0, 0.1),
+    p_l = runif(25L, 0.2, 0.8),
+    p_d = 1.0,
+    fresh_fact = 1.0,
+    k_used = mean(k_fast_defaults),
+    C0i = 1.0,
+    Dragage_flag = 1L
   )
-  USE_REAL_DATA <- FALSE
 }
 
-# ── 3. Monte Carlo iterations ─────────────────────────────────────────────────
-n_cells    <- nrow(fi_sub)
-has_svr    <- "SVR" %in% names(fi_sub)
-has_pl     <- any(c("p_l_corr", "p_l") %in% names(fi_sub))
-has_c0i    <- "C0i" %in% names(fi_sub)
-has_dflag  <- any(c("Dragage_flag", "ref_binary") %in% names(fi_sub))
-pl_col     <- if ("p_l_corr" %in% names(fi_sub)) "p_l_corr" else "p_l"
-dflag_col  <- if ("Dragage_flag" %in% names(fi_sub)) "Dragage_flag" else "ref_binary"
+n_cells <- nrow(fi_dt)
+cat(sprintf("n_cells used for this batch: %d\n", n_cells))
+cat("Known limitation: classification error is applied at cell level, not at ping level.\n")
 
-if (!has_svr || !has_pl) {
-  # Reconstruct a minimal representation from f_i_full if SVR not present
-  if ("f_i_full" %in% names(fi_sub)) {
-    fi_sub[, SVR     := f_i_full / max(f_i_full, na.rm = TRUE) * 0.1]
-    fi_sub[, p_l_corr := 0.5]
-    has_svr <- TRUE; has_pl <- TRUE; pl_col <- "p_l_corr"
-    cat("SVR/p_l reconstructed from f_i_full for MC purposes.\n")
-  } else {
-    stop("Cannot perform MC: SVR and p_l_corr columns missing from fi_grid.")
+if (!("SVR" %in% names(fi_dt))) {
+  stop("Cannot perform Monte Carlo: SVR column missing from fi_grid.")
+}
+
+grid_id_base <- if ("grid_id" %in% names(fi_dt)) fi_dt$grid_id else seq_len(n_cells)
+svr_base <- fi_dt$SVR
+c0i_base <- if ("C0i" %in% names(fi_dt)) fi_dt$C0i else rep(1.0, n_cells)
+dflag_col <- if ("Dragage_flag" %in% names(fi_dt)) {
+  "Dragage_flag"
+} else if ("ref_binary" %in% names(fi_dt)) {
+  "ref_binary"
+} else {
+  NULL
+}
+dflag_base <- if (!is.null(dflag_col)) as.integer(fi_dt[[dflag_col]]) else rep(1L, n_cells)
+
+has_raw_depth <- all(c("p_l", "p_d") %in% names(fi_dt))
+has_fresh_fact <- "fresh_fact" %in% names(fi_dt)
+has_p_l_corr <- "p_l_corr" %in% names(fi_dt)
+has_k_used <- "k_used" %in% names(fi_dt)
+
+if (has_raw_depth) {
+  p_l_base <- fi_dt$p_l
+  p_d_safe <- fifelse(is.finite(fi_dt$p_d) & fi_dt$p_d > 0, fi_dt$p_d, 1.0)
+  w1_v <- pmin(0.05, p_d_safe) / p_d_safe
+  w2_v <- pmin(0.05, pmax(p_d_safe - 0.05, 0)) / p_d_safe
+  fresh_fact_base <- if (has_fresh_fact) fi_dt$fresh_fact else rep(1.0, n_cells)
+  cat("alpha_dep will be reapplied from p_l and p_d for each Monte Carlo iteration.\n")
+  if (!has_fresh_fact) {
+    cat("Known limitation: fresh_fact missing from fi_grid; using pl_eff without freshness weighting.\n")
   }
+} else if (has_p_l_corr) {
+  p_l_corr_base <- fi_dt$p_l_corr
+  cat("Known limitation: p_l/p_d missing from fi_grid; reusing p_l_corr, so alpha_dep cannot be perturbed.\n")
+} else {
+  stop("Cannot perform Monte Carlo: need either p_l+p_d or p_l_corr in fi_grid.")
 }
 
-if (!has_c0i) fi_sub[, C0i := 1.0]  # dimensionless proxy
-if (!has_dflag) {
-  fi_sub[, Dragage_flag := 1L]  # assume all cells are dredging
-  dflag_col <- "Dragage_flag"   # ensure fallback column is used below
+if (has_k_used) {
+  k_used_base <- fi_dt$k_used
+} else {
+  k_used_base <- rep(mean(k_fast_defaults), n_cells)
+  cat("Known limitation: k_used missing from fi_grid; using mean k_fast fallback.\n")
 }
 
+pos_frac <- AIS_POS_ERROR_M_1SIGMA / CELL_SIZE_M
+flip_prob <- max(0, min(1, 1 - LOYO_AUC))
 results_list <- vector("list", N_ITER)
 
 for (iter_offset in seq_len(N_ITER)) {
   iter_id <- ITER_START + iter_offset - 1
 
-  dt_iter <- copy(fi_sub)
-
-  # ── Error source 1: AIS position error ──────────────────────────────────────
-  # Perturb SVR slightly: position error shifts cells by ~AIS_POS_ERROR_M_1SIGMA/CELL_SIZE_M
-  # This is a fractional effect on SVR (conservative approximation)
-  pos_frac <- AIS_POS_ERROR_M_1SIGMA / CELL_SIZE_M   # ~0.03
-  dt_iter[, SVR := SVR * pmax(0, 1 + rnorm(.N, mean = 0, sd = pos_frac))]
-
-  # ── Error source 2: Classification error ────────────────────────────────────
-  # Flip the Dragage_flag with probability (1 - LOYO_AUC) per ping
-  # For cell-level, this approximates the expected mislabel rate
-  flip_prob <- 1 - LOYO_AUC
+  svr_mc <- svr_base * pmax(0, 1 + rnorm(n_cells, mean = 0, sd = pos_frac))
   flips <- rbinom(n_cells, 1, flip_prob)
-  dt_iter[, Dragage_flag_mc := fifelse(flips == 1,
-                                        as.integer(1 - get(dflag_col)),
-                                        as.integer(get(dflag_col)))]
-  dt_iter[, SVR := SVR * Dragage_flag_mc]
+  dragage_flag_mc <- fifelse(flips == 1L, 1L - dflag_base, dflag_base)
+  svr_mc <- svr_mc * dragage_flag_mc
 
-  # ── Error source 3: fi parameter uncertainty ─────────────────────────────────
-  alpha_dep_mc     <- fi_params_default$alpha_dep * rnorm(1, 1, FI_PARAM_CV)
-  fast_frac_mc     <- pmin(1, pmax(0, fi_params_default$fast_fraction *
-                                       rnorm(1, 1, FI_PARAM_CV)))
-  slow_k_mc        <- pmax(0, fi_params_default$slow_k * rnorm(1, 1, FI_PARAM_CV))
-  preserv_fact_mc  <- pmin(1, pmax(0, fi_params_default$preservation_factor *
-                                       rnorm(1, 1, FI_PARAM_CV)))
-  k_mult_mc        <- pmax(0, fi_params_default$k_fast_multiplier *
-                               rnorm(1, 1, FI_PARAM_CV))
-
-  # Use mean k_fast across provinces (scalar approximation)
-  k_fast_defaults <- c(
-    North_Pacific = 1.67, South_Pacific = 3.84, Atlantic = 1.00,
-    Indian = 4.76, Mediterranean = 12.3, Arctic = 0.275,
-    Gulf_Mexico_Caribbean = 16.8
+  alpha_dep_mc <- fi_params_default$alpha_dep * rnorm(1, 1, FI_PARAM_CV)
+  fast_frac_mc <- pmin(1, pmax(0, fi_params_default$fast_fraction * rnorm(1, 1, FI_PARAM_CV)))
+  slow_k_mc <- pmax(0, fi_params_default$slow_k * rnorm(1, 1, FI_PARAM_CV))
+  preserv_fact_mc <- pmin(
+    1,
+    pmax(0, fi_params_default$preservation_factor * rnorm(1, 1, FI_PARAM_CV))
   )
-  k_mean_mc <- mean(k_fast_defaults * k_mult_mc)
+  k_mult_mc <- pmax(0, fi_params_default$k_fast_multiplier * rnorm(1, 1, FI_PARAM_CV))
 
-  # Recalculate f_i with perturbed parameters
-  dt_iter[, f_i_mc := SVR * get(pl_col) * preserv_fact_mc *
-                       (fast_frac_mc       * (1 - exp(-k_mean_mc)) +
-                        (1 - fast_frac_mc) * (1 - exp(-slow_k_mc)))]
+  if (has_raw_depth) {
+    pl_eff_new <- w1_v * p_l_base + w2_v * p_l_base * alpha_dep_mc
+    pl_corr_new <- pl_eff_new * fresh_fact_base
+  } else {
+    pl_corr_new <- p_l_corr_base
+  }
 
-  dt_iter[, C_ri_mc := C0i * f_i_mc]
+  k_new <- k_used_base * k_mult_mc
+  fi_mc <- svr_mc * pl_corr_new * preserv_fact_mc *
+    (fast_frac_mc * (1 - exp(-k_new)) +
+       (1 - fast_frac_mc) * (1 - exp(-slow_k_mc)))
+  c_ri_mc <- c0i_base * fi_mc
 
   results_list[[iter_offset]] <- data.table(
-    cell_id   = seq_len(n_cells),
-    grid_id   = if ("grid_id" %in% names(fi_sub)) fi_sub$grid_id else seq_len(n_cells),
+    cell_id = seq_len(n_cells),
+    grid_id = grid_id_base,
     iteration = iter_id,
-    fi_value  = dt_iter$f_i_mc,
-    C_ri_value = dt_iter$C_ri_mc
+    fi_value = fi_mc,
+    C_ri_value = c_ri_mc
   )
 }
 
 mc_results <- rbindlist(results_list)
-
 cat(sprintf("Generated %d MC rows (%d cells x %d iterations)\n",
             nrow(mc_results), n_cells, N_ITER))
 
-# ── 4. Save batch output ──────────────────────────────────────────────────────
-# On cluster, prefer ~/scratch/output_V6/ (NFS scratch); fall back to local output_V6/
 out_dir <- if (dir.exists(file.path(path.expand("~"), "scratch"))) {
   file.path(path.expand("~"), "scratch", "output_V6", "uncertainty")
 } else {
@@ -234,5 +297,5 @@ if (requireNamespace("arrow", quietly = TRUE)) {
   cat(sprintf("Saved (rds): %s\n", out_rds))
 }
 
-runtime_sec <- proc.time()["elapsed"] - t0
+runtime_sec <- proc.time()[["elapsed"]] - t0
 cat(sprintf("Batch %d done in %.1f seconds.\n", BATCH_ID, runtime_sec))
