@@ -7,9 +7,9 @@
 #SBATCH --output=logs/step5_merge_%j.out
 #SBATCH --error=logs/step5_merge_%j.err
 #SBATCH --time=06:00:00
-#SBATCH --mem=128G
-#SBATCH --cpus-per-task=8
-#SBATCH --nodelist=hpc-05.grit.ucsb.edu
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=4
+#SBATCH --partition=emlab_nodes,grit_nodes
 
 # R packages installes dans ~/R/library
 export R_LIBS_USER=~/R/library
@@ -81,8 +81,17 @@ if [ ! -f "$SCRIPT_PATH" ]; then
 fi
 echo "Script R: $SCRIPT_PATH"
 
-# Lancement
-/usr/bin/Rscript "$SCRIPT_PATH" 2>&1
+# Fix: libproj.so.22 not in default path; symlink ~/lib/libproj.so.22 -> libproj.so.25
+export LD_LIBRARY_PATH=$HOME/lib:${LD_LIBRARY_PATH:-}
+
+# Lancement via Apptainer (portable: fonctionne sur emlab_nodes et grit_nodes)
+IMG=~/scratch/rocker_geospatial_step5.sif
+module load apptainer 2>/dev/null || true
+if [ -f "$IMG" ] && command -v apptainer &>/dev/null; then
+  apptainer exec --bind /scratch,/home "$IMG" Rscript "$SCRIPT_PATH" 2>&1
+else
+  /usr/bin/Rscript "$SCRIPT_PATH" 2>&1
+fi
 
 exit_code=$?
 
