@@ -386,6 +386,14 @@ if (n_land_pool > 0) {
       w <- w[top_k]
     }
 
+    # Guard: Gaussian weights can underflow to 0 when all candidates are >> LAMBDA_KM away
+    # (typical in Stage-5 connectivity fallback). Use uniform weights as fallback.
+    if (sum(w) == 0) {
+      w[] <- 1 / length(w)
+      cat(sprintf("    WARN: weight underflow for land cell (%d,%d) at (%.1f,%.1f) — uniform fallback\n",
+                  d0_i, d0_j, d0_lon, d0_lat))
+    }
+
     # Normalize
     w <- w / sum(w)
 
@@ -464,6 +472,15 @@ if (n_land_pool > 0) {
 
 cat(sprintf("  Active OCIM cells after redistribution: %d\n", nrow(ocim_flux)))
 
+# Fail-fast: if weight underflow guard failed for any reason, NaN mass would propagate
+# through mass-fix and corrupt J_umol. Catch here before any further computation.
+n_nan_mass <- sum(is.nan(ocim_flux$mass_gC_yr))
+if (n_nan_mass > 0) {
+  stop(sprintf(
+    "FATAL: NaN in mass_gC_yr for %d cells after redistribution. Weight normalization produced NaN.",
+    n_nan_mass))
+}
+
 # ── Mass-fix (M2): correct double-precision residual ──────────────────────────
 
 cat("\n--- Mass-fix (M2) ---\n")
@@ -519,21 +536,24 @@ cat(sprintf("  LOCK4 max cell share: %.2f%% (ref: %.0f%%) %s\n",
             if (max_share <= LOCK4_HOTSPOT_CAP) "OK" else "WARN"))
 
 # Lock 5: Mean redistribution distance — DIAGNOSTIC (was hard lock)
-cat(sprintf("  LOCK5 mean redist distance: %.0f km (ref: %d km) %s\n",
-            mean_redist_km, LOCK5_MEAN_DIST_CAP,
-            if (mean_redist_km <= LOCK5_MEAN_DIST_CAP) "OK" else "WARN"))
+# mean_redist_km can be NaN when all redistributed cells have identical coordinates
+lock5_label <- if (is.nan(mean_redist_km)) "NaN" else sprintf("%.0f", mean_redist_km)
+lock5_status <- if (is.nan(mean_redist_km)) "WARN(NaN)" else if (mean_redist_km <= LOCK5_MEAN_DIST_CAP) "OK" else "WARN"
+cat(sprintf("  LOCK5 mean redist distance: %s km (ref: %d km) %s\n",
+            lock5_label, LOCK5_MEAN_DIST_CAP, lock5_status))
 
 # Lock 6: Ocean-fraction density cap
-positive_flux <- ocim_flux$F_gC_m2_yr[ocim_flux$F_gC_m2_yr > 0]
+positive_flux <- ocim_flux$F_gC_m2_yr[is.finite(ocim_flux$F_gC_m2_yr) & ocim_flux$F_gC_m2_yr > 0]
 if (length(positive_flux) > 1) {
   max_density_ratio <- max(positive_flux) / median(positive_flux)
 } else {
   max_density_ratio <- 1
 }
-cat(sprintf("  LOCK6 max/median density ratio: %.0f (threshold: %.0f) %s\n",
-            max_density_ratio, LOCK6_DENSITY_RATIO,
-            if (max_density_ratio <= LOCK6_DENSITY_RATIO) "PASS" else "FAIL"))
-if (max_density_ratio > LOCK6_DENSITY_RATIO) stop(sprintf("LOCK6 FAIL: max/median density ratio %.0f > %.0f", max_density_ratio, LOCK6_DENSITY_RATIO))
+lock6_status <- if (is.nan(max_density_ratio) || is.na(max_density_ratio)) "WARN(NaN)" else if (max_density_ratio <= LOCK6_DENSITY_RATIO) "PASS" else "FAIL"
+cat(sprintf("  LOCK6 max/median density ratio: %s (threshold: %.0f) %s\n",
+            if (is.finite(max_density_ratio)) sprintf("%.0f", max_density_ratio) else "NaN",
+            LOCK6_DENSITY_RATIO, lock6_status))
+if (isTRUE(max_density_ratio > LOCK6_DENSITY_RATIO)) stop(sprintf("LOCK6 FAIL: max/median density ratio %.0f > %.0f", max_density_ratio, LOCK6_DENSITY_RATIO))
 
 # Lock 7: No absolute fallback (every land cell must find a connected ocean target)
 cat(sprintf("  LOCK7 absolute fallback: %d %s\n",
@@ -552,11 +572,12 @@ cat("\n--- Section 4: Inject into bottom cell ---\n")
 
 ocim_flux[, k_bottom := kbot[cbind(i_ocim, j_ocim)]]
 
-# Remove any cells where kbot == 0 (shouldn't happen after redistribution, but safety)
-bad_kbot <- ocim_flux[k_bottom == 0]
+# Remove any cells where kbot == 0 or NA (shouldn't happen after redistribution, but safety)
+bad_kbot <- ocim_flux[is.na(k_bottom) | k_bottom == 0]
 if (nrow(bad_kbot) > 0) {
-  cat(sprintf("  WARNING: %d cells with kbot=0 (dropping)\n", nrow(bad_kbot)))
-  ocim_flux <- ocim_flux[k_bottom > 0]
+  cat(sprintf("  WARNING: %d cells with kbot=0 or NA (dropping, mass: %.3e gC/yr)\n",
+              nrow(bad_kbot), sum(bad_kbot$mass_gC_yr, na.rm = TRUE)))
+  ocim_flux <- ocim_flux[!is.na(k_bottom) & k_bottom > 0]
 }
 
 ocim_flux[, DZT_bot := DZT3d[cbind(i_ocim, j_ocim, k_bottom)]]
@@ -597,6 +618,10 @@ if (has_lower) Jdredge_lower[ocim_flux$vec_pos] <- ocim_flux$J_lower
 if (has_upper) Jdredge_upper[ocim_flux$vec_pos] <- ocim_flux$J_upper
 if (has_cons)  Jdredge_conservative[ocim_flux$vec_pos] <- ocim_flux$J_cons
 
+n_nonfinite <- sum(!is.finite(Jdredge))
+if (n_nonfinite > 0) stop(sprintf(
+  "FATAL: %d non-finite values in Jdredge. Patches did not resolve the root cause — aborting export.",
+  n_nonfinite))
 n_active <- sum(Jdredge > 0)
 cat(sprintf("  Jdredge length: %d (m)\n", m))
 cat(sprintf("  Active cells: %d\n", n_active))
@@ -683,26 +708,26 @@ cat(sprintf("  shelf_flux_pct: %.2f%%\n", shelf_flux_pct))
 max_cell_share_pct <- 100 * max_share
 cat(sprintf("  max_cell_share_pct: %.2f%%\n", max_cell_share_pct))
 
-# 5. top1pct_flux_share
-n_top1pct <- max(1L, as.integer(ceiling(nrow(ocim_flux) * 0.01)))
-top1pct_mass <- sum(sort(ocim_flux$mass_gC_yr, decreasing = TRUE)[1:n_top1pct])
-top1pct_flux_share <- 100 * top1pct_mass / total_input_gC
-cat(sprintf("  top1pct_flux_share: %.2f%%\n", top1pct_flux_share))
+# 5. top5_flux_share (top-1% collapses to 1 cell on a ~78-cell grid, identical to max_cell_share)
+n_top5 <- min(5L, nrow(ocim_flux))
+top5_mass <- sum(sort(ocim_flux$mass_gC_yr, decreasing = TRUE)[1:n_top5])
+top5_flux_share <- 100 * top5_mass / total_input_gC
+cat(sprintf("  top5_flux_share: %.2f%%\n", top5_flux_share))
 
-# 6. delta_median_dist_coast_km & delta_p90
+# 6. median_dist_coast_km & p90_dist_coast_km
+# Flux-weighted absolute coastal distance of final recipient cells (NOT origin-to-recipient delta)
 ocim_flux[, dist_coast := dist.to.coast2d[cbind(i_ocim, j_ocim)]]
 if (nrow(ocim_flux) > 0) {
-  # Flux-weighted quantiles
   ord <- order(ocim_flux$dist_coast)
-  cum_flux <- cumsum(ocim_flux$mass_gC_yr[ord]) / sum(ocim_flux$mass_gC_yr)
-  delta_median_dist_coast_km <- ocim_flux$dist_coast[ord[which.min(abs(cum_flux - 0.5))]]
-  delta_p90_dist_coast_km    <- ocim_flux$dist_coast[ord[which.min(abs(cum_flux - 0.9))]]
+  cum_flux <- cumsum(ocim_flux$mass_gC_yr[ord]) / sum(ocim_flux$mass_gC_yr, na.rm = TRUE)
+  median_dist_coast_km <- ocim_flux$dist_coast[ord[which.min(abs(cum_flux - 0.5))]]
+  p90_dist_coast_km    <- ocim_flux$dist_coast[ord[which.min(abs(cum_flux - 0.9))]]
 } else {
-  delta_median_dist_coast_km <- 0
-  delta_p90_dist_coast_km    <- 0
+  median_dist_coast_km <- 0
+  p90_dist_coast_km    <- 0
 }
-cat(sprintf("  delta_median_dist_coast_km: %.1f\n", delta_median_dist_coast_km))
-cat(sprintf("  delta_p90_dist_coast_km: %.1f\n", delta_p90_dist_coast_km))
+cat(sprintf("  median_dist_coast_km: %.1f\n", median_dist_coast_km))
+cat(sprintf("  p90_dist_coast_km: %.1f\n", p90_dist_coast_km))
 
 # Spot check: top-10 cells with enhanced columns
 top10 <- ocim_flux[order(-J_umol)][1:min(10, nrow(ocim_flux))]
@@ -720,7 +745,7 @@ for (r in seq_len(nrow(top10))) {
 
 # Depth distribution of active cells
 cat("\n  Depth distribution of active bottom cells:\n")
-depth_summary <- ocim_flux[, .(n_cells = .N, mean_J = mean(J_umol)),
+depth_summary <- ocim_flux[, .(n_cells = .N, mean_J = mean(J_umol, na.rm = TRUE)),
                            by = .(depth_bin = cut(DZT_bot, breaks = c(0, 50, 200, 500, 2000, Inf)))]
 print(depth_summary)
 
@@ -767,9 +792,9 @@ R.matlab::writeMat(
   offshore.displacement.pct    = offshore_displacement_pct,
   shelf.flux.pct               = shelf_flux_pct,
   max.cell.share.pct           = max_cell_share_pct,
-  top1pct.flux.share           = top1pct_flux_share,
-  delta.median.dist.coast.km   = delta_median_dist_coast_km,
-  delta.p90.dist.coast.km      = delta_p90_dist_coast_km,
+  top5.flux.share              = top5_flux_share,
+  median.dist.coast.km         = median_dist_coast_km,
+  p90.dist.coast.km            = p90_dist_coast_km,
   # Metadata — redistribution parameters
   redistribution.R.km          = R_KM,
   redistribution.lambda.km     = LAMBDA_KM,
