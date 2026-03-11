@@ -1,14 +1,14 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# Step 5 : Fusion des tuiles SAR -> grille f_i finale
+# Step 5 : Fusion the tiles SAR -> grid f_i finale
 # =============================================================================
 # Fixes applied:
-#  A : Dedup keeps ALL cells (prefer owner tile, fallback to max sum_dw)
-#  B : k_fast mapping works with basin-keyed OR province-keyed YAML
-#  C : p_l = pl_sum / n_with_pl (worker-corrected schema)
-#  D : Centroid coordinates use constants.R (bottom-up)
-#  E : GeoTIFF row inversion (terra top-down)
-#  F : Minimal but actionable diagnostics
+# A : Dedup keeps ALL cells (prefer owner tile, fallback to max sum_dw)
+# B : k_fast mapping works with basin-keyed OR province-keyed YAML
+# C : p_l = pl_sum / n_with_pl (worker-corrected schema)
+# D : Centroid coordinates use constants.R (bottom-up)
+# E : GeoTIFF row intoion (terra top-down)
+# F : Minimal but actionable diagnostics
 # =============================================================================
 
 suppressPackageStartupMessages({
@@ -36,16 +36,16 @@ source(file.path(script_dir, "constants.R"))
 
 sf_use_s2(FALSE)
 
-cat("Grille :", GRID_COLS, "x", GRID_ROWS, " cellules de", CELL_SIZE_M, "m\n")
+cat("Grid :", GRID_COLS, "x", GRID_ROWS, " cells of", CELL_SIZE_M, "m\n")
 cat("Emprise X :", WORLD_XMIN, "->", WORLD_XMAX, "\n")
 cat("Emprise Y :", WORLD_YMIN, "->", WORLD_YMAX, "\n\n")
 
-# --- Parametres de ligne de commande ------------------------------------------
+# --- Parameters of line of commande ------------------------------------------
 args <- commandArgs(trailingOnly = TRUE)
 scenario <- if(length(args) > 0) args[1] else "default"
 cat("Fusion finale - Scenario :", scenario, "\n")
 
-# --- Chargement des parametres YAML -------------------------------------------
+# --- Loading the parameters YAML -------------------------------------------
 param_yaml <- "~/scratch/configuration/fi_parameters_with_freshness.yaml"
 params_raw <- yaml::read_yaml(param_yaml)
 
@@ -59,13 +59,13 @@ get_scenario <- function(name) {
 }
 par <- get_scenario(scenario)
 
-# --- Verification des parametres requis ---------------------------------------
+# --- Verification the parameters required ---------------------------------------
 required <- c("alpha_dep","fast_fraction","slow_k","preservation_factor","k_fast")
 miss <- setdiff(required, names(par))
-if(length(miss)) stop("Parametres YAML manquants : ", paste(miss, collapse=", "))
-if (length(par$k_fast) == 0) stop("k_fast vide dans le YAML")
+if(length(miss)) stop("Parameters YAML missing : ", paste(miss, collapse=", "))
+if (length(par$k_fast) == 0) stop("k_fast vide in the YAML")
 
-# --- Table des k regionaux (raw from YAML) ------------------------------------
+# --- Table the k regionaux (raw from YAML) ------------------------------------
 k_yaml_names <- names(par$k_fast)
 k_yaml_vals  <- unlist(par$k_fast) *
                 ifelse(is.null(par$k_fast_multiplier), 1, par$k_fast_multiplier)
@@ -76,56 +76,56 @@ slow_k        <- par$slow_k
 preserv_fact  <- ifelse(is.null(par$preservation_factor), 0.87,  par$preservation_factor)  # p_r
 depletion_di  <- ifelse(is.null(par$depletion_factor),    0.272, par$depletion_factor)       # d_i
 
-cat("Parametres f_i :\n")
-cat("   - alpha_dep       :", alpha_dep, "\n")
-cat("   - fast_fraction   :", fast_frac, "\n")
-cat("   - slow_k          :", slow_k, "a-1\n")
-cat("   - p_r (preserv)   :", preserv_fact, "\n")
-cat("   - d_i (depletion) :", depletion_di, "\n")
-cat("   - k_fast keys     :", paste(k_yaml_names, collapse=", "), "\n")
+cat("Parameters f_i :\n")
+cat(" - alpha_dep :", alpha_dep, "\n")
+cat(" - fast_fraction :", fast_frac, "\n")
+cat(" - slow_k :", slow_k, "a-1\n")
+cat(" - preserv_factor (p_r) :", preserv_fact, "\n")
+cat(" - depletion_di  (d_i) :", depletion_di, "\n")
+cat(" - k_fast keys :", paste(k_yaml_names, collapse=", "), "\n")
 stopifnot(!is.na(alpha_dep), !is.na(fast_frac), !is.na(slow_k), !is.na(preserv_fact), !is.na(depletion_di))
-cat("Tous les parametres sont valides\n\n")
+cat("Tous the parameters are valides\n\n")
 
 # =============================================================================
-# 1) Fusion des tuiles SAR
+# 1) Fusion the tiles SAR
 # =============================================================================
-cat("== 1) Fusion des tuiles SAR ==\n")
+cat("== 1) Fusion the tiles SAR ==\n")
 
 sar_files <- list.files("~/scratch/output_V6/", pattern="^sar_.*\\.(parquet|rds)$", full.names=TRUE)
-if(length(sar_files) == 0) stop("Aucun fichier sar_* trouve dans ~/scratch/output_V6/")
+if(length(sar_files) == 0) stop("No file sar_* found in ~/scratch/output_V6/")
 
 parquet_count <- sum(grepl("\\.parquet$", sar_files))
 rds_count     <- sum(grepl("\\.rds$", sar_files))
-cat("Fichiers trouves :", length(sar_files), "(Parquet:", parquet_count, "RDS:", rds_count, ")\n")
+cat("Files found :", length(sar_files), "(Parquet:", parquet_count, "RDS:", rds_count, ")\n")
 
-# Chargement SAR avec provenance tile_id
+# Loading SAR with provenance tile_id
 tile_from_file <- function(f) as.integer(sub("^sar_", "", sub("\\.(parquet|rds)$", "", basename(f))))
 
 sar_list <- vector("list", length(sar_files))
 for(i in seq_along(sar_files)) {
   file <- sar_files[i]
-  cat("   Chargement :", basename(file), "\n")
+  cat(" Loading :", basename(file), "\n")
   dt <- if(grepl("\\.parquet$", file)) as.data.table(read_parquet(file))
         else as.data.table(readRDS(file))
   dt[, source_tile_id := tile_from_file(file)]
   sar_list[[i]] <- dt
 }
 
-cat("Assemblage des donnees...\n")
+cat("Assemblage the data...\n")
 sar_global <- rbindlist(sar_list, fill=TRUE)
 rm(sar_list); gc()
 setDT(sar_global)
 
 n_rows_raw   <- nrow(sar_global)
 n_gridid_raw <- uniqueN(sar_global$grid_id)
-cat("Avant deduplication :", n_rows_raw, "lignes,", n_gridid_raw, "grid_id uniques\n")
+cat("Avant deduplication :", n_rows_raw, "lines,", n_gridid_raw, "grid_id uniques\n")
 
 # =============================================================================
 # 2) Deduplication — Fix A : keep ALL cells, no drops
 # =============================================================================
 cat("\n== 2) Deduplication owner-tile ==\n")
 
-# Centres cellules EPSG:6933
+# Centres cells EPSG:6933
 cent <- unique(sar_global[, .(grid_id)])
 cent[, `:=`(
   col = (grid_id - 1L) %% GRID_COLS,
@@ -137,10 +137,10 @@ cent[, `:=`(
 )]
 cent_sf <- st_as_sf(cent, coords = c("x", "y"), crs = 6933)
 
-# Charger les tuiles core (sans buffer) — auto-detect layer with tile_id
+# Charger the tiles core (without buffer) — auto-detect layer with tile_id
 tiles_path <- "~/scratch/output_V6/tiles_1000km.gpkg"
 if (!file.exists(path.expand(tiles_path))) {
-  stop("Fichier tuiles introuvable : ", tiles_path)
+  stop("File tiles introuvable : ", tiles_path)
 }
 ly <- st_layers(path.expand(tiles_path))
 layer_ok <- NULL
@@ -148,11 +148,11 @@ for (L in ly$name) {
   s <- try(st_read(path.expand(tiles_path), layer = L, quiet = TRUE), silent = TRUE)
   if (!inherits(s, "try-error") && "tile_id" %in% names(s)) { layer_ok <- L; break }
 }
-if (is.null(layer_ok)) stop("Aucun layer avec colonne tile_id dans ", tiles_path)
+if (is.null(layer_ok)) stop("No layer with column tile_id in ", tiles_path)
 tiles <- st_read(path.expand(tiles_path), layer = layer_ok, quiet = TRUE)
-cat("Tiles layer :", layer_ok, "->", nrow(tiles), "tuiles\n")
+cat("Tiles layer :", layer_ok, "->", nrow(tiles), "tiles\n")
 
-# Jointure spatiale : trouver la tuile owner de chaque cellule
+# Jointure spatiale : trouver the tile owner of chaque cell
 owner <- as.data.table(st_join(cent_sf, tiles[, "tile_id"], left = TRUE))
 owner[, geometry := NULL]
 setnames(owner, "tile_id", "owner_tile_id")
@@ -173,22 +173,22 @@ stopifnot(nrow(sar_global) == uniqueN(sar_global$grid_id))
 
 # Zero-drop check: must keep ALL unique grid_ids
 if (nrow(sar_global) != n_gridid_raw) {
-  warning("Dedup a modifie le nombre de grid_id: ", n_gridid_raw, " -> ", nrow(sar_global))
+  warning("Dedup a modifie the nombre of grid_id: ", n_gridid_raw, " -> ", nrow(sar_global))
 }
 
 n_with_owner    <- sum(sar_global$is_owner == 1L, na.rm = TRUE)
 n_without_owner <- nrow(sar_global) - n_with_owner
-cat("Deduplication :", nrow(sar_global), "cellules uniques\n")
-cat("   avec owner-tile :", n_with_owner, "\n")
-cat("   sans owner (fallback max sum_dw) :", n_without_owner, "\n")
+cat("Deduplication :", nrow(sar_global), "cells uniques\n")
+cat(" with owner-tile :", n_with_owner, "\n")
+cat(" without owner (fallback max sum_dw) :", n_without_owner, "\n")
 
-# Nettoyage colonnes temporaires
+# Nettoyage columns temporaires
 sar_global[, c("source_tile_id", "owner_tile_id", "is_owner") := NULL]
 
 # =============================================================================
-# 3) Calcul des metriques SAR / SVR — Fix C
+# 3) Calcul the metrics SAR / SVR — Fix C
 # =============================================================================
-cat("\n== 3) Calcul des metriques SAR/SVR ==\n")
+cat("\n== 3) Calcul the metrics SAR/SVR ==\n")
 
 sar_global[, SAR := sum_dw / CELL_AREA_M2]
 sar_global[, p_d := fifelse(sum_dw > 0, sum_dw_pd / sum_dw, NA_real_)]
@@ -205,7 +205,7 @@ if ("n_with_pl" %in% names(sar_global) && "pl_sum" %in% names(sar_global)) {
 # Option B depth-weighting: surface layer [0-5 cm] + capped deep layer [5-10 cm].
 # Sediment below 10 cm contributes 0 labile fraction on a 1-year timescale
 # (beyond Holocene bioturbated layer; k < 1e-4 a-1, negligible in 365 days).
-# Guard against p_d = 0 or NA (→ treated as 1 m default, consistent with tile worker).
+# Guard against p_d = 0 or NA (treated as 1 m default, consistent with tile worker).
 sar_global[, p_d_safe := fifelse(is.na(p_d) | p_d <= 0, 1, p_d)]
 sar_global[, `:=`(
   w1 = pmin(0.05, p_d_safe) / p_d_safe,
@@ -214,11 +214,11 @@ sar_global[, `:=`(
 sar_global[, p_l_eff := w1 * p_l + w2 * p_l * alpha_dep]
 sar_global[, c("p_d_safe", "w1", "w2") := NULL]
 
-cat("SAR  : min=", min(sar_global$SAR, na.rm=TRUE),
+cat("SAR : min=", min(sar_global$SAR, na.rm=TRUE),
     " max=", max(sar_global$SAR, na.rm=TRUE), "\n")
-cat("SVR  : min=", min(sar_global$SVR, na.rm=TRUE),
+cat("SVR : min=", min(sar_global$SVR, na.rm=TRUE),
     " max=", max(sar_global$SVR, na.rm=TRUE), "\n")
-cat("p_l  : non-NA =", sum(!is.na(sar_global$p_l)), "/", nrow(sar_global), "\n")
+cat("p_l : not-NA =", sum(!is.na(sar_global$p_l)), "/", nrow(sar_global), "\n")
 
 # =============================================================================
 # 4) Provinces Longhurst + k_fast mapping — Fix B
@@ -231,9 +231,9 @@ longhurst <- st_read(
 )
 longhurst <- st_transform(longhurst, 6933)
 
-# Detecter la colonne code
+# Detecter the column code
 code_col <- grep("code$", names(longhurst), value = TRUE, ignore.case = TRUE)[1]
-if(is.na(code_col) || code_col == "") stop("Champ code Longhurst introuvable dans le shapefile")
+if(is.na(code_col) || code_col == "") stop("Champ code Longhurst introuvable in the shapefile")
 longhurst <- dplyr::rename(longhurst, longhurst_pr = !!sym(code_col))
 
 prov_codes <- unique(longhurst$longhurst_pr)
@@ -253,13 +253,13 @@ if (is_province_mode) {
   # Province-keyed: direct join
   overlap <- length(intersect(k_yaml_names, prov_codes))
   if (overlap < 0.8 * length(k_yaml_names)) {
-    warning("Province-mode mais overlap faible: ", overlap, "/", length(k_yaml_names),
+    warning("Province-mode mais overlap low: ", overlap, "/", length(k_yaml_names),
             " (verifier les cles YAML)")
   }
   k_table <- data.table(longhurst_pr = k_yaml_names, k_fast = k_yaml_vals)
   longhurst <- dplyr::left_join(longhurst, k_table, by = "longhurst_pr")
   if (!"k_fast" %in% names(longhurst)) {
-    stop("Province mode actif mais k_fast n'a pas ete joint sur longhurst (verifier code_col / YAML keys)")
+    stop("Province mode actif mais k_fast n'a pas ete joint on longhurst (check code_col / YAML keys)")
   }
 } else {
   # Basin-keyed: map province -> basin using geographic rules
@@ -316,10 +316,10 @@ grid_cent[, `:=`(
 
 sf_cent <- st_as_sf(grid_cent, coords = c("x","y"), crs = 6933)
 
-# Jointure avec Longhurst
+# Jointure with Longhurst
 fi_dt <- as.data.table(st_join(sf_cent, longhurst, left=TRUE))[, geometry := NULL]
 
-# Fusion avec les donnees SAR
+# Fusion with the data SAR
 fi_dt <- merge(fi_dt, sar_global, by="grid_id", all.x=TRUE)
 
 # --- Lon/lat from sf_cent (reuse, no recalculation) --------------------------
@@ -331,7 +331,7 @@ fi_dt <- merge(fi_dt, coords_4326, by = "grid_id", all.x = TRUE)
 
 # --- k_fast assignment (basin mode) ------------------------------------------
 if (!is_province_mode) {
-  if (is.null(basin_k)) stop("basin_k non defini (bug logique)")
+  if (is.null(basin_k)) stop("basin_k not defined (logic bug)")
 
   # Join LUT on longhurst province code
   fi_dt <- merge(fi_dt, PROV_BASIN_LUT, by.x = "longhurst_pr", by.y = "prov_code", all.x = TRUE)
@@ -362,7 +362,7 @@ if (!is_province_mode) {
   pct_na_k <- 100 * mean(is.na(fi_dt$k_fast))
   if (pct_na_k > 5) {
     unmatched <- setdiff(unique(fi_dt$basin_norm), basin_k$basin_norm)
-    warning("k_fast NA > 5% en basin mode (", round(pct_na_k, 1), "%). Basins non matches: ",
+    warning("k_fast NA > 5% in basin mode (", round(pct_na_k, 1), "%). Unmatched basins: ",
             paste(unmatched, collapse = ", "))
   }
 
@@ -377,10 +377,10 @@ if (!is_province_mode) {
 
 # --- k_fast coverage diagnostics ---------------------------------------------
 n_with_k <- sum(!is.na(fi_dt$k_fast))
-cat("k_fast non-NA :", n_with_k, "/", nrow(fi_dt),
+cat("k_fast not-NA :", n_with_k, "/", nrow(fi_dt),
     sprintf("(%.1f%%)\n", 100 * n_with_k / nrow(fi_dt)))
 
-# --- Charger le facteur de fraicheur depuis le YAML ---------------------------
+# --- Charger the facteur of fraicheur depuis the YAML ---------------------------
 if (!is.null(par$fresh_fact) && length(par$fresh_fact) > 0) {
   fresh_fact_table <- data.table(
     longhurst_pr = names(par$fresh_fact),
@@ -400,9 +400,6 @@ fi_dt[, `:=`(
 
 t <- 1
 fi_dt[, `:=`(
-  # f_i_full: base formula (Sala et al. 2021 structure)
-  # f_i = SVR × p_l_corr × p_r × [two-pool kinetics]
-  # p_r = 0.87: fraction of disturbed OC that resettles in originating cell (spatial factor)
   f_i_full = SVR * p_l_corr * preserv_fact *
              ( fast_frac * (1 - exp(-k_used * t)) +
                (1 - fast_frac) * (1 - exp(-slow_k * t)) ),
@@ -413,12 +410,10 @@ fi_dt[, `:=`(
 )]
 
 # f_i_depleted: applies d_i depletion factor for chronically trawled cells (Atwood et al. 2023)
-# d_i = 0.272 for cells trawled annually >10 years; d_i = 1 otherwise.
-# Here applied globally as conservative default (all active cells assumed chronically disturbed).
-# C_r,i = C_0,i × f_i_depleted  (Atwood et al. eq.)
+# d_i = 0.272 for cells trawled annually >10 years; applied globally as conservative default.
 fi_dt[, f_i_depleted := f_i_full * depletion_di]
 
-# CAP dans [0, 1]
+# CAP in [0, 1]
 fi_dt[, f_i_full         := pmin(pmax(f_i_full, 0), 1)]
 fi_dt[, f_i_depleted     := pmin(pmax(f_i_depleted, 0), 1)]
 fi_dt[, f_i_conservative := pmin(pmax(f_i_conservative, 0), 1)]
@@ -432,16 +427,16 @@ nb_fallback <- fi_dt[, sum(is_fallback, na.rm=TRUE)]
 nb_active   <- fi_dt[, sum(SVR > 0, na.rm=TRUE)]
 if (nb_active == 0) nb_active <- 1
 
-cat(sprintf("   Cellules k_fast manquant (fallback k_used=1.0) : %d / %d (%.1f%%)\n",
+cat(sprintf(" Cells k_fast missing (fallback k_used=1.0) : %d / %d (%.1f%%)\n",
             nb_fallback, nb_active, 100*nb_fallback/nb_active))
 if (nb_fallback / nb_active > 0.05) {
-  warning("Plus de 5% des cellules n'ont pas de k_fast (fallback k_used=1.0)")
+  warning("Plus of 5% the cells n'ont pas of k_fast (fallback k_used=1.0)")
 }
 
-cat(sprintf("   p_l non-NA        : %d / %d (%.1f%%)\n",
+cat(sprintf(" p_l not-NA : %d / %d (%.1f%%)\n",
             sum(!is.na(fi_dt$p_l)), nrow(fi_dt),
             100 * sum(!is.na(fi_dt$p_l)) / nrow(fi_dt)))
-cat(sprintf("   f_i_full non-NA   : %d / %d (%.1f%%)\n",
+cat(sprintf(" f_i_full not-NA : %d / %d (%.1f%%)\n",
             sum(!is.na(fi_dt$f_i_full)), nrow(fi_dt),
             100 * sum(!is.na(fi_dt$f_i_full)) / nrow(fi_dt)))
 
@@ -451,9 +446,9 @@ print(head(fi_dt[order(-f_i_full),
                    f_i_full, lon_deg, lat_deg)], 10))
 
 # =============================================================================
-# 6) Sauvegarde finale
+# 6) Save finale
 # =============================================================================
-cat("\n== 6) Sauvegarde ==\n")
+cat("\n== 6) Save ==\n")
 
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
 
@@ -465,16 +460,16 @@ cat("Parquet :", basename(out_parquet), "\n")
 # RDS
 out_rds <- sprintf("~/scratch/output_V6/fi_grid_%s.rds", timestamp)
 saveRDS(fi_dt, out_rds)
-cat("RDS     :", basename(out_rds), "\n")
+cat("RDS :", basename(out_rds), "\n")
 
 # =============================================================================
-# 7) GeoTIFF — Fix E : inversion row top-down
+# 7) GeoTIFF — Fix E : intoion row top-down
 # =============================================================================
 CREATE_GEOTIFF <- as.logical(Sys.getenv("MAKE_TIFF", "TRUE"))
 if (is.na(CREATE_GEOTIFF)) CREATE_GEOTIFF <- TRUE
 
 if(CREATE_GEOTIFF) {
-  cat("\n== 7) Creation du raster GeoTIFF ==\n")
+  cat("\n== 7) Creation of raster GeoTIFF ==\n")
 
   tryCatch({
     raster_data <- fi_dt[, .(grid_id, f_i_full)]
@@ -510,21 +505,21 @@ if(CREATE_GEOTIFF) {
         gdal      = c("COMPRESS=LZW", "TILED=YES", "BLOCKXSIZE=512", "BLOCKYSIZE=512")
       )
 
-      cat("GeoTIFF cree :", basename(out_tif), "\n")
-      cat("Statistiques raster :", nrow(raster_data), "cellules non-NA sur", ncell(r), "pixels\n")
+      cat("GeoTIFF created :", basename(out_tif), "\n")
+      cat("Statistiques raster :", nrow(raster_data), "cells not-NA on", ncell(r), "pixels\n")
     } else {
-      cat("Aucune donnee f_i valide pour creer le raster\n")
+      cat("No data f_i valide for creer the raster\n")
     }
   }, error = function(e) {
-    cat("Echec creation GeoTIFF :", e$message, "\n")
-    cat("Les fichiers Parquet et RDS sont disponibles\n")
+    cat("Failure creation GeoTIFF :", e$message, "\n")
+    cat("The files Parquet et RDS are disponibles\n")
   })
 } else {
   cat("\nCreation GeoTIFF desactivee\n")
 }
 
-cat("\nStep 5 merge termine avec succes !\n")
-cat("Fichiers crees :\n")
-cat("   -", basename(out_parquet), "\n")
-cat("   -", basename(out_rds), "\n")
-if(CREATE_GEOTIFF) cat("   -", sprintf("fi_grid_%s.tif", timestamp), "\n")
+cat("\nStep 5 merge completed successfully !\n")
+cat("Files crees :\n")
+cat(" -", basename(out_parquet), "\n")
+cat(" -", basename(out_rds), "\n")
+if(CREATE_GEOTIFF) cat(" -", sprintf("fi_grid_%s.tif", timestamp), "\n")
