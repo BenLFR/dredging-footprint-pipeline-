@@ -119,8 +119,8 @@ Supported layouts:
   the repository root itself is the Obsidian vault, so `--open-in-obsidian` is
   usually enough
 - separate vault:
-  pass both `--obsidian-vault` and `--obsidian-vault-root` so the wrapper can
-  translate the saved note path into a vault-relative path
+  pass both `--obsidian-vault` and `--obsidian-vault-root`; the wrapper will
+  mirror the note from the repo into the vault and then open the mirrored copy
 
 Recommended practice:
 
@@ -128,6 +128,8 @@ Recommended practice:
 - use `cli` only when the official Obsidian CLI is preferred explicitly
 - keep local markdown as the source of truth even when Obsidian is used as the
   reading layer
+- for this workstation, prefer a dedicated vault named `KnowledgeVault` at
+  `C:\Users\loeff\Obsidian\KnowledgeVault`
 
 ### 9. Close the loop
 

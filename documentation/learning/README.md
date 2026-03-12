@@ -119,7 +119,8 @@ Two vault layouts are supported:
   `--open-in-obsidian`
 - separate vault:
   keep the vault elsewhere and pass both `--obsidian-vault` and
-  `--obsidian-vault-root` so the wrapper can derive a vault-relative path
+  `--obsidian-vault-root`; the wrapper will mirror the saved note into the
+  vault before opening it
 
 Examples:
 
@@ -140,6 +141,13 @@ python tools/promote_teaching_note.py \
   --obsidian-vault "KnowledgeVault" \
   --obsidian-vault-root "C:\\Users\\loeff\\Obsidian\\KnowledgeVault"
 ```
+
+Recommended dedicated vault for this setup:
+
+- vault name: `KnowledgeVault`
+- vault root: `C:\Users\loeff\Obsidian\KnowledgeVault`
+- repo remains the source of truth; Obsidian receives mirrored markdown for
+  reading and annotation
 
 ## Existing seed materials
 

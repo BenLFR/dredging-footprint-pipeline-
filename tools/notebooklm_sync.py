@@ -257,6 +257,34 @@ def resolve_note_path(path_value: str | Path) -> Path:
     return path.resolve()
 
 
+def note_is_within(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
+
+def mirror_note_into_obsidian_vault(note_path: Path, vault_root: str | None) -> Path:
+    if not vault_root:
+        return note_path
+
+    vault_root_path = Path(vault_root).expanduser().resolve()
+    if note_is_within(note_path, vault_root_path):
+        return note_path
+    if not note_is_within(note_path, ROOT.resolve()):
+        raise ValueError(
+            "Cannot mirror note into a separate Obsidian vault because the note "
+            "is outside both the repository root and the vault root."
+        )
+
+    relative_path = note_path.relative_to(ROOT.resolve())
+    mirrored_path = vault_root_path / relative_path
+    mirrored_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(note_path, mirrored_path)
+    return mirrored_path
+
+
 def resolve_obsidian_relative_path(note_path: Path, vault_root: str | None) -> str:
     candidate_roots: list[Path] = []
     if vault_root:
@@ -314,18 +342,23 @@ def resolve_obsidian_cli(note_path: Path, *, obsidian_bin: str, vault: str | Non
 
 
 def open_note_in_obsidian(path_value: str | Path, args: argparse.Namespace) -> dict[str, Any]:
-    note_path = resolve_note_path(path_value)
+    source_note_path = resolve_note_path(path_value)
     method = getattr(args, "obsidian_method", "auto")
     vault = getattr(args, "obsidian_vault", None)
     vault_root = getattr(args, "obsidian_vault_root", None)
     obsidian_bin = getattr(args, "obsidian_bin", DEFAULT_OBSIDIAN_BIN)
+    note_path = mirror_note_into_obsidian_vault(source_note_path, vault_root)
     uri_error: Exception | None = None
 
     if method in {"auto", "uri"}:
         try:
             uri = build_obsidian_open_uri(note_path, vault=vault, vault_root=vault_root)
             launch_obsidian_uri(uri)
-            return {"method": "uri", "uri": uri, "note_path": str(note_path)}
+            payload = {"method": "uri", "uri": uri, "note_path": str(note_path)}
+            if note_path != source_note_path:
+                payload["source_note_path"] = str(source_note_path)
+                payload["mirrored_note_path"] = str(note_path)
+            return payload
         except Exception as exc:
             if method == "uri":
                 raise RuntimeError(f"Failed to open note in Obsidian via URI: {exc}") from exc
@@ -339,7 +372,11 @@ def open_note_in_obsidian(path_value: str | Path, args: argparse.Namespace) -> d
             vault_root=vault_root,
         )
         subprocess.run(command, check=True)
-        return {"method": "cli", "command": command, "note_path": str(note_path)}
+        payload = {"method": "cli", "command": command, "note_path": str(note_path)}
+        if note_path != source_note_path:
+            payload["source_note_path"] = str(source_note_path)
+            payload["mirrored_note_path"] = str(note_path)
+        return payload
     except Exception as exc:
         if uri_error is not None:
             raise RuntimeError(
