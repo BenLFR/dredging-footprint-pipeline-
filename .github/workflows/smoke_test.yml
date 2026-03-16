@@ -16,6 +16,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run editorial hygiene checks (Phase 1 scope)
+        run: python tests/editorial_hygiene_check.py --strict --include README.md CONTRIBUTING.md docs/*.md documentation/*.md deploy/*.sh config/templates/slurm/*.sh
+
+      - name: Run deploy sanitation checks
+        run: python tests/deploy_sanitation_check.py --strict
+
+      - name: Run deploy shell syntax checks
+        shell: bash
+        run: |
+          shopt -s nullglob
+          bash -n deploy/*.sh
+          bash -n config/templates/slurm/submit_step.sh
+          bash -n pipeline/*.sh pipeline/step5/*.sh
+
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
         with:
