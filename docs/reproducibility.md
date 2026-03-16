@@ -113,43 +113,58 @@ Set environment variables common to all steps:
 
 ```bash
 export SCRATCH_DIR=~/scratch
-export CONFIG_DIR=$(pwd)/config
+export CONFIG_DIR="${SCRATCH_DIR}/configuration"   # where land_mask/, longhurst/, etc. live
 export PIPELINE_DIR=$(pwd)/pipeline
+export OUTPUT_DIR="${SCRATCH_DIR}/output_V6"
 ```
 
 Upload code and configs to the cluster (adapt hostnames as needed):
 
 ```bash
-bash deploy/sync_pipeline.sh --env-file deploy/config.example.env
+bash deploy/hpc_sync.sh --env-file deploy/config.example.env
 ```
 
 Then submit steps in order:
 
 ```bash
 # Step 0 — Core temporal window selection
-sbatch config/templates/slurm/submit_step.sh pipeline/step0/step0_core_window.R
+#   AIS_INPUT_FILE must point to the raw GFW data on scratch
+AIS_INPUT_FILE="${SCRATCH_DIR}/AIS_data/ais_filtered.csv" \
+  sbatch pipeline/step0/step0_window_select.sh
 
 # Step 1 — Split AIS data by vessel
-sbatch config/templates/slurm/submit_step.sh pipeline/step1/step1_split_navires.R
+sbatch pipeline/step1/step1_split_vessels.sh
 
 # Step 2 — Per-vessel track filtering (array job, one task per vessel)
-sbatch pipeline/step2/step2_process_array.sh
+#   SPLIT_JOB_ID = the SLURM job ID from step 1 (check squeue or logs)
+SPLIT_JOB_ID=<step1_job_id> sbatch pipeline/step2/step2_process_array.sh
 
 # Step 3 — Merge vessels, GMM activity classification, DBSCAN
-sbatch config/templates/slurm/submit_step.sh pipeline/step3/step3_merge_final.R
+#   SPLIT_JOB_ID and RESULTS_DIR must reference step 1/2 outputs
+SPLIT_JOB_ID=<step1_job_id> \
+  RESULTS_DIR="${SCRATCH_DIR}/ais_results_<step2_job_id>" \
+  sbatch pipeline/step3/step3_merge.sh
 
 # Step 4 — Join dbSEABED lithology
-sbatch config/templates/slurm/submit_step.sh pipeline/step4/step4_add_lithology.R
+#   Requires hubocean_cache in SCRATCH_DIR (see data/README.md §3)
+sbatch pipeline/step4/step4_add_lithology.sh
 
-# Step 5 — Tiled SAR computation + global merge
-sbatch pipeline/step5/step5_tile_job.sh          # parallel tile workers
-sbatch pipeline/step5/step5_merge_slurm.sh       # after all tiles complete
+# Step 5a — Generate tile grid (run once, produces tiles_1000km.gpkg)
+Rscript pipeline/step5/step5_make_tiles.R
+N_TILES=$(Rscript -e "library(sf); cat(nrow(sf::st_read('${OUTPUT_DIR}/tiles_1000km.gpkg', quiet=TRUE)))")
+echo "Tile count: $N_TILES"
+
+# Step 5b — Tiled SAR computation (array job)
+sbatch --array="1-${N_TILES}%20" pipeline/step5/step5_tile_job.sh
+
+# Step 5c — Global merge of all tiles
+sbatch pipeline/step5/step5_merge_slurm.sh
 
 # Step 6 — CRI (cumulative risk index)
-sbatch config/templates/slurm/submit_step.sh pipeline/step6/step6_calculate_cri.R
+sbatch pipeline/step6/step6_calculate_cri.sh
 
 # Step 7 — Export Jdredge forcing for OCIM CO2 model
-sbatch config/templates/slurm/submit_step.sh pipeline/step7/step7_export_jdredge.R
+sbatch pipeline/step7/step7_export_jdredge.sh
 ```
 
 ### Expected outputs
@@ -162,8 +177,8 @@ sbatch config/templates/slurm/submit_step.sh pipeline/step7/step7_export_jdredge
 | step3 | `$SCRATCH_DIR/output_V6/AIS_data_core_preprocessed_V6_*.rds` | merged, activity-classified |
 | step4 | `$SCRATCH_DIR/output_V6/AIS_with_lithology_*.rds` | + lithology columns |
 | step5 | `$SCRATCH_DIR/output_V6/fi_grid_*.parquet` / `.tif` | lon, lat, SAR, fi |
-| step6 | `$SCRATCH_DIR/output_V6/cri_grid_*.parquet` / `.tif` | lon, lat, CRI |
-| step7 | `$SCRATCH_DIR/output_V6/Jdredge.mat` | OCIM2-48L forcing matrix |
+| step6 | `$SCRATCH_DIR/output_V6/cri_final_*.parquet` / `.tif` | lon, lat, C_ri |
+| step7 | `$SCRATCH_DIR/output_V6/jdredge_ocim2_48l_*.mat` | OCIM2-48L forcing matrix |
 
 ### Result verification
 
@@ -182,7 +197,7 @@ cat("Global mean fi:", mean(fi$fi, na.rm = TRUE), "\n")
 After step 6:
 
 ```r
-cri <- read_parquet(Sys.glob("output_V6/cri_grid_*.parquet")[1])
+cri <- read_parquet(Sys.glob("output_V6/cri_final_*.parquet")[1])
 stopifnot(nrow(cri) > 0,
           all(c("lon", "lat", "cri") %in% names(cri)))
 cat("Active cells:", sum(cri$cri > 0, na.rm = TRUE), "\n")

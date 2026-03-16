@@ -37,16 +37,19 @@ invisible(sapply(pkgs, safe_library))
 cat("Tous les packages charges avec succes\n\n")
 
 ## 0.5 Configuration terra pour HPC ---------------------------------------------
-tmp_terra <- file.path(path.expand("~"), "scratch/tmp_terra")
+scratch_dir <- path.expand(Sys.getenv("SCRATCH_DIR", unset = "~/scratch"))
+config_dir  <- path.expand(Sys.getenv("CONFIG_DIR",  unset = file.path(scratch_dir, "configuration")))
+output_dir  <- path.expand(Sys.getenv("OUTPUT_DIR",  unset = file.path(scratch_dir, "output_V6")))
+tmp_terra   <- file.path(scratch_dir, "tmp_terra")
 dir.create(tmp_terra, showWarnings = FALSE, recursive = TRUE)
 terraOptions(memfrac = 0.8, tempdir = tmp_terra, progress = 0)
+cat("SCRATCH_DIR:", scratch_dir, "\n")
+cat("CONFIG_DIR: ", config_dir, "\n")
 cat("terraOptions: memfrac=0.8, tempdir=", tmp_terra, "\n\n")
 
 ## 1.  Chemins I/O --------------------------------------------------------------
-home_dir <- path.expand("~")
-cache_dir <- file.path(home_dir, "scratch/hubocean_cache")
-output_dir <- file.path(home_dir, "scratch/output_V6")
-config_dir <- file.path(home_dir, "ais-pipeline/configuration/lithology")
+home_dir  <- path.expand("~")
+cache_dir <- path.expand(Sys.getenv("HUBOCEAN_CACHE_DIR", unset = file.path(scratch_dir, "hubocean_cache")))
 
 # Verification cache HubOcean
 if (!dir.exists(cache_dir)) {

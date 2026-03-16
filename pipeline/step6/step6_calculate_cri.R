@@ -11,10 +11,17 @@ suppressPackageStartupMessages({
 })
 sf::sf_use_s2(FALSE)
 
-# constants.R must be in the same directory as this script
+# constants.R: look in script dir first, then parent (pipeline/)
 script_dir <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(), value = TRUE)))
 if (length(script_dir) == 0 || script_dir == "") script_dir <- getwd()
-source(file.path(script_dir, "constants.R"))
+constants_candidates <- c(
+  file.path(script_dir, "constants.R"),
+  file.path(dirname(script_dir), "constants.R")
+)
+constants_path <- Filter(file.exists, constants_candidates)[1]
+if (length(constants_path) == 0 || !file.exists(constants_path))
+  stop("constants.R not found (looked in ", script_dir, " and parent)")
+source(constants_path)
 
 # ---- PATH CONFIGURATION (override via env vars) ----
 scratch_dir <- path.expand(Sys.getenv("SCRATCH_DIR", unset = "~/scratch"))

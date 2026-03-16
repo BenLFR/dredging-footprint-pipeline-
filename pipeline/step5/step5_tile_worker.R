@@ -49,7 +49,15 @@ this_file <- function() {
   stop("Cannot locate running script")
 }
 script_dir <- dirname(this_file())
-source(file.path(script_dir, "constants.R"))
+# Look for constants.R in same dir first, then parent (pipeline/)
+constants_candidates <- c(
+  file.path(script_dir, "constants.R"),
+  file.path(dirname(script_dir), "constants.R")
+)
+constants_path <- Filter(file.exists, constants_candidates)[1]
+if (length(constants_path) == 0 || !file.exists(constants_path))
+  stop("constants.R not found (looked in ", script_dir, " and parent)")
+source(constants_path)
 
 # Safety fallback if constants.R predates DEEP_HORIZON
 if (!exists("DEEP_HORIZON")) {

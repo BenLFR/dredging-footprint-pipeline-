@@ -18,26 +18,33 @@ export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 
+# Cluster-neutral path resolution
+SCRATCH_DIR="${SCRATCH_DIR:-$HOME/scratch}"
+CONFIG_DIR="${CONFIG_DIR:-${SCRATCH_DIR}/configuration}"
+PIPELINE_DIR="${PIPELINE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+LOGS_DIR="${LOGS_DIR:-${SCRATCH_DIR}/../logs}"
+
 # Critical geospatial configuration
-export LAND_MASK_FILE=~/ais-pipeline/configuration/land_mask/land_polygons.shp
-export LAND_MASK_BUFFER_M=0
-export LAND_NEAR_COAST_KM=5
+export LAND_MASK_FILE="${LAND_MASK_FILE:-${CONFIG_DIR}/land_mask/land_polygons.shp}"
+export LAND_MASK_BUFFER_M="${LAND_MASK_BUFFER_M:-0}"
+export LAND_NEAR_COAST_KM="${LAND_NEAR_COAST_KM:-5}"
+export SCRATCH_DIR CONFIG_DIR PIPELINE_DIR
 
 # Land mask pre-flight check
-if [ -f "$HOME/ais-pipeline/configuration/land_mask/land_polygons.shp" ]; then
-    echo "Land mask found: $(ls -lh $HOME/ais-pipeline/configuration/land_mask/land_polygons.shp | awk '{print $5}')"
+if [ -f "$LAND_MASK_FILE" ]; then
+    echo "Land mask found: $(ls -lh "$LAND_MASK_FILE" | awk '{print $5}')"
 else
-    echo "WARNING: Land mask NOT FOUND!"
+    echo "WARNING: Land mask NOT FOUND at: $LAND_MASK_FILE"
 fi
 
 # Directories
 SPLIT_JOB_ID=${SPLIT_JOB_ID:?ERROR: SPLIT_JOB_ID must be set before running this script}
-mkdir -p ~/ais-pipeline/pipeline_V6/logs
-
-cd ~/ais-pipeline/pipeline_V6
+mkdir -p "${LOGS_DIR}"
 
 echo "Starting vessel processing for task $SLURM_ARRAY_TASK_ID..."
-echo "Source: ~/scratch/ais_split_${SPLIT_JOB_ID}/"
+echo "PIPELINE_DIR: $PIPELINE_DIR"
+echo "SCRATCH_DIR:  $SCRATCH_DIR"
+echo "Source: ${SCRATCH_DIR}/ais_split_${SPLIT_JOB_ID}/"
 echo "LAND_MASK_FILE: $LAND_MASK_FILE"
 echo "LAND_MASK_BUFFER_M: $LAND_MASK_BUFFER_M"
 echo "LAND_NEAR_COAST_KM: $LAND_NEAR_COAST_KM"
@@ -51,7 +58,7 @@ fi
 
 export SLURM_ARRAY_TASK_ID=$SLURM_ARRAY_TASK_ID
 export SPLIT_JOB_ID=$SPLIT_JOB_ID
-Rscript step2_process_vessel.R 2>&1
+Rscript "${PIPELINE_DIR}/step2_process_vessel.R" 2>&1
 
 exit_code=$?
 
@@ -64,4 +71,4 @@ fi
 
 # Affichage résultat
 echo "VESSEL SUMMARY $SLURM_ARRAY_TASK_ID:"
-ls -lh ~/scratch/ais_split_${SPLIT_JOB_ID}/navire_*${SLURM_ARRAY_TASK_ID}_*_clean.rds 2>/dev/null || echo "clean file not found"
+ls -lh "${SCRATCH_DIR}/ais_results_${SLURM_ARRAY_JOB_ID}/"*"${SLURM_ARRAY_TASK_ID}"*_clean.rds 2>/dev/null || echo "clean file not found"

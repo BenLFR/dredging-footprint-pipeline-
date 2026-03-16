@@ -31,7 +31,8 @@ cat("Start:", format(Sys.time()), "\n\n")
 
 # Configuration des chemins (dynamique selon l'utilisateur)
 home_dir <- path.expand("~")
-output_dir <- file.path(home_dir, "scratch/output_V6")
+scratch_dir <- path.expand(Sys.getenv("SCRATCH_DIR", unset = "~/scratch"))
+output_dir  <- path.expand(Sys.getenv("OUTPUT_DIR",  unset = file.path(scratch_dir, "output_V6")))
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
 # Checkpointing system for fast restart

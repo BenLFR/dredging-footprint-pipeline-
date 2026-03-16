@@ -70,8 +70,14 @@ local({
     message("[INFO] pipeline_warnings.R not found — limitation checks skipped.")
 })
 
+# ---- PATH CONFIGURATION (override via env vars) ----
+scratch_dir <- path.expand(Sys.getenv("SCRATCH_DIR", unset = "~/scratch"))
+config_dir  <- path.expand(Sys.getenv("CONFIG_DIR",  unset = file.path(scratch_dir, "configuration")))
+cat("SCRATCH_DIR:", scratch_dir, "\n")
+cat("CONFIG_DIR: ", config_dir, "\n")
+
 # ---- GEOSPATIAL PARAMETERS ----
-land_mask_path_raw <- Sys.getenv("LAND_MASK_FILE", unset = "~/ais-pipeline/configuration/land_mask/land_polygons.shp")
+land_mask_path_raw <- Sys.getenv("LAND_MASK_FILE", unset = file.path(config_dir, "land_mask", "land_polygons.shp"))
 land_mask_path     <- path.expand(land_mask_path_raw)
 land_buffer_m      <- suppressWarnings(as.numeric(Sys.getenv("LAND_MASK_BUFFER_M", unset = "0")))
 if (is.na(land_buffer_m)) land_buffer_m <- 0
@@ -489,7 +495,7 @@ cat("Task ID:", task_id, "\n")
 cat("Split Job ID:", split_job_id, "\n")
 
 # ---- CHEMINS FICHIERS ----
-split_dir <- file.path("~/scratch", paste0("ais_split_", split_job_id))
+split_dir <- file.path(scratch_dir, paste0("ais_split_", split_job_id))
 metadata_file <- file.path(split_dir, "navires_metadata.csv")
 
 if (!file.exists(metadata_file)) stop("Metadata file not found: ", metadata_file)
@@ -538,7 +544,7 @@ if (nrow(dt_nav) > 0) {
 }
 
 # ---- READ VESSEL SPECIFICATIONS ----
-spec_file <- "~/ais-pipeline/configuration/ship_specs.yaml"
+spec_file <- Sys.getenv("SHIP_SPECS_FILE", unset = file.path(config_dir, "ship_specs.yaml"))
 if (!file.exists(spec_file)) stop("ship_specs.yaml not found: ", spec_file)
 
 spec_list  <- yaml::read_yaml(spec_file)$ship_specs
@@ -729,7 +735,7 @@ n_before_geo <- nrow(dt_nav)
 # Load speed_margin_pct from YAML config (technique.speed_margin_pct), fallback 0.15
 speed_margin_pct <- 0.15
 {
-  cfg_file_sm <- "~/ais-pipeline/configuration/outlier_config_V6.yaml"
+  cfg_file_sm <- Sys.getenv("OUTLIER_CONFIG_FILE", unset = file.path(config_dir, "outlier_config_V6.yaml"))
   if (file.exists(cfg_file_sm)) {
     cfg_sm <- tryCatch(yaml.load_file(cfg_file_sm), error = function(e) list())
     if (!is.null(cfg_sm$technique$speed_margin_pct))
@@ -852,7 +858,7 @@ dt_nav[, Course_change := c(NA_real_, abs(diff(Course)))]
 dt_nav[Course_change > 180, Course_change := 360 - Course_change]
 dt_nav[, Accel         := c(NA_real_, diff(Speed * 0.514444) / pmax(delta_t[-1], 1))]
 
-config_file <- "~/ais-pipeline/configuration/outlier_config_V6.yaml"
+config_file <- Sys.getenv("OUTLIER_CONFIG_FILE", unset = file.path(config_dir, "outlier_config_V6.yaml"))
 if (file.exists(config_file)) {
   config <- yaml.load_file(config_file)
   outlier_config <- list(
@@ -940,7 +946,7 @@ cat("  Outliers detected:", n_outliers, "(", outlier_rate, "%)\n")
 cat("  Stops detected:", n_stops, "(", stop_rate, "%)\n")
 
 # ---- SAUVEGARDE ----
-output_dir <- file.path("~/scratch", paste0("ais_results_", Sys.getenv("SLURM_ARRAY_JOB_ID")))
+output_dir <- file.path(scratch_dir, paste0("ais_results_", Sys.getenv("SLURM_ARRAY_JOB_ID")))
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
 safe_name <- gsub("[^A-Za-z0-9_-]", "_", navire_name)

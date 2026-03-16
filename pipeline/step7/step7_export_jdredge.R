@@ -49,7 +49,15 @@ OFFSHORE_DELTA_KM    <- 50      # threshold for "offshore displacement"
 
 script_dir <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(), value = TRUE)))
 if (length(script_dir) == 0 || script_dir == "") script_dir <- getwd()
-source(file.path(script_dir, "constants.R"))
+# Look for constants.R in script dir first, then parent (pipeline/)
+constants_candidates <- c(
+  file.path(script_dir, "constants.R"),
+  file.path(dirname(script_dir), "constants.R")
+)
+constants_path <- Filter(file.exists, constants_candidates)[1]
+if (length(constants_path) == 0 || !file.exists(constants_path))
+  stop("constants.R not found (looked in ", script_dir, " and parent)")
+source(constants_path)
 
 scratch_dir <- path.expand(Sys.getenv("SCRATCH_DIR", unset = "~/scratch"))
 OUT_DIR   <- path.expand(Sys.getenv("OUT_DIR",  Sys.getenv("OUTPUT_DIR",  file.path(scratch_dir, "output_V6"))))
