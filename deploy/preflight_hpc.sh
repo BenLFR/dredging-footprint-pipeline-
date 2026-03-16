@@ -68,6 +68,32 @@ if [[ -n "${SYNC_ITEMS:-}" ]]; then
   done
 fi
 
+# Check that repo-shipped config files required for a full run are present locally.
+deploy::info "Checking required local config files..."
+_required_configs=(
+  "config/ship_specs.yaml"
+  "config/outlier_config_V6.yaml"
+  "config/fi_parameters_with_freshness.yaml"
+  "config/runtime_thresholds.csv"
+)
+_missing=0
+for _f in "${_required_configs[@]}"; do
+  if deploy::resolve_local_path "${_f}" >/dev/null 2>&1; then
+    deploy::info "  OK: ${_f}"
+  else
+    deploy::warn "  MISSING: ${_f} (required for full pipeline run)"
+    _missing=$((_missing + 1))
+  fi
+done
+if [[ "${_missing}" -gt 0 ]]; then
+  deploy::warn "${_missing} required config file(s) missing. Run 'git status' to check."
+fi
+
+# Remind about large external assets that cannot be shipped in the repo.
+deploy::warn "Full run also requires external data assets in SCRATCH_DIR/configuration/:"
+deploy::warn "  land_mask/, longhurst_v4_2010/, atwood_carbon_full/, trawling_history.rds, ocim/"
+deploy::warn "  See config/README.md for download sources."
+
 if [[ "${run_ping}" -eq 1 ]]; then
   bash "${SCRIPT_DIR}/hpc_ping.sh" --env-file "${DEPLOY_ENV_FILE}"
 fi

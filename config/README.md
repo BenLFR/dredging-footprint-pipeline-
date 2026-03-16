@@ -78,3 +78,40 @@ Used by: step 5b (tile worker), step 5c (merge).
 ## `outlier_config.yaml` (deprecated)
 
 Superseded by `outlier_config_V6.yaml`. Retained in history only. Do not use.
+
+---
+
+## Runtime data assets (not shipped in this repo)
+
+The full pipeline requires large external datasets that cannot be included here
+due to size or licensing. They must be placed in `$SCRATCH_DIR/configuration/`
+(default: `~/scratch/configuration/`) before running the relevant steps.
+
+| Asset | Expected path under `$CONFIG_DIR` | Required by | Source |
+|-------|-----------------------------------|-------------|--------|
+| Land mask shapefile | `land_mask/land_polygons.shp` | step 2 | [OpenStreetMap](https://osmdata.openstreetmap.de/data/land-polygons.html) — download `land-polygons-complete-4326.zip` |
+| Longhurst provinces | `longhurst_v4_2010/Longhurst_world_v4_2010.shp` | step 5 | [VLIZ](https://www.marineregions.org/downloads.php) — Longhurst v4 shapefile |
+| Atwood carbon rasters | `atwood_carbon_full/` (directory of GeoTIFF) | step 6 | Atwood et al. 2023 — Zenodo [doi:10.5281/zenodo.7875872](https://doi.org/10.5281/zenodo.7875872) |
+| Trawling history | `trawling_history.rds` | step 6 | Sala et al. 2021 supplementary — derived from GFW trawling effort |
+| OCIM2-48L control run | `ocim/OCIM2_48L_CTL.mat` | step 7 / CO2 model | DeVries 2022 — [doi:10.5281/zenodo.5821125](https://doi.org/10.5281/zenodo.5821125) |
+| OCIM2 WOA nutrients | `ocim/woa09po4.mat`, `ocim/woa09si.mat` | CO2 model | Bundled with OCIM2 download above |
+
+### Smoke test (no external data needed)
+
+The repo-shipped smoke tests (`tests/smoke_test_steps2_5.R`) use fully
+synthetic data and run without any of the above assets:
+
+```bash
+Rscript -e "install.packages('renv', repos='https://cloud.r-project.org')"
+Rscript -e "renv::consent(provided=TRUE); renv::restore(prompt=FALSE)"
+Rscript tests/smoke_test_steps2_5.R
+```
+
+### Preflight check before a full run
+
+`deploy/preflight_hpc.sh` validates SSH connectivity and that `config/` files
+are present locally before sync. Run it with:
+
+```bash
+bash deploy/preflight_hpc.sh --env-file deploy/config.example.env
+```
