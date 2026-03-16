@@ -13,11 +13,16 @@ sf::sf_use_s2(FALSE)
 
 # constants.R must be in the same directory as this script
 script_dir <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(), value = TRUE)))
-if (length(script_dir) == 0 || script_dir == "") script_dir <- "~/ais-pipeline/pipeline_V6"
+if (length(script_dir) == 0 || script_dir == "") script_dir <- getwd()
 source(file.path(script_dir, "constants.R"))
 
+# ---- PATH CONFIGURATION (override via env vars) ----
+scratch_dir <- path.expand(Sys.getenv("SCRATCH_DIR", unset = "~/scratch"))
+config_dir  <- path.expand(Sys.getenv("CONFIG_DIR",  unset = file.path(scratch_dir, "configuration")))
+output_dir  <- path.expand(Sys.getenv("OUTPUT_DIR",  unset = file.path(scratch_dir, "output_V6")))
+
 # Terra temp directory
-tmp_terra <- file.path(path.expand("~"), "scratch/tmp_terra")
+tmp_terra <- file.path(scratch_dir, "tmp_terra")
 dir.create(tmp_terra, showWarnings = FALSE, recursive = TRUE)
 terraOptions(tempdir = tmp_terra)
 
@@ -27,8 +32,8 @@ cat("--- Step 6: Cri calculation ---\n")
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
   cat("[INFO] No f_i file specified; searching for most recent...\n")
-  fi_files <- list.files("~/scratch/output_V6/", pattern="^fi_grid_.*\\.(parquet|rds)$", full.names=TRUE)
-  if(length(fi_files) == 0) stop("No f_i file found in ~/scratch/output_V6/")
+  fi_files <- list.files(output_dir, pattern="^fi_grid_.*\\.(parquet|rds)$", full.names=TRUE)
+  if(length(fi_files) == 0) stop("No f_i file found in ", output_dir)
   fi_path <- fi_files[which.max(file.info(fi_files)$mtime)]
 } else fi_path <- args[1]
 cat("[INFO] f_i file:", basename(fi_path), "\n")
@@ -77,7 +82,7 @@ if ("f_i_conservative" %in% names(fi_dt)) {
 
 ## 2) Load C0i rasters (Atwood) and reproject to EPSG:6933 if needed ----------
 cat("[INFO] Loading C0i rasters...\n")
-carbon_dir <- path.expand("~/scratch/configuration/atwood_carbon_full")
+carbon_dir <- Sys.getenv("CARBON_DIR", unset = file.path(config_dir, "atwood_carbon_full"))
 carbon_files <- list.files(carbon_dir, pattern = "\\.tif$", full.names = TRUE)
 if(length(carbon_files) == 0) stop("No C0i TIF files in ", carbon_dir)
 
@@ -109,7 +114,7 @@ if ("C0i_global_error_upper_bound" %in% names(fi_dt)) fi_dt[, C0i_upper := C0i_g
 
 ## 3) Depletion factor di -------------------------------------------------------
 cat("[INFO] Computing depletion factor (di)...\n")
-trawling_history_path <- path.expand("~/scratch/configuration/trawling_history.rds")
+trawling_history_path <- Sys.getenv("TRAWLING_HISTORY_FILE", unset = file.path(config_dir, "trawling_history.rds"))
 if (!file.exists(trawling_history_path)) {
   fi_dt[, di := 1.0]
   cat("[WARN] Trawling history absent — di set to 1.0\n")
@@ -131,7 +136,7 @@ fi_dt[, C_ri_conservative := pmin(C0i * f_i_conservative * di, C0i)]
 
 ## 5) Save outputs --------------------------------------------------------------
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-output_prefix <- file.path(path.expand("~/scratch/output_V6/"), paste0("cri_final_", timestamp))
+output_prefix <- file.path(output_dir, paste0("cri_final_", timestamp))
 
 saveRDS(fi_dt, paste0(output_prefix, ".rds"))
 cat("[INFO] RDS written\n")

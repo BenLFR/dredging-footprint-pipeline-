@@ -101,9 +101,9 @@ echo "constants.R: $CONSTANTS_PATH"
 
 SCRIPT_PATH=""
 for cand in \
-  "$PIPELINE_DIR/step5_merge_tiles_optimized.R" \
-  "$PIPELINE_DIR/pipeline_V6/step5_merge_tiles_optimized.R" \
-  "$PIPELINE_DIR/pipeline/step5_merge_tiles.R"; do
+  "$SCRIPT_DIR/step5_merge_tiles.R" \
+  "$PIPELINE_DIR/step5/step5_merge_tiles.R" \
+  "$PIPELINE_DIR/step5_merge_tiles_optimized.R"; do
   if [ -f "$cand" ]; then
     SCRIPT_PATH="$cand"
     break
@@ -112,9 +112,9 @@ done
 if [ -z "$SCRIPT_PATH" ]; then
   echo "ERROR: No script merge Step 5 found."
   echo "candidates testes:"
+  echo " - $SCRIPT_DIR/step5_merge_tiles.R"
+  echo " - $PIPELINE_DIR/step5/step5_merge_tiles.R"
   echo " - $PIPELINE_DIR/step5_merge_tiles_optimized.R"
-  echo " - $PIPELINE_DIR/pipeline_V6/step5_merge_tiles_optimized.R"
-  echo " - $PIPELINE_DIR/pipeline/step5_merge_tiles.R"
   exit 1
 fi
 echo "Script R selectionne: $SCRIPT_PATH"
@@ -122,7 +122,7 @@ echo "Script R selectionne: $SCRIPT_PATH"
 # Run
 /usr/bin/Rscript "$SCRIPT_PATH" 2>&1
 
-exit_code=$->
+exit_code=$?
 
 # Deplacer the logs to LOGS_DIR (si generes in the directory courant)
 if [ -f "${SLURM_JOB_NAME}_${SLURM_JOB_ID}.out" ]; then

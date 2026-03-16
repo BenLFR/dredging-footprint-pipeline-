@@ -34,6 +34,11 @@ this_file <- function() {
 script_dir <- dirname(this_file())
 source(file.path(script_dir, "constants.R"))
 
+# ---- PATH CONFIGURATION (override via env vars) ----
+scratch_dir <- path.expand(Sys.getenv("SCRATCH_DIR", unset = "~/scratch"))
+config_dir  <- path.expand(Sys.getenv("CONFIG_DIR",  unset = file.path(scratch_dir, "configuration")))
+output_dir  <- path.expand(Sys.getenv("OUTPUT_DIR",  unset = file.path(scratch_dir, "output_V6")))
+
 sf_use_s2(FALSE)
 
 cat("Grid :", GRID_COLS, "x", GRID_ROWS, " cells of", CELL_SIZE_M, "m\n")
@@ -46,7 +51,7 @@ scenario <- if(length(args) > 0) args[1] else "default"
 cat("Fusion finale - Scenario :", scenario, "\n")
 
 # --- Loading the parameters YAML -------------------------------------------
-param_yaml <- "~/scratch/configuration/fi_parameters_with_freshness.yaml"
+param_yaml <- Sys.getenv("FI_PARAMS_FILE", unset = file.path(config_dir, "fi_parameters_with_freshness.yaml"))
 params_raw <- yaml::read_yaml(param_yaml)
 
 get_scenario <- function(name) {
@@ -91,8 +96,8 @@ cat("Tous the parameters are valides\n\n")
 # =============================================================================
 cat("== 1) Fusion the tiles SAR ==\n")
 
-sar_files <- list.files("~/scratch/output_V6/", pattern="^sar_.*\\.(parquet|rds)$", full.names=TRUE)
-if(length(sar_files) == 0) stop("No file sar_* found in ~/scratch/output_V6/")
+sar_files <- list.files(output_dir, pattern="^sar_.*\\.(parquet|rds)$", full.names=TRUE)
+if(length(sar_files) == 0) stop("No file sar_* found in ", output_dir)
 
 parquet_count <- sum(grepl("\\.parquet$", sar_files))
 rds_count     <- sum(grepl("\\.rds$", sar_files))
@@ -138,7 +143,7 @@ cent[, `:=`(
 cent_sf <- st_as_sf(cent, coords = c("x", "y"), crs = 6933)
 
 # Charger the tiles core (without buffer) — auto-detect layer with tile_id
-tiles_path <- "~/scratch/output_V6/tiles_1000km.gpkg"
+tiles_path <- Sys.getenv("TILES_FILE", unset = file.path(output_dir, "tiles_1000km.gpkg"))
 if (!file.exists(path.expand(tiles_path))) {
   stop("File tiles introuvable : ", tiles_path)
 }
@@ -226,7 +231,7 @@ cat("p_l : not-NA =", sum(!is.na(sar_global$p_l)), "/", nrow(sar_global), "\n")
 cat("\n== 4) Provinces Longhurst ==\n")
 
 longhurst <- st_read(
-  path.expand("~/scratch/configuration/longhurst_v4_2010/Longhurst_world_v4_2010.shp"),
+  file.path(config_dir, "longhurst_v4_2010", "Longhurst_world_v4_2010.shp"),
   quiet = TRUE
 )
 longhurst <- st_transform(longhurst, 6933)
@@ -453,12 +458,12 @@ cat("\n== 6) Save ==\n")
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
 
 # Parquet
-out_parquet <- sprintf("~/scratch/output_V6/fi_grid_%s.parquet", timestamp)
+out_parquet <- file.path(output_dir, sprintf("fi_grid_%s.parquet", timestamp))
 write_parquet(fi_dt, out_parquet)
 cat("Parquet :", basename(out_parquet), "\n")
 
 # RDS
-out_rds <- sprintf("~/scratch/output_V6/fi_grid_%s.rds", timestamp)
+out_rds <- file.path(output_dir, sprintf("fi_grid_%s.rds", timestamp))
 saveRDS(fi_dt, out_rds)
 cat("RDS :", basename(out_rds), "\n")
 
@@ -497,7 +502,7 @@ if(CREATE_GEOTIFF) {
       vals[inds] <- raster_data$f_i_full
       values(r) <- vals
 
-      out_tif <- sprintf("~/scratch/output_V6/fi_grid_%s.tif", timestamp)
+      out_tif <- file.path(output_dir, sprintf("fi_grid_%s.tif", timestamp))
       writeRaster(
         r, out_tif,
         datatype  = "FLT4S",

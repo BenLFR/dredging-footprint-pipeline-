@@ -19,9 +19,11 @@ echo "Start: $(date)"
 export R_LIBS_USER=~/R/library
 
 # Directories
-PIPELINE_DIR=${HPC_PIPELINE_DIR:-~/ais-pipeline/pipeline_V6}
-mkdir -p "$PIPELINE_DIR/logs"
-mkdir -p ~/scratch/output_V6
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PIPELINE_DIR="${HPC_PIPELINE_DIR:-${SCRIPT_DIR}}"
+SCRATCH_DIR="${SCRATCH_DIR:-${HOME}/scratch}"
+mkdir -p "${SCRATCH_DIR}/output_V6"
+mkdir -p "${SCRATCH_DIR}/logs"
 
 cd "$PIPELINE_DIR" || { echo "ERROR: pipeline directory not found"; exit 2; }
 
@@ -29,7 +31,7 @@ echo "Working directory: $(pwd)"
 echo "R library path: $R_LIBS_USER"
 
 # Pre-flight: ocim_cache.mat
-OCIM_CACHE=~/scratch/configuration/ocim/ocim_cache.mat
+OCIM_CACHE="${OCIM_DIR:-${SCRATCH_DIR}/configuration/ocim}/ocim_cache.mat"
 if [ ! -f "$OCIM_CACHE" ]; then
     echo "ERROR: ocim_cache.mat missing: $OCIM_CACHE"
     echo "   Run first: matlab -batch \"run('step7_extract_ocim_cache.m')\""
@@ -38,9 +40,9 @@ fi
 echo "ocim_cache.mat: $(ls -lh "$OCIM_CACHE" | awk '{print $5}')"
 
 # Pre-flight: cri_final_*.parquet
-CRI_FILES=$(find ~/scratch/output_V6/ -name "cri_final_*.parquet" 2>/dev/null | head -5)
+CRI_FILES=$(find "${SCRATCH_DIR}/output_V6/" -name "cri_final_*.parquet" 2>/dev/null | head -5)
 if [ -z "$CRI_FILES" ]; then
-    echo "ERROR: No cri_final_*.parquet files in ~/scratch/output_V6/"
+    echo "ERROR: No cri_final_*.parquet files in ${SCRATCH_DIR}/output_V6/"
     echo "   Run Step 6 first"
     exit 1
 fi
@@ -74,7 +76,7 @@ if [ $exit_code -eq 0 ]; then
     echo ""
     echo "STEP 7 complete: $(date)"
     echo "Files generated:"
-    ls -lh ~/scratch/output_V6/jdredge_ocim2_48l_* 2>/dev/null || echo "   No jdredge files found"
+    ls -lh "${SCRATCH_DIR}/output_V6"/jdredge_ocim2_48l_* 2>/dev/null || echo "   No jdredge files found"
 else
     echo "ERROR: STEP 7 failed (code $exit_code)"
     exit $exit_code

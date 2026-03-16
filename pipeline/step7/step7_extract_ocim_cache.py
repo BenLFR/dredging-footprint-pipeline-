@@ -14,8 +14,8 @@ The ocean connectivity fields enforce basin-aware redistribution:
     redistribution targets (Adcroft regrid_runoff coastal wet-point approach)
   - seed_ocean_ij: nearest coastal wet-point per land cell via KDTree
 
-Usage on GRIT:
-  python3 ~/ais-pipeline/pipeline_V6/step7_extract_ocim_cache.py
+Usage:
+  python3 pipeline/step7/step7_extract_ocim_cache.py
 
 Input:  ~/scratch/configuration/ocim/OCIM2_48L_CTL.mat
 Output: ~/scratch/configuration/ocim/ocim_cache.mat
@@ -34,9 +34,11 @@ src_file = os.path.join(ocim_dir, "OCIM2_48L_CTL.mat")
 out_file = os.path.join(ocim_dir, "ocim_cache.mat")
 
 # Land mask shapefile for ocean-fraction computation
+_scratch = os.environ.get("SCRATCH_DIR", os.path.expanduser("~/scratch"))
+_config  = os.environ.get("CONFIG_DIR",  os.path.join(_scratch, "configuration"))
 LAND_SHP = os.path.expanduser(
     os.environ.get("LAND_MASK_FILE",
-                   "~/ais-pipeline/configuration/land_mask/land_polygons.shp")
+                   os.path.join(_config, "land_mask", "land_polygons.shp"))
 )
 
 assert os.path.isfile(src_file), f"OCIM source not found: {src_file}"

@@ -48,11 +48,12 @@ OFFSHORE_DELTA_KM    <- 50      # threshold for "offshore displacement"
 # ── Section 0: Preflight ─────────────────────────────────────────────────────
 
 script_dir <- dirname(sub("^--file=", "", grep("^--file=", commandArgs(), value = TRUE)))
-if (length(script_dir) == 0 || script_dir == "") script_dir <- "~/ais-pipeline/pipeline_V6"
+if (length(script_dir) == 0 || script_dir == "") script_dir <- getwd()
 source(file.path(script_dir, "constants.R"))
 
-OUT_DIR   <- path.expand(Sys.getenv("OUT_DIR", "~/scratch/output_V6"))
-OCIM_DIR  <- path.expand(Sys.getenv("OCIM_DIR", "~/scratch/configuration/ocim"))
+scratch_dir <- path.expand(Sys.getenv("SCRATCH_DIR", unset = "~/scratch"))
+OUT_DIR   <- path.expand(Sys.getenv("OUT_DIR",  Sys.getenv("OUTPUT_DIR",  file.path(scratch_dir, "output_V6"))))
+OCIM_DIR  <- path.expand(Sys.getenv("OCIM_DIR", file.path(Sys.getenv("CONFIG_DIR", file.path(scratch_dir, "configuration")), "ocim")))
 
 # Physical constants
 M_C  <- 12.011   # molar mass of carbon [g/mol]
