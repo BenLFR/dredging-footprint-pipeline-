@@ -52,7 +52,8 @@ jobs:
         run: |
           pkgs <- c(
             "data.table", "arrow", "qs", "mclust", "dbscan",
-            "sf", "terra", "yaml", "dplyr", "testthat"
+            "sf", "terra", "yaml", "dplyr", "testthat",
+            "lubridate", "solitude", "zoo"
           )
           missing <- pkgs[!pkgs %in% installed.packages()[,"Package"]]
           if (length(missing) > 0) {
@@ -72,6 +73,9 @@ jobs:
 
       - name: Run smoke test (steps 2-5, toy data)
         run: Rscript tests/smoke_test_steps2_5.R
+
+      - name: Run end-to-end step2 canonical test
+        run: Rscript tests/e2e_step2_canonical.R
 
       - name: Upload toy data artifact (on failure)
         if: failure()
