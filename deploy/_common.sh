@@ -69,6 +69,14 @@ deploy::ssh_target() {
   fi
 }
 
+deploy::is_local_mode() {
+  # Local mode: explicit flag, localhost target, or sbatch already available (we're on the cluster)
+  [[ "${DEPLOY_LOCAL_MODE:-0}" == "1" ]] && return 0
+  [[ "${HPC_HOST:-}" == "localhost" || "${HPC_HOST:-}" == "127.0.0.1" ]] && return 0
+  command -v sbatch >/dev/null 2>&1 && return 0
+  return 1
+}
+
 deploy::run_ssh() {
   local target
   local cmd=(ssh)
@@ -115,7 +123,11 @@ deploy::quote_args() {
 
 deploy::run_remote_shell() {
   local shell_code="$1"
-  deploy::run_ssh "bash -lc $(printf '%q' "${shell_code}")"
+  if deploy::is_local_mode; then
+    bash -lc "${shell_code}"
+  else
+    deploy::run_ssh "bash -lc $(printf '%q' "${shell_code}")"
+  fi
 }
 
 deploy::ensure_remote_dir() {

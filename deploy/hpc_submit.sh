@@ -86,8 +86,12 @@ EOF
 done
 
 deploy::load_env "${env_file}"
-deploy::require_commands ssh
-deploy::require_vars HPC_HOST HPC_BASEDIR
+if ! deploy::is_local_mode; then
+  deploy::require_commands ssh
+  deploy::require_vars HPC_HOST HPC_BASEDIR
+else
+  deploy::require_vars HPC_BASEDIR
+fi
 
 if [[ -n "${SLURM_PARTITION:-}" ]]; then
   sbatch_args+=(--partition "${SLURM_PARTITION}")
