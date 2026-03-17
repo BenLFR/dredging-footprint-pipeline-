@@ -107,64 +107,42 @@ ais <- ais[ssvid %in% target_ssv]
 fwrite(ais, "data/external/ais/ais_filtered.csv")
 ```
 
-### Step-by-step pipeline commands (HPC / SLURM)
+### Running the pipeline (HPC / SLURM)
 
-Set environment variables common to all steps:
+The pipeline is launched via a single orchestrator command. Copy
+`deploy/config.example.env` to `deploy/config.env`, fill in your cluster paths
+and AIS input file, then run:
 
 ```bash
-export SCRATCH_DIR=~/scratch
-export CONFIG_DIR="${SCRATCH_DIR}/configuration"   # where land_mask/, longhurst/, etc. live
-export PIPELINE_DIR=$(pwd)/pipeline
-export OUTPUT_DIR="${SCRATCH_DIR}/output_V6"
+# From the cluster (recommended — no SSH needed):
+cd ~/path/to/repo
+bash deploy/run_full_pipeline.sh --env-file deploy/config.env
 ```
 
-Upload code and configs to the cluster (adapt hostnames as needed):
+The orchestrator auto-detects whether it is running locally or on the cluster:
+- **On the cluster** (`sbatch` available): submits jobs directly via a relay
+  pattern — step 0 and step 1 are submitted immediately; a relay SLURM job
+  wakes up after step 1 finishes, reads the vessel count, and submits steps 2–7
+  with full `afterok` dependency chains.
+- **From a local machine**: wraps all submissions in SSH calls to the cluster.
+
+Resume from a specific step if needed:
 
 ```bash
-bash deploy/hpc_sync.sh --env-file deploy/config.example.env
+bash deploy/run_full_pipeline.sh --env-file deploy/config.env --from-step 4
+bash deploy/run_full_pipeline.sh --env-file deploy/config.env --include-co2model
+
+# Restart from step 2 after a step 1 failure (provide the step 1 job ID):
+bash deploy/run_full_pipeline.sh --env-file deploy/config.env \
+  --from-step 2 --split-job-id <step1_job_id>
 ```
 
-Then submit steps in order:
+Monitor progress:
 
 ```bash
-# Step 0 — Core temporal window selection
-#   AIS_INPUT_FILE must point to the raw GFW data on scratch
-AIS_INPUT_FILE="${SCRATCH_DIR}/AIS_data/ais_filtered.csv" \
-  sbatch pipeline/step0/step0_window_select.sh
-
-# Step 1 — Split AIS data by vessel
-sbatch pipeline/step1/step1_split_vessels.sh
-
-# Step 2 — Per-vessel track filtering (array job, one task per vessel)
-#   SPLIT_JOB_ID = the SLURM job ID from step 1 (check squeue or logs)
-SPLIT_JOB_ID=<step1_job_id> sbatch pipeline/step2/step2_process_array.sh
-
-# Step 3 — Merge vessels, GMM activity classification, DBSCAN
-#   SPLIT_JOB_ID and RESULTS_DIR must reference step 1/2 outputs
-SPLIT_JOB_ID=<step1_job_id> \
-  RESULTS_DIR="${SCRATCH_DIR}/ais_results_<step2_job_id>" \
-  sbatch pipeline/step3/step3_merge.sh
-
-# Step 4 — Join dbSEABED lithology
-#   Requires hubocean_cache in SCRATCH_DIR (see data/README.md §3)
-sbatch pipeline/step4/step4_add_lithology.sh
-
-# Step 5a — Generate tile grid (run once, produces tiles_1000km.gpkg)
-Rscript pipeline/step5/step5_make_tiles.R
-N_TILES=$(Rscript -e "library(sf); cat(nrow(sf::st_read('${OUTPUT_DIR}/tiles_1000km.gpkg', quiet=TRUE)))")
-echo "Tile count: $N_TILES"
-
-# Step 5b — Tiled SAR computation (array job)
-sbatch --array="1-${N_TILES}%20" pipeline/step5/step5_tile_job.sh
-
-# Step 5c — Global merge of all tiles
-sbatch pipeline/step5/step5_merge_slurm.sh
-
-# Step 6 — CRI (cumulative risk index)
-sbatch pipeline/step6/step6_calculate_cri.sh
-
-# Step 7 — Export Jdredge forcing for OCIM CO2 model
-sbatch pipeline/step7/step7_export_jdredge.sh
+squeue -u $USER                          # running/pending jobs
+tail -f logs/relay_*.out                 # relay submission log
+tail -f logs/step3_*.out                 # any step log
 ```
 
 ### Expected outputs
