@@ -4,6 +4,18 @@
 # Global sensitivity analysis using Sobol indices for the fi / C_ri formula.
 # Uses a local 25-cell synthetic test-patch proxy for C_ri, not the global grid.
 #
+# SUPERSEDED 2026-07-29 by analysis/sensitivity_sobol_realgrid.R, which runs the
+# same analysis on the real fi_grid. Retained for provenance only.
+# Two limitations of this script are why it was replaced:
+#   (1) the 25 cells are runif() draws - SVR ~ U(0, 0.10), p_l ~ U(0.20, 0.80) -
+#       against a real grid whose SVR median is 0.0017 and maximum 8.3;
+#   (2) per-cell k_fast is collapsed into one unweighted mean over seven
+#       provinces. Because k enters through exp(-k), this is the substitution
+#       that actually moves the indices: unlike SVR and p_l, cell-to-cell
+#       variation in k does not factor out of the sum.
+# On the real grid the two dominant parameters total 88%, not 98%, and the
+# decay-rate multiplier is NOT negligible (total-effect 0.062, CI 0.055-0.069).
+#
 # Outputs:
 #   output_V6/sensitivity/sobol_indices.csv
 #   output_V6/sensitivity/sobol_plot.png

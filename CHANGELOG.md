@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased]
+
+### Added
+- `analysis/sensitivity_sobol_realgrid.R`: Sobol' indices computed on the real
+  `fi_grid` (33,495 cells) instead of a synthetic 25-cell patch. Validates its own
+  reconstruction of `f_i` against the stored `f_i_full` before running, and aborts
+  on mismatch.
+- `analysis/decompose_conservative.R`: decomposes the conservative scenario into the
+  contribution of each halved parameter family.
+
+### Changed
+- `analysis/sensitivity_sobol.R` marked SUPERSEDED. On the real grid the two dominant
+  parameters account for 88% of the variance, not 98%, and the decay-rate multiplier
+  is not negligible (total-effect index 0.062, 95% CI 0.055-0.069).
+
+---
+
 ## [1.0.0] — 2026 (pub/v1.0-clean)
 
 ### Added
